@@ -228,44 +228,25 @@ function kyri.new(title)
         Parent = main
     })
     
-    local drag, drag_input, drag_start = false, nil, nil
-    
-    local function update_drag(input)
-        local delta = input.Position - drag_start
-        local start_pos = UDim2.new(
-            main.Position.X.Scale,
-            main.Position.X.Offset + delta.X,
-            main.Position.Y.Scale,
-            main.Position.Y.Offset + delta.Y
-        )
-        main.Position = start_pos
-    end
+    local drag, drag_start, frame_start = false, nil, nil
     
     top.InputBegan:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
             drag = true
             drag_start = inp.Position
-            drag_input = inp
-            
-            local conn
-            conn = inp.Changed:Connect(function()
-                if inp.UserInputState == Enum.UserInputState.End then
-                    drag = false
-                    conn:Disconnect()
-                end
-            end)
+            frame_start = main.Position
         end
     end)
     
-    top.InputChanged:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
-            drag_input = inp
-        end
-    end)
-    
-    kyri.svc.run.Heartbeat:Connect(function()
-        if drag and drag_input then
-            update_drag(drag_input)
+    kyri.svc.inp.InputChanged:Connect(function(inp)
+        if drag and inp.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = inp.Position - drag_start
+            main.Position = UDim2.new(
+                frame_start.X.Scale,
+                frame_start.X.Offset + delta.X,
+                frame_start.Y.Scale,
+                frame_start.Y.Offset + delta.Y
+            )
         end
     end)
     
