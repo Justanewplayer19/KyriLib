@@ -40,7 +40,7 @@ local function make(c, p)
     return o
 end
 
-mt.new = function(title)
+function kyri.new(title)
     local w = {}
     setmetatable(w, mt)
     
