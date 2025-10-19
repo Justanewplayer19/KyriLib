@@ -233,14 +233,17 @@ function kyri.new(title)
     top.InputBegan:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
             drag = true
-            drag_start = inp.Position
+            local gui_inset = kyri.svc.gui:GetGuiInset().Y
+            drag_start = Vector2.new(inp.Position.X, inp.Position.Y - gui_inset)
             start_pos = main.Position
         end
     end)
     
     kyri.svc.inp.InputChanged:Connect(function(inp)
         if drag and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
-            local delta = inp.Position - drag_start
+            local gui_inset = kyri.svc.gui:GetGuiInset().Y
+            local current_pos = Vector2.new(inp.Position.X, inp.Position.Y - gui_inset)
+            local delta = current_pos - drag_start
             local vp = workspace.CurrentCamera.ViewportSize
             local sz = main.AbsoluteSize
             local new_x = math.clamp(start_pos.X.Offset + delta.X, 0, vp.X - sz.X)
@@ -729,7 +732,9 @@ function kyri.new(title)
         w.tabs[name] = tab
         
         if not w.active then
-            btn.MouseButton1Click:Fire()
+            task.spawn(function()
+                btn.MouseButton1Click:Fire()
+            end)
         end
         
         return tab
