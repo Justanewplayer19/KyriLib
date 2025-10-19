@@ -96,6 +96,53 @@ function kyri.new(title)
         Parent = main
     })
     
+    local resize_handle = make("ImageButton", {
+        Size = UDim2.fromOffset(20, 20),
+        Position = UDim2.fromScale(1, 1),
+        AnchorPoint = Vector2.new(1, 1),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://6023426962",
+        ImageColor3 = t.subtext,
+        ZIndex = 100,
+        Parent = main
+    })
+    
+    local resizing = false
+    local resize_start = nil
+    local size_start = nil
+    local min_size = Vector2.new(400, 300)
+    
+    resize_handle.InputBegan:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+            resizing = true
+            resize_start = inp.Position
+            size_start = main.Size
+        end
+    end)
+    
+    kyri.svc.inp.InputChanged:Connect(function(inp)
+        if resizing and inp.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = inp.Position - resize_start
+            local new_x = math.max(size_start.X.Offset + delta.X, min_size.X)
+            local new_y = math.max(size_start.Y.Offset + delta.Y, min_size.Y)
+            main.Size = UDim2.fromOffset(new_x, new_y)
+        end
+    end)
+    
+    kyri.svc.inp.InputEnded:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+            resizing = false
+        end
+    end)
+    
+    resize_handle.MouseEnter:Connect(function()
+        kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.text}):Play()
+    end)
+    
+    resize_handle.MouseLeave:Connect(function()
+        kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.subtext}):Play()
+    end)
+    
     local glow = make("ImageLabel", {
         Size = UDim2.fromScale(1, 1),
         Position = UDim2.fromScale(0.5, 0.5),
