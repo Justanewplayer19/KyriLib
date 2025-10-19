@@ -486,8 +486,8 @@ function kyri.new(title)
             
             local knob = make("Frame", {
                 Size = UDim2.fromOffset(18, 18),
-                Position = state and UDim2.new(1, -3, 0.5, 0) or UDim2.fromOffset(3, 0),
-                AnchorPoint = state and Vector2.new(1, 0.5) or Vector2.new(0, 0.5),
+                Position = state and UDim2.new(1, -3, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+                AnchorPoint = Vector2.new(state and 1 or 0, 0.5),
                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                 Parent = tog_bg
             })
@@ -521,8 +521,8 @@ function kyri.new(title)
                 local color = state and t.accent or t.container
                 kyri.svc.tw:Create(tog_bg, ti_tog, {BackgroundColor3 = color}):Play()
                 kyri.svc.tw:Create(knob, ti_tog, {
-                    Position = state and UDim2.new(1, -3, 0.5, 0) or UDim2.fromOffset(3, 0),
-                    AnchorPoint = state and Vector2.new(1, 0.5) or Vector2.new(0, 0.5)
+                    Position = state and UDim2.new(1, -3, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+                    AnchorPoint = Vector2.new(state and 1 or 0, 0.5)
                 }):Play()
                 kyri.svc.tw:Create(lbl, ti_tog, {
                     TextColor3 = state and t.text or t.subtext
