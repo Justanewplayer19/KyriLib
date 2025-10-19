@@ -1,689 +1,760 @@
-local kyri_lib = {}
-local gs = cloneref or function(obj) return obj end
+local kyri = {}
+local gs = cloneref or function(o) return o end
 
-local function get_service(name)
-    return gs(game:GetService(name))
+local function svc(n)
+    return gs(game:GetService(n))
 end
 
-kyri_lib.services = {
-    tween = get_service("TweenService"),
-    input = get_service("UserInputService"),
-    players = get_service("Players"),
-    gui = get_service("GuiService"),
-    run = get_service("RunService"),
-    http = get_service("HttpService")
+kyri.svc = {
+    tw = svc("TweenService"),
+    inp = svc("UserInputService"),
+    plr = svc("Players"),
+    gui = svc("GuiService"),
+    run = svc("RunService"),
+    http = svc("HttpService")
 }
 
-kyri_lib.config = {
-    title = "kyrilib",
-    bg = Color3.fromRGB(12, 12, 12),
-    primary = Color3.fromRGB(18, 18, 18),
-    secondary = Color3.fromRGB(28, 28, 28),
-    tertiary = Color3.fromRGB(38, 38, 38),
-    accent = Color3.fromRGB(120, 120, 255),
-    text = Color3.fromRGB(255, 255, 255),
-    dim_text = Color3.fromRGB(140, 140, 140),
-    border = Color3.fromRGB(45, 45, 45),
-    font = Enum.Font.Gotham,
-    radius = UDim.new(0, 6),
-    padding = UDim.new(0, 10),
-    gap = 6,
-    anim_time = 0.2
+kyri.theme = {
+    bg = Color3.fromRGB(8, 8, 10),
+    container = Color3.fromRGB(14, 14, 18),
+    element = Color3.fromRGB(20, 20, 26),
+    hover = Color3.fromRGB(28, 28, 36),
+    active = Color3.fromRGB(32, 32, 42),
+    accent = Color3.fromRGB(138, 116, 249),
+    text = Color3.fromRGB(245, 245, 250),
+    subtext = Color3.fromRGB(165, 165, 180),
+    border = Color3.fromRGB(32, 32, 40)
 }
 
-kyri_lib.core = {}
-kyri_lib.core.__index = kyri_lib.core
+local mt = {}
+mt.__index = mt
 
-local function make_instance(class, props)
-    local obj = Instance.new(class)
-    for k, v in pairs(props) do
-        obj[k] = v
+local function make(c, p)
+    local o = Instance.new(c)
+    for k, v in pairs(p) do
+        o[k] = v
     end
-    if obj:IsA("GuiObject") then
-        obj.BorderSizePixel = 0
+    if o:IsA("GuiObject") then
+        o.BorderSizePixel = 0
     end
-    return obj
+    return o
 end
 
-local config_dir = "KyriLibData"
-
-local function get_save_path(name)
-    return config_dir .. "/" .. name .. ".json"
-end
-
-local function save_data(name, data)
-    if not isfolder(config_dir) then
-        makefolder(config_dir)
-    end
+mt.new = function(title)
+    local w = {}
+    setmetatable(w, mt)
     
-    local success = pcall(function()
-        writefile(get_save_path(name), kyri_lib.services.http:JSONEncode(data))
-    end)
+    w.title = title or "kyri"
+    w.tabs = {}
+    w.active = nil
+    w.accents = {}
+    w.sounds = {}
     
-    if not success then
-        warn("kyrilib save failed")
-    end
-end
-
-local function load_data(name)
-    local path = get_save_path(name)
+    local t = kyri.theme
     
-    if not isfile(path) then
-        return nil
-    end
-    
-    local success, result = pcall(function()
-        return kyri_lib.services.http:JSONDecode(readfile(path))
-    end)
-    
-    if not success then
-        warn("kyrilib load failed")
-        return nil
-    end
-    
-    return result
-end
-
-kyri_lib.core.new = function(title)
-    local win = {}
-    setmetatable(win, kyri_lib.core)
-    
-    win.title = title or kyri_lib.config.title
-    win.elements = {}
-    win.accent_objs = {}
-    win.tabs = {}
-    win.current_tab = nil
-    
-    local cfg = kyri_lib.config
-    local width = 480
-    local height = 380
-    
-    win.gui = make_instance("ScreenGui", {
-        Name = "KyriLib",
+    w.gui = make("ScreenGui", {
+        Name = "Kyri",
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn = false,
         IgnoreGuiInset = true,
         DisplayOrder = 999999999
     })
     
-    local drag_container = make_instance("Frame", {
-        Name = "Container",
-        Size = UDim2.fromOffset(width, height),
-        Position = UDim2.new(0.5, -width / 2, 0.5, -height / 2),
-        BackgroundTransparency = 1,
-        Parent = win.gui
-    })
+    local sound_ids = {
+        click = "rbxassetid://7249904928",
+        hover = "rbxassetid://7249903719",
+        toggle_on = "rbxassetid://7249904928",
+        toggle_off = "rbxassetid://7249903719"
+    }
     
-    local main = make_instance("Frame", {
+    for name, id in pairs(sound_ids) do
+        w.sounds[name] = make("Sound", {
+            SoundId = id,
+            Volume = 0.3,
+            Parent = w.gui
+        })
+    end
+    
+    local function play(name)
+        if w.sounds[name] then
+            w.sounds[name]:Play()
+        end
+    end
+    
+    local main = make("Frame", {
         Name = "Main",
-        Size = UDim2.fromScale(1, 1),
-        BackgroundColor3 = cfg.bg,
+        Size = UDim2.fromOffset(520, 400),
+        Position = UDim2.new(0.5, -260, 0.5, -200),
+        BackgroundColor3 = t.bg,
         ClipsDescendants = true,
-        Parent = drag_container
+        Parent = w.gui
     })
     
-    make_instance("UICorner", {
-        CornerRadius = cfg.radius,
+    make("UICorner", {
+        CornerRadius = UDim.new(0, 12),
         Parent = main
     })
     
-    make_instance("UIStroke", {
-        Color = cfg.border,
-        Thickness = 1,
-        Transparency = 0.3,
+    local glow = make("ImageLabel", {
+        Size = UDim2.fromScale(1, 1),
+        Position = UDim2.fromScale(0.5, 0.5),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://5028857084",
+        ImageColor3 = t.accent,
+        ImageTransparency = 0.85,
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(24, 24, 276, 276),
         Parent = main
     })
     
-    local topbar = make_instance("Frame", {
-        Name = "Topbar",
-        Size = UDim2.new(1, -20, 0, 40),
-        Position = UDim2.fromOffset(10, 10),
-        BackgroundColor3 = cfg.primary,
+    table.insert(w.accents, {obj = glow, prop = "ImageColor3"})
+    
+    local top = make("Frame", {
+        Size = UDim2.new(1, 0, 0, 52),
+        BackgroundColor3 = t.container,
         Parent = main
     })
     
-    make_instance("UICorner", {
-        CornerRadius = cfg.radius,
-        Parent = topbar
+    make("UICorner", {
+        CornerRadius = UDim.new(0, 12),
+        Parent = top
     })
     
-    make_instance("UIStroke", {
-        Color = cfg.border,
-        Thickness = 1,
-        Parent = topbar
+    local top_cover = make("Frame", {
+        Size = UDim2.new(1, 0, 0, 12),
+        Position = UDim2.new(0, 0, 1, -12),
+        BackgroundColor3 = t.container,
+        BorderSizePixel = 0,
+        Parent = top
     })
     
-    make_instance("TextLabel", {
-        Name = "Title",
+    local title_txt = make("TextLabel", {
+        Size = UDim2.new(1, -80, 1, 0),
+        Position = UDim2.fromOffset(20, 0),
+        BackgroundTransparency = 1,
+        Text = w.title,
+        TextColor3 = t.text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 17,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = top
+    })
+    
+    local accent_bar = make("Frame", {
+        Size = UDim2.new(0, 3, 0, 24),
+        Position = UDim2.fromOffset(8, 14),
+        BackgroundColor3 = t.accent,
+        BorderSizePixel = 0,
+        Parent = top
+    })
+    
+    table.insert(w.accents, {obj = accent_bar, prop = "BackgroundColor3"})
+    
+    make("UICorner", {
+        CornerRadius = UDim.new(1, 0),
+        Parent = accent_bar
+    })
+    
+    local minimize = make("ImageButton", {
+        Size = UDim2.fromOffset(18, 18),
+        Position = UDim2.new(1, -15, 0.5, 0),
+        AnchorPoint = Vector2.new(1, 0.5),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://6026568240",
+        ImageColor3 = t.subtext,
+        Parent = top
+    })
+    
+    local minimized = false
+    local pre_min_size = nil
+    
+    minimize.MouseEnter:Connect(function()
+        play("hover")
+        kyri.svc.tw:Create(minimize, TweenInfo.new(0.2), {ImageColor3 = t.text}):Play()
+    end)
+    
+    minimize.MouseLeave:Connect(function()
+        kyri.svc.tw:Create(minimize, TweenInfo.new(0.2), {ImageColor3 = t.subtext}):Play()
+    end)
+    
+    minimize.MouseButton1Click:Connect(function()
+        play("click")
+        minimized = not minimized
+        
+        if minimized then
+            pre_min_size = main.Size
+            kyri.svc.tw:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
+                Size = UDim2.new(0, main.Size.X.Offset, 0, 52)
+            }):Play()
+        else
+            kyri.svc.tw:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
+                Size = pre_min_size
+            }):Play()
+        end
+        
+        kyri.svc.tw:Create(minimize, TweenInfo.new(0.25), {
+            Rotation = minimized and 180 or 0
+        }):Play()
+    end)
+    
+    local sidebar = make("Frame", {
+        Size = UDim2.new(0, 140, 1, -64),
+        Position = UDim2.fromOffset(12, 58),
+        BackgroundTransparency = 1,
+        Parent = main
+    })
+    
+    local tab_holder = make("ScrollingFrame", {
         Size = UDim2.fromScale(1, 1),
         BackgroundTransparency = 1,
-        Text = win.title,
-        TextColor3 = cfg.text,
-        Font = cfg.font,
-        TextSize = 16,
-        Parent = topbar
+        ScrollBarThickness = 0,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        Parent = sidebar
     })
     
-    local tab_bar = make_instance("Frame", {
-        Name = "TabBar",
-        Size = UDim2.new(0, 120, 1, -70),
-        Position = UDim2.fromOffset(10, 60),
-        BackgroundColor3 = cfg.primary,
-        Parent = main
-    })
-    
-    make_instance("UICorner", {
-        CornerRadius = cfg.radius,
-        Parent = tab_bar
-    })
-    
-    make_instance("UIStroke", {
-        Color = cfg.border,
-        Thickness = 1,
-        Parent = tab_bar
-    })
-    
-    local tab_list = make_instance("UIListLayout", {
-        Padding = UDim.new(0, 4),
+    local tab_list = make("UIListLayout", {
+        Padding = UDim.new(0, 6),
         SortOrder = Enum.SortOrder.LayoutOrder,
-        Parent = tab_bar
+        Parent = tab_holder
     })
     
-    make_instance("UIPadding", {
-        PaddingTop = UDim.new(0, 8),
-        PaddingBottom = UDim.new(0, 8),
-        PaddingLeft = UDim.new(0, 8),
-        PaddingRight = UDim.new(0, 8),
-        Parent = tab_bar
-    })
+    tab_list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        tab_holder.CanvasSize = UDim2.new(0, 0, 0, tab_list.AbsoluteContentSize.Y)
+    end)
     
-    local content_holder = make_instance("Frame", {
-        Name = "Content",
-        Size = UDim2.new(1, -150, 1, -70),
-        Position = UDim2.fromOffset(140, 60),
+    local content = make("Frame", {
+        Size = UDim2.new(1, -168, 1, -70),
+        Position = UDim2.fromOffset(158, 58),
         BackgroundTransparency = 1,
+        ClipsDescendants = true,
         Parent = main
     })
     
-    local dragging = false
-    local drag_start = nil
-    local start_pos = nil
+    local drag, drag_start, start_pos = false, nil, nil
     
-    topbar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            drag_start = input.Position
-            start_pos = drag_container.Position
+    top.InputBegan:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+            drag = true
+            drag_start = inp.Position
+            start_pos = main.Position
         end
     end)
     
-    kyri_lib.services.input.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - drag_start
-            local viewport = workspace.CurrentCamera.ViewportSize
-            local size = drag_container.AbsoluteSize
-            
-            local new_x = start_pos.X.Offset + delta.X
-            local new_y = start_pos.Y.Offset + delta.Y
-            
-            new_x = math.clamp(new_x, 0, viewport.X - size.X)
-            new_y = math.clamp(new_y, 0, viewport.Y - size.Y)
-            
-            drag_container.Position = UDim2.fromOffset(new_x, new_y)
+    kyri.svc.inp.InputChanged:Connect(function(inp)
+        if drag and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+            local delta = inp.Position - drag_start
+            local vp = workspace.CurrentCamera.ViewportSize
+            local sz = main.AbsoluteSize
+            local new_x = math.clamp(start_pos.X.Offset + delta.X, 0, vp.X - sz.X)
+            local new_y = math.clamp(start_pos.Y.Offset + delta.Y, 0, vp.Y - sz.Y)
+            main.Position = UDim2.fromOffset(new_x, new_y)
         end
     end)
     
-    kyri_lib.services.input.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
+    kyri.svc.inp.InputEnded:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+            drag = false
         end
     end)
     
-    win.gui.Parent = kyri_lib.services.players.LocalPlayer.PlayerGui
+    w.gui.Parent = kyri.svc.plr.LocalPlayer.PlayerGui
     
-    win.add_tab = function(self, name)
+    w.tab = function(self, name)
         local tab = {}
         tab.name = name
         tab.elements = {}
         
-        local tab_btn = make_instance("TextButton", {
-            Name = "Tab_" .. name,
-            Size = UDim2.new(1, 0, 0, 32),
-            BackgroundColor3 = cfg.secondary,
-            Text = name,
-            TextColor3 = cfg.text,
-            Font = cfg.font,
-            TextSize = 14,
+        local btn = make("TextButton", {
+            Name = name,
+            Size = UDim2.new(1, 0, 0, 38),
+            BackgroundColor3 = t.element,
+            Text = "",
             AutoButtonColor = false,
-            Parent = tab_bar
+            Parent = tab_holder
         })
         
-        make_instance("UICorner", {
-            CornerRadius = cfg.radius,
-            Parent = tab_btn
+        make("UICorner", {
+            CornerRadius = UDim.new(0, 8),
+            Parent = btn
         })
         
-        local tab_content = make_instance("ScrollingFrame", {
-            Name = "TabContent_" .. name,
+        local txt = make("TextLabel", {
+            Size = UDim2.new(1, -12, 1, 0),
+            Position = UDim2.fromOffset(12, 0),
+            BackgroundTransparency = 1,
+            Text = name,
+            TextColor3 = t.subtext,
+            Font = Enum.Font.GothamMedium,
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = btn
+        })
+        
+        local indicator = make("Frame", {
+            Size = UDim2.new(0, 0, 0, 38),
+            Position = UDim2.new(1, 0, 0, 0),
+            BackgroundColor3 = t.accent,
+            BorderSizePixel = 0,
+            Parent = btn
+        })
+        
+        table.insert(w.accents, {obj = indicator, prop = "BackgroundColor3"})
+        
+        make("UICorner", {
+            CornerRadius = UDim.new(0, 8),
+            Parent = indicator
+        })
+        
+        local page = make("ScrollingFrame", {
+            Name = name,
             Size = UDim2.fromScale(1, 1),
             BackgroundTransparency = 1,
             ScrollBarThickness = 3,
-            ScrollBarImageColor3 = cfg.accent,
+            ScrollBarImageColor3 = t.accent,
             CanvasSize = UDim2.new(0, 0, 0, 0),
             Visible = false,
-            Parent = content_holder
+            Parent = content
         })
         
-        table.insert(win.accent_objs, {
-            obj = tab_content,
-            prop = "ScrollBarImageColor3"
-        })
+        table.insert(w.accents, {obj = page, prop = "ScrollBarImageColor3"})
         
-        local content_list = make_instance("UIListLayout", {
-            Padding = UDim.new(0, cfg.gap),
+        local page_list = make("UIListLayout", {
+            Padding = UDim.new(0, 8),
             SortOrder = Enum.SortOrder.LayoutOrder,
-            Parent = tab_content
+            Parent = page
         })
         
-        make_instance("UIPadding", {
-            PaddingTop = UDim.new(0, 6),
-            PaddingBottom = UDim.new(0, 6),
-            Parent = tab_content
+        make("UIPadding", {
+            PaddingTop = UDim.new(0, 4),
+            PaddingBottom = UDim.new(0, 8),
+            Parent = page
         })
         
-        content_list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            tab_content.CanvasSize = UDim2.new(0, 0, 0, content_list.AbsoluteContentSize.Y + 12)
+        page_list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            page.CanvasSize = UDim2.new(0, 0, 0, page_list.AbsoluteContentSize.Y + 12)
         end)
         
-        tab_btn.MouseButton1Click:Connect(function()
-            for _, t in pairs(win.tabs) do
-                t.content.Visible = false
-                t.button.BackgroundColor3 = cfg.secondary
+        local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        
+        btn.MouseButton1Click:Connect(function()
+            play("click")
+            
+            for _, tb in pairs(w.tabs) do
+                tb.page.Visible = false
+                kyri.svc.tw:Create(tb.btn, ti, {BackgroundColor3 = t.element}):Play()
+                kyri.svc.tw:Create(tb.txt, ti, {TextColor3 = t.subtext}):Play()
+                kyri.svc.tw:Create(tb.indicator, ti, {Size = UDim2.new(0, 0, 0, 38)}):Play()
             end
             
-            tab_content.Visible = true
-            tab_btn.BackgroundColor3 = cfg.tertiary
-            win.current_tab = tab
+            page.Visible = true
+            kyri.svc.tw:Create(btn, ti, {BackgroundColor3 = t.hover}):Play()
+            kyri.svc.tw:Create(txt, ti, {TextColor3 = t.text}):Play()
+            kyri.svc.tw:Create(indicator, ti, {Size = UDim2.new(0, 3, 0, 38)}):Play()
+            w.active = tab
         end)
         
-        tab.button = tab_btn
-        tab.content = tab_content
+        btn.MouseEnter:Connect(function()
+            play("hover")
+            if w.active ~= tab then
+                kyri.svc.tw:Create(btn, ti, {BackgroundColor3 = t.hover}):Play()
+            end
+        end)
         
-        tab.add_button = function(self, text, callback)
-            local btn = make_instance("TextButton", {
-                Name = "Btn_" .. text,
-                Size = UDim2.new(1, 0, 0, 36),
-                BackgroundColor3 = cfg.secondary,
-                Text = text,
-                TextColor3 = cfg.text,
-                Font = cfg.font,
-                TextSize = 13,
-                AutoButtonColor = false,
-                Parent = tab_content
-            })
-            
-            make_instance("UICorner", {
-                CornerRadius = cfg.radius,
-                Parent = btn
-            })
-            
-            make_instance("UIStroke", {
-                Color = cfg.border,
-                Thickness = 1,
-                Parent = btn
-            })
-            
-            local tween_info = TweenInfo.new(cfg.anim_time, Enum.EasingStyle.Quad)
-            
-            btn.MouseEnter:Connect(function()
-                kyri_lib.services.tween:Create(btn, tween_info, {BackgroundColor3 = cfg.tertiary}):Play()
-            end)
-            
-            btn.MouseLeave:Connect(function()
-                kyri_lib.services.tween:Create(btn, tween_info, {BackgroundColor3 = cfg.secondary}):Play()
-            end)
-            
-            btn.MouseButton1Click:Connect(function()
-                if callback then
-                    callback()
-                end
-            end)
-            
-            table.insert(tab.elements, btn)
-            return btn
-        end
+        btn.MouseLeave:Connect(function()
+            if w.active ~= tab then
+                kyri.svc.tw:Create(btn, ti, {BackgroundColor3 = t.element}):Play()
+            end
+        end)
         
-        tab.add_toggle = function(self, text, default, callback)
-            local state = default or false
-            
-            local toggle_frame = make_instance("Frame", {
-                Name = "Toggle_" .. text,
-                Size = UDim2.new(1, 0, 0, 36),
-                BackgroundColor3 = cfg.secondary,
-                Parent = tab_content
+        tab.btn = btn
+        tab.txt = txt
+        tab.indicator = indicator
+        tab.page = page
+        
+        tab.button = function(self, text, callback)
+            local box = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 42),
+                BackgroundColor3 = t.element,
+                Parent = page
             })
             
-            make_instance("UICorner", {
-                CornerRadius = cfg.radius,
-                Parent = toggle_frame
+            make("UICorner", {
+                CornerRadius = UDim.new(0, 8),
+                Parent = box
             })
             
-            make_instance("UIStroke", {
-                Color = cfg.border,
-                Thickness = 1,
-                Parent = toggle_frame
+            local click = make("TextButton", {
+                Size = UDim2.fromScale(1, 1),
+                BackgroundTransparency = 1,
+                Text = "",
+                Parent = box
             })
             
-            make_instance("TextLabel", {
-                Name = "Label",
-                Size = UDim2.new(1, -50, 1, 0),
-                Position = UDim2.fromOffset(12, 0),
+            make("TextLabel", {
+                Size = UDim2.new(1, -24, 1, 0),
+                Position = UDim2.fromOffset(16, 0),
                 BackgroundTransparency = 1,
                 Text = text,
-                TextColor3 = cfg.text,
-                Font = cfg.font,
-                TextSize = 13,
+                TextColor3 = t.text,
+                Font = Enum.Font.GothamMedium,
+                TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = toggle_frame
+                Parent = box
             })
             
-            local toggle_btn = make_instance("TextButton", {
-                Name = "ToggleBtn",
-                Size = UDim2.fromOffset(40, 20),
-                Position = UDim2.new(1, -12, 0.5, 0),
+            local ripple = make("ImageLabel", {
+                Size = UDim2.fromScale(0, 0),
+                Position = UDim2.fromScale(0.5, 0.5),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundTransparency = 1,
+                Image = "rbxassetid://4560909609",
+                ImageTransparency = 1,
+                ImageColor3 = t.accent,
+                ZIndex = 2,
+                Parent = box
+            })
+            
+            table.insert(w.accents, {obj = ripple, prop = "ImageColor3"})
+            
+            click.MouseButton1Click:Connect(function()
+                play("click")
+                ripple.Size = UDim2.fromScale(0, 0)
+                ripple.ImageTransparency = 0.5
+                kyri.svc.tw:Create(ripple, TweenInfo.new(0.4), {
+                    Size = UDim2.fromScale(1.5, 1.5),
+                    ImageTransparency = 1
+                }):Play()
+                if callback then callback() end
+            end)
+            
+            click.MouseEnter:Connect(function()
+                play("hover")
+                kyri.svc.tw:Create(box, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
+            end)
+            
+            click.MouseLeave:Connect(function()
+                kyri.svc.tw:Create(box, TweenInfo.new(0.15), {BackgroundColor3 = t.element}):Play()
+            end)
+            
+            return box
+        end
+        
+        tab.toggle = function(self, text, def, callback)
+            local state = def or false
+            
+            local box = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 42),
+                BackgroundColor3 = t.element,
+                Parent = page
+            })
+            
+            make("UICorner", {
+                CornerRadius = UDim.new(0, 8),
+                Parent = box
+            })
+            
+            local lbl = make("TextLabel", {
+                Size = UDim2.new(1, -80, 1, 0),
+                Position = UDim2.fromOffset(16, 0),
+                BackgroundTransparency = 1,
+                Text = text,
+                TextColor3 = state and t.text or t.subtext,
+                Font = Enum.Font.GothamMedium,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = box
+            })
+            
+            local tog_bg = make("TextButton", {
+                Size = UDim2.fromOffset(46, 24),
+                Position = UDim2.new(1, -16, 0.5, 0),
                 AnchorPoint = Vector2.new(1, 0.5),
-                BackgroundColor3 = state and cfg.accent or cfg.primary,
+                BackgroundColor3 = state and t.accent or t.container,
                 Text = "",
                 AutoButtonColor = false,
-                Parent = toggle_frame
+                Parent = box
             })
             
-            table.insert(win.accent_objs, {
-                obj = toggle_btn,
-                prop = "BackgroundColor3",
-                is_toggle = true,
-                state_ref = function() return state end
-            })
-            
-            make_instance("UICorner", {
-                CornerRadius = UDim.new(0.5, 0),
-                Parent = toggle_btn
-            })
-            
-            local indicator = make_instance("Frame", {
-                Name = "Indicator",
-                Size = UDim2.fromOffset(14, 14),
-                Position = state and UDim2.new(1, -3, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
-                AnchorPoint = state and Vector2.new(1, 0.5) or Vector2.new(0, 0.5),
-                BackgroundColor3 = cfg.text,
-                Parent = toggle_btn
-            })
-            
-            make_instance("UICorner", {
+            make("UICorner", {
                 CornerRadius = UDim.new(1, 0),
-                Parent = indicator
+                Parent = tog_bg
             })
             
-            local tween_info = TweenInfo.new(0.15, Enum.EasingStyle.Quad)
+            local knob = make("Frame", {
+                Size = UDim2.fromOffset(18, 18),
+                Position = state and UDim2.new(1, -3, 0.5, 0) or UDim2.fromOffset(3, 0),
+                AnchorPoint = state and Vector2.new(1, 0.5) or Vector2.new(0, 0.5),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                Parent = tog_bg
+            })
             
-            toggle_btn.MouseButton1Click:Connect(function()
+            make("UICorner", {
+                CornerRadius = UDim.new(1, 0),
+                Parent = knob
+            })
+            
+            if state then
+                table.insert(w.accents, {obj = tog_bg, prop = "BackgroundColor3", is_toggle = true, get_state = function() return state end})
+            end
+            
+            local ti_tog = TweenInfo.new(0.18, Enum.EasingStyle.Quad)
+            
+            tog_bg.MouseButton1Click:Connect(function()
                 state = not state
+                play(state and "toggle_on" or "toggle_off")
                 
-                kyri_lib.services.tween:Create(toggle_btn, tween_info, {
-                    BackgroundColor3 = state and cfg.accent or cfg.primary
-                }):Play()
+                for i, v in ipairs(w.accents) do
+                    if v.obj == tog_bg and v.is_toggle then
+                        table.remove(w.accents, i)
+                        break
+                    end
+                end
                 
-                kyri_lib.services.tween:Create(indicator, tween_info, {
-                    Position = state and UDim2.new(1, -3, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+                if state then
+                    table.insert(w.accents, {obj = tog_bg, prop = "BackgroundColor3", is_toggle = true, get_state = function() return state end})
+                end
+                
+                local color = state and t.accent or t.container
+                kyri.svc.tw:Create(tog_bg, ti_tog, {BackgroundColor3 = color}):Play()
+                kyri.svc.tw:Create(knob, ti_tog, {
+                    Position = state and UDim2.new(1, -3, 0.5, 0) or UDim2.fromOffset(3, 0),
                     AnchorPoint = state and Vector2.new(1, 0.5) or Vector2.new(0, 0.5)
                 }):Play()
+                kyri.svc.tw:Create(lbl, ti_tog, {
+                    TextColor3 = state and t.text or t.subtext
+                }):Play()
                 
-                if callback then
-                    callback(state)
-                end
+                if callback then callback(state) end
             end)
             
-            table.insert(tab.elements, toggle_frame)
-            return toggle_frame
+            return box
         end
         
-        tab.add_slider = function(self, text, min, max, default, callback)
-            local value = default or min
+        tab.slider = function(self, text, min, max, def, callback)
+            local val = def or min
             
-            local slider_frame = make_instance("Frame", {
-                Name = "Slider_" .. text,
-                Size = UDim2.new(1, 0, 0, 50),
-                BackgroundColor3 = cfg.secondary,
-                Parent = tab_content
+            local box = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 58),
+                BackgroundColor3 = t.element,
+                Parent = page
             })
             
-            make_instance("UICorner", {
-                CornerRadius = cfg.radius,
-                Parent = slider_frame
+            make("UICorner", {
+                CornerRadius = UDim.new(0, 8),
+                Parent = box
             })
             
-            make_instance("UIStroke", {
-                Color = cfg.border,
-                Thickness = 1,
-                Parent = slider_frame
-            })
-            
-            local label = make_instance("TextLabel", {
-                Name = "Label",
-                Size = UDim2.new(1, -24, 0, 20),
-                Position = UDim2.fromOffset(12, 6),
+            make("TextLabel", {
+                Size = UDim2.new(1, -90, 0, 20),
+                Position = UDim2.fromOffset(16, 10),
                 BackgroundTransparency = 1,
                 Text = text,
-                TextColor3 = cfg.text,
-                Font = cfg.font,
-                TextSize = 13,
+                TextColor3 = t.text,
+                Font = Enum.Font.GothamMedium,
+                TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = slider_frame
+                Parent = box
             })
             
-            local value_label = make_instance("TextLabel", {
-                Name = "Value",
-                Size = UDim2.new(0, 50, 0, 20),
-                Position = UDim2.new(1, -12, 0, 6),
+            local val_lbl = make("TextLabel", {
+                Size = UDim2.fromOffset(60, 20),
+                Position = UDim2.new(1, -16, 0, 10),
                 AnchorPoint = Vector2.new(1, 0),
                 BackgroundTransparency = 1,
-                Text = tostring(value),
-                TextColor3 = cfg.accent,
-                Font = cfg.font,
-                TextSize = 13,
+                Text = tostring(val),
+                TextColor3 = t.accent,
+                Font = Enum.Font.GothamBold,
+                TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Right,
-                Parent = slider_frame
+                Parent = box
             })
             
-            table.insert(win.accent_objs, {
-                obj = value_label,
-                prop = "TextColor3"
+            table.insert(w.accents, {obj = val_lbl, prop = "TextColor3"})
+            
+            local track = make("Frame", {
+                Size = UDim2.new(1, -32, 0, 5),
+                Position = UDim2.fromOffset(16, 40),
+                BackgroundColor3 = t.container,
+                Parent = box
             })
             
-            local slider_bg = make_instance("Frame", {
-                Name = "SliderBg",
-                Size = UDim2.new(1, -24, 0, 4),
-                Position = UDim2.fromOffset(12, 34),
-                BackgroundColor3 = cfg.primary,
-                Parent = slider_frame
-            })
-            
-            make_instance("UICorner", {
+            make("UICorner", {
                 CornerRadius = UDim.new(1, 0),
-                Parent = slider_bg
+                Parent = track
             })
             
-            local slider_fill = make_instance("Frame", {
-                Name = "Fill",
-                Size = UDim2.new((value - min) / (max - min), 0, 1, 0),
-                BackgroundColor3 = cfg.accent,
-                Parent = slider_bg
+            local fill = make("Frame", {
+                Size = UDim2.new((val - min) / (max - min), 0, 1, 0),
+                BackgroundColor3 = t.accent,
+                Parent = track
             })
             
-            table.insert(win.accent_objs, {
-                obj = slider_fill,
-                prop = "BackgroundColor3"
-            })
+            table.insert(w.accents, {obj = fill, prop = "BackgroundColor3"})
             
-            make_instance("UICorner", {
+            make("UICorner", {
                 CornerRadius = UDim.new(1, 0),
-                Parent = slider_fill
+                Parent = fill
+            })
+            
+            local handle = make("Frame", {
+                Size = UDim2.fromOffset(13, 13),
+                Position = UDim2.new((val - min) / (max - min), 0, 0.5, 0),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundColor3 = t.text,
+                Parent = track
+            })
+            
+            make("UICorner", {
+                CornerRadius = UDim.new(1, 0),
+                Parent = handle
             })
             
             local dragging = false
             
-            local function update_slider(input)
-                local pos = (input.Position.X - slider_bg.AbsolutePosition.X) / slider_bg.AbsoluteSize.X
-                pos = math.clamp(pos, 0, 1)
-                value = math.floor(min + (max - min) * pos)
-                
-                slider_fill.Size = UDim2.new(pos, 0, 1, 0)
-                value_label.Text = tostring(value)
-                
-                if callback then
-                    callback(value)
-                end
+            local function update(inp)
+                local pct = math.clamp((inp.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+                val = math.floor(min + (max - min) * pct)
+                fill.Size = UDim2.new(pct, 0, 1, 0)
+                handle.Position = UDim2.new(pct, 0, 0.5, 0)
+                val_lbl.Text = tostring(val)
+                if callback then callback(val) end
             end
             
-            slider_bg.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            track.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
                     dragging = true
-                    update_slider(input)
+                    play("toggle_on")
+                    update(inp)
                 end
             end)
             
-            kyri_lib.services.input.InputChanged:Connect(function(input)
-                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    update_slider(input)
+            kyri.svc.inp.InputChanged:Connect(function(inp)
+                if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
+                    update(inp)
                 end
             end)
             
-            kyri_lib.services.input.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            kyri.svc.inp.InputEnded:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if dragging then
+                        play("toggle_off")
+                    end
                     dragging = false
                 end
             end)
             
-            table.insert(tab.elements, slider_frame)
-            return slider_frame
+            return box
         end
         
-        tab.add_textbox = function(self, text, placeholder, callback)
-            local textbox_frame = make_instance("Frame", {
-                Name = "Textbox_" .. text,
-                Size = UDim2.new(1, 0, 0, 60),
-                BackgroundColor3 = cfg.secondary,
-                Parent = tab_content
+        tab.input = function(self, text, placeholder, callback)
+            local box = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 68),
+                BackgroundColor3 = t.element,
+                Parent = page
             })
             
-            make_instance("UICorner", {
-                CornerRadius = cfg.radius,
-                Parent = textbox_frame
+            make("UICorner", {
+                CornerRadius = UDim.new(0, 8),
+                Parent = box
             })
             
-            make_instance("UIStroke", {
-                Color = cfg.border,
-                Thickness = 1,
-                Parent = textbox_frame
-            })
-            
-            make_instance("TextLabel", {
-                Name = "Label",
-                Size = UDim2.new(1, -24, 0, 20),
-                Position = UDim2.fromOffset(12, 6),
+            make("TextLabel", {
+                Size = UDim2.new(1, -32, 0, 20),
+                Position = UDim2.fromOffset(16, 10),
                 BackgroundTransparency = 1,
                 Text = text,
-                TextColor3 = cfg.text,
-                Font = cfg.font,
+                TextColor3 = t.text,
+                Font = Enum.Font.GothamMedium,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = box
+            })
+            
+            local inp = make("TextBox", {
+                Size = UDim2.new(1, -32, 0, 30),
+                Position = UDim2.fromOffset(16, 34),
+                BackgroundColor3 = t.container,
+                Text = "",
+                PlaceholderText = placeholder or "enter text",
+                PlaceholderColor3 = t.subtext,
+                TextColor3 = t.text,
+                Font = Enum.Font.Gotham,
                 TextSize = 13,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = textbox_frame
-            })
-            
-            local input_box = make_instance("TextBox", {
-                Name = "Input",
-                Size = UDim2.new(1, -24, 0, 26),
-                Position = UDim2.fromOffset(12, 28),
-                BackgroundColor3 = cfg.primary,
-                Text = "",
-                PlaceholderText = placeholder or "Enter text...",
-                PlaceholderColor3 = cfg.dim_text,
-                TextColor3 = cfg.text,
-                Font = cfg.font,
-                TextSize = 12,
-                TextXAlignment = Enum.TextXAlignment.Left,
                 ClearTextOnFocus = false,
-                Parent = textbox_frame
+                Parent = box
             })
             
-            make_instance("UICorner", {
-                CornerRadius = cfg.radius,
-                Parent = input_box
+            make("UICorner", {
+                CornerRadius = UDim.new(0, 6),
+                Parent = inp
             })
             
-            make_instance("UIPadding", {
-                PaddingLeft = UDim.new(0, 8),
-                PaddingRight = UDim.new(0, 8),
-                Parent = input_box
+            make("UIPadding", {
+                PaddingLeft = UDim.new(0, 10),
+                PaddingRight = UDim.new(0, 10),
+                Parent = inp
             })
             
-            input_box.FocusLost:Connect(function(enter)
+            inp.FocusLost:Connect(function(enter)
                 if callback and enter then
-                    callback(input_box.Text)
+                    play("click")
+                    callback(inp.Text)
                 end
             end)
             
-            table.insert(tab.elements, textbox_frame)
-            return textbox_frame
+            return box
         end
         
-        tab.add_label = function(self, text)
-            local label = make_instance("TextLabel", {
-                Name = "Label_" .. text,
-                Size = UDim2.new(1, 0, 0, 28),
+        tab.label = function(self, text)
+            local lbl = make("TextLabel", {
+                Size = UDim2.new(1, 0, 0, 32),
                 BackgroundTransparency = 1,
                 Text = text,
-                TextColor3 = cfg.dim_text,
-                Font = cfg.font,
-                TextSize = 12,
+                TextColor3 = t.subtext,
+                Font = Enum.Font.Gotham,
+                TextSize = 13,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = tab_content
+                TextWrapped = true,
+                Parent = page
             })
             
-            make_instance("UIPadding", {
-                PaddingLeft = UDim.new(0, 12),
-                Parent = label
+            make("UIPadding", {
+                PaddingLeft = UDim.new(0, 16),
+                PaddingRight = UDim.new(0, 16),
+                Parent = lbl
             })
             
-            table.insert(tab.elements, label)
-            return label
+            return lbl
         end
         
-        win.tabs[name] = tab
+        w.tabs[name] = tab
         
-        if not win.current_tab then
-            tab_btn.MouseButton1Click:Fire()
+        if not w.active then
+            btn.MouseButton1Click:Fire()
         end
         
         return tab
     end
     
-    win.set_accent = function(self, color)
-        cfg.accent = color
-        for _, data in ipairs(win.accent_objs) do
-            if data.obj and data.obj.Parent then
-                if data.is_toggle then
-                    if data.state_ref() then
-                        data.obj[data.prop] = color
+    w.accent = function(self, color)
+        t.accent = color
+        for _, d in ipairs(w.accents) do
+            if d.obj and d.obj.Parent then
+                if d.is_toggle then
+                    if d.get_state() then
+                        d.obj[d.prop] = color
                     end
                 else
-                    data.obj[data.prop] = color
+                    d.obj[d.prop] = color
                 end
             end
         end
     end
     
-    return win
+    return w
 end
 
-return kyri_lib
+return kyri
