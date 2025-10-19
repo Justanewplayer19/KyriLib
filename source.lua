@@ -26,9 +26,6 @@ kyri.theme = {
     border = Color3.fromRGB(32, 32, 40)
 }
 
-local mt = {}
-mt.__index = mt
-
 local function make(c, p)
     local o = Instance.new(c)
     for k, v in pairs(p) do
@@ -42,7 +39,6 @@ end
 
 function kyri.new(title)
     local w = {}
-    setmetatable(w, mt)
     
     w.title = title or "kyri"
     w.tabs = {}
@@ -261,7 +257,7 @@ function kyri.new(title)
     
     w.gui.Parent = kyri.svc.plr.LocalPlayer.PlayerGui
     
-    w.tab = function(self, name)
+    function w:tab(name)
         local tab = {}
         tab.name = name
         tab.elements = {}
@@ -373,7 +369,7 @@ function kyri.new(title)
         tab.indicator = indicator
         tab.page = page
         
-        tab.button = function(self, text, callback)
+        function tab:button(text, callback)
             local box = make("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
                 BackgroundColor3 = t.element,
@@ -441,7 +437,7 @@ function kyri.new(title)
             return box
         end
         
-        tab.toggle = function(self, text, def, callback)
+        function tab:toggle(text, def, callback)
             local state = def or false
             
             local box = make("Frame", {
@@ -532,7 +528,7 @@ function kyri.new(title)
             return box
         end
         
-        tab.slider = function(self, text, min, max, def, callback)
+        function tab:slider(text, min, max, def, callback)
             local val = def or min
             
             local box = make("Frame", {
@@ -648,7 +644,7 @@ function kyri.new(title)
             return box
         end
         
-        tab.input = function(self, text, placeholder, callback)
+        function tab:input(text, placeholder, callback)
             local box = make("Frame", {
                 Size = UDim2.new(1, 0, 0, 68),
                 BackgroundColor3 = t.element,
@@ -708,7 +704,7 @@ function kyri.new(title)
             return box
         end
         
-        tab.label = function(self, text)
+        function tab:label(text)
             local lbl = make("TextLabel", {
                 Size = UDim2.new(1, 0, 0, 32),
                 BackgroundTransparency = 1,
@@ -739,7 +735,7 @@ function kyri.new(title)
         return tab
     end
     
-    w.accent = function(self, color)
+    function w:accent(color)
         t.accent = color
         for _, d in ipairs(w.accents) do
             if d.obj and d.obj.Parent then
