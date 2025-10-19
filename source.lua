@@ -228,27 +228,44 @@ function kyri.new(title)
         Parent = main
     })
     
-    local drag, drag_start, start_pos = false, nil, nil
+    local drag, drag_input, drag_start = false, nil, nil
+    
+    local function update_drag(input)
+        local delta = input.Position - drag_start
+        local start_pos = UDim2.new(
+            main.Position.X.Scale,
+            main.Position.X.Offset + delta.X,
+            main.Position.Y.Scale,
+            main.Position.Y.Offset + delta.Y
+        )
+        main.Position = start_pos
+    end
     
     top.InputBegan:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
             drag = true
-            local gui_inset = kyri.svc.gui:GetGuiInset().Y
-            drag_start = Vector2.new(inp.Position.X, inp.Position.Y - gui_inset)
-            start_pos = main.Position
+            drag_start = inp.Position
+            drag_input = inp
+            
+            local conn
+            conn = inp.Changed:Connect(function()
+                if inp.UserInputState == Enum.UserInputState.End then
+                    drag = false
+                    conn:Disconnect()
+                end
+            end)
         end
     end)
     
-    kyri.svc.inp.InputChanged:Connect(function(inp)
-        if drag and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
-            local gui_inset = kyri.svc.gui:GetGuiInset().Y
-            local current_pos = Vector2.new(inp.Position.X, inp.Position.Y - gui_inset)
-            local delta = current_pos - drag_start
-            local vp = workspace.CurrentCamera.ViewportSize
-            local sz = main.AbsoluteSize
-            local new_x = math.clamp(start_pos.X.Offset + delta.X, 0, vp.X - sz.X)
-            local new_y = math.clamp(start_pos.Y.Offset + delta.Y, 0, vp.Y - sz.Y)
-            main.Position = UDim2.fromOffset(new_x, new_y)
+    top.InputChanged:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+            drag_input = inp
+        end
+    end)
+    
+    kyri.svc.run.Heartbeat:Connect(function()
+        if drag and drag_input then
+            update_drag(drag_input)
         end
     end)
     
@@ -732,9 +749,12 @@ function kyri.new(title)
         w.tabs[name] = tab
         
         if not w.active then
-            task.spawn(function()
-                btn.MouseButton1Click:Fire()
-            end)
+            task.wait()
+            page.Visible = true
+            kyri.svc.tw:Create(btn, ti, {BackgroundColor3 = t.hover}):Play()
+            kyri.svc.tw:Create(txt, ti, {TextColor3 = t.text}):Play()
+            kyri.svc.tw:Create(indicator, ti, {Size = UDim2.new(0, 3, 0, 38)}):Play()
+            w.active = tab
         end
         
         return tab
