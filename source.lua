@@ -38,6 +38,11 @@ local function make(c, p)
 end
 
 function kyri.new(title)
+    local existing = kyri.svc.plr.LocalPlayer.PlayerGui:FindFirstChild("Kyri")
+    if existing then
+        existing:Destroy()
+    end
+    
     local w = {}
     
     w.title = title or "kyri"
