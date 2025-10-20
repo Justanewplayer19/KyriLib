@@ -892,7 +892,7 @@ function kyri.new(title, options)
                 end
             end)
             
-            return box
+            return {box = box, input = inp}
         end
         
         function tab:label(text)
@@ -936,7 +936,9 @@ function kyri.new(title, options)
         
         settings:label("config management")
         
-        local config_name_box = settings:input("config name", "MyConfig", function() end)
+        local config_name_input = nil
+        local config_name_result = settings:input("config name", "MyConfig", function() end)
+        config_name_input = config_name_result.input
         
         local function create_popup(title, message, on_yes)
             local popup_gui = make("ScreenGui", {
@@ -1048,8 +1050,11 @@ function kyri.new(title, options)
         
         local function refresh_configs()
             for _, child in ipairs(settings.page:GetChildren()) do
-                if child:IsA("Frame") and child.Name ~= "Label_config management" and child.Name ~= "Label_saved configs" and child.Name ~= "TextBox_config name" and child.Name ~= "Button_save config" then
-                    child:Destroy()
+                if child:IsA("Frame") and child.Name == "" then
+                    local has_delete_btn = child:FindFirstChild("ImageButton")
+                    if has_delete_btn then
+                        child:Destroy()
+                    end
                 end
             end
             
@@ -1141,17 +1146,19 @@ function kyri.new(title, options)
         end
         
         settings:button("save config", function()
-            local input_box = config_name_box:FindFirstChild("TextBox", true)
-            if input_box and input_box.Text ~= "" then
+            if config_name_input and config_name_input.Text ~= "" then
+                local cfg_name = config_name_input.Text
                 local data = {}
                 for flag, value in pairs(w.flags) do
                     if not flag:match("_set$") then
                         data[flag] = value
                     end
                 end
-                save_config(w.game_name, input_box.Text, data)
-                print("saved config:", input_box.Text)
+                save_config(w.game_name, cfg_name, data)
+                print("saved config:", cfg_name)
                 refresh_configs()
+            else
+                print("enter a config name")
             end
         end)
         
