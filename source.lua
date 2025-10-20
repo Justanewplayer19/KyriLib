@@ -880,6 +880,66 @@ function kyri.new(title, options)
         
         local config_name_box = settings:input("config name", "MyConfig", function() end)
         
+        local config_list_container = settings:label("")
+        
+        local function refresh_configs()
+            for _, child in ipairs(settings.page:GetChildren()) do
+                if child.Name:match("^load:") then
+                    child:Destroy()
+                end
+            end
+            
+            local configs = list_configs(w.game_name)
+            for _, cfg_name in ipairs(configs) do
+                settings:button("load: " .. cfg_name, function()
+                    local data = load_config(w.game_name, cfg_name)
+                    if data then
+                        for flag, value in pairs(data) do
+                            w.flags[flag] = value
+                            
+                            for tab_name, tab_data in pairs(w.tabs) do
+                                for _, element in ipairs(tab_data.page:GetChildren()) do
+                                    if element:IsA("Frame") then
+                                        local toggle_bg = element:FindFirstChild("SwitchBackground") or element:FindFirstChild("TextButton", true)
+                                        if toggle_bg and toggle_bg:IsA("TextButton") then
+                                            local knob = toggle_bg:FindFirstChild("Knob")
+                                            local lbl = element:FindFirstChild("TextLabel")
+                                            
+                                            if knob and lbl then
+                                                local state = value
+                                                local ti = TweenInfo.new(0.18, Enum.EasingStyle.Quad)
+                                                local color = state and kyri.theme.accent or kyri.theme.container
+                                                
+                                                kyri.svc.tw:Create(toggle_bg, ti, {BackgroundColor3 = color}):Play()
+                                                kyri.svc.tw:Create(knob, ti, {
+                                                    Position = state and UDim2.new(1, -3, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+                                                    AnchorPoint = Vector2.new(state and 1 or 0, 0.5)
+                                                }):Play()
+                                                kyri.svc.tw:Create(lbl, ti, {
+                                                    TextColor3 = state and kyri.theme.text or kyri.theme.subtext
+                                                }):Play()
+                                            end
+                                        end
+                                        
+                                        local slider_handle = element:FindFirstChild("Frame", true)
+                                        if slider_handle and slider_handle.Name == "Knob" then
+                                            local val_lbl = element:FindFirstChild("TextLabel", true)
+                                            local fill = element:FindFirstChild("Frame", true)
+                                            
+                                            if val_lbl and fill and val_lbl.Name ~= "Label" then
+                                                val_lbl.Text = tostring(value)
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                        print("loaded config:", cfg_name)
+                    end
+                end)
+            end
+        end
+        
         settings:button("save config", function()
             local input_box = config_name_box:FindFirstChild("TextBox", true)
             if input_box and input_box.Text ~= "" then
@@ -889,23 +949,13 @@ function kyri.new(title, options)
                 end
                 save_config(w.game_name, input_box.Text, data)
                 print("saved config:", input_box.Text)
+                refresh_configs()
             end
         end)
         
         settings:label("saved configs")
         
-        local configs = list_configs(w.game_name)
-        for _, cfg_name in ipairs(configs) do
-            settings:button("load: " .. cfg_name, function()
-                local data = load_config(w.game_name, cfg_name)
-                if data then
-                    for flag, value in pairs(data) do
-                        w.flags[flag] = value
-                    end
-                    print("loaded config:", cfg_name)
-                end
-            end)
-        end
+        refresh_configs()
         
         return settings
     end
