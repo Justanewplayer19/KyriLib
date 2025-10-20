@@ -37,218 +37,7 @@ local function make(c, p)
     return o
 end
 
-local CONFIG_FOLDER = "KyriLib"
-
-local function save_config(game_name, config_name, data)
-    local path = CONFIG_FOLDER .. "/" .. game_name
-    if not isfolder(path) then
-        makefolder(path)
-    end
-    writefile(path .. "/" .. config_name .. ".json", kyri.svc.http:JSONEncode(data))
-end
-
-local function load_config(game_name, config_name)
-    local path = CONFIG_FOLDER .. "/" .. game_name .. "/" .. config_name .. ".json"
-    if isfile(path) then
-        return kyri.svc.http:JSONDecode(readfile(path))
-    end
-    return nil
-end
-
-local function list_configs(game_name)
-    local path = CONFIG_FOLDER .. "/" .. game_name
-    if not isfolder(path) then
-        return {}
-    end
-    local files = listfiles(path)
-    local configs = {}
-    for _, file in ipairs(files) do
-        local name = file:match("([^/\\]+)%.json$")
-        if name then
-            table.insert(configs, name)
-        end
-    end
-    return configs
-end
-
-local function delete_config(game_name, config_name)
-    local path = CONFIG_FOLDER .. "/" .. game_name .. "/" .. config_name .. ".json"
-    if isfile(path) then
-        delfile(path)
-    end
-end
-
-local function create_key_system(config, callback)
-    local key_gui = make("ScreenGui", {
-        Name = "KyriKey",
-        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-        ResetOnSpawn = false,
-        IgnoreGuiInset = true,
-        DisplayOrder = 999999999,
-        Parent = kyri.svc.plr.LocalPlayer.PlayerGui
-    })
-    
-    local t = kyri.theme
-    
-    local overlay = make("Frame", {
-        Size = UDim2.fromScale(1, 1),
-        BackgroundColor3 = Color3.new(0, 0, 0),
-        BackgroundTransparency = 0.4,
-        Parent = key_gui
-    })
-    
-    local main = make("Frame", {
-        Size = UDim2.fromOffset(360, 220),
-        Position = UDim2.fromScale(0.5, 0.5),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = t.bg,
-        Parent = overlay
-    })
-    
-    make("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = main
-    })
-    
-    make("TextLabel", {
-        Size = UDim2.new(1, -28, 0, 26),
-        Position = UDim2.fromOffset(14, 14),
-        BackgroundTransparency = 1,
-        Text = config.Title or "key system",
-        TextColor3 = t.text,
-        Font = Enum.Font.GothamBold,
-        TextSize = 16,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = main
-    })
-    
-    make("TextLabel", {
-        Size = UDim2.new(1, -28, 0, 20),
-        Position = UDim2.fromOffset(14, 44),
-        BackgroundTransparency = 1,
-        Text = config.Subtitle or "enter key",
-        TextColor3 = t.subtext,
-        Font = Enum.Font.Gotham,
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = main
-    })
-    
-    local input_box = make("Frame", {
-        Size = UDim2.new(1, -28, 0, 36),
-        Position = UDim2.fromOffset(14, 80),
-        BackgroundColor3 = t.element,
-        Parent = main
-    })
-    
-    make("UICorner", {
-        CornerRadius = UDim.new(0, 6),
-        Parent = input_box
-    })
-    
-    local key_input = make("TextBox", {
-        Size = UDim2.new(1, -14, 1, 0),
-        Position = UDim2.fromOffset(7, 0),
-        BackgroundTransparency = 1,
-        Text = "",
-        PlaceholderText = "key",
-        PlaceholderColor3 = t.subtext,
-        TextColor3 = t.text,
-        Font = Enum.Font.Gotham,
-        TextSize = 12,
-        ClearTextOnFocus = false,
-        Parent = input_box
-    })
-    
-    local status = make("TextLabel", {
-        Size = UDim2.new(1, -28, 0, 16),
-        Position = UDim2.fromOffset(14, 124),
-        BackgroundTransparency = 1,
-        Text = "",
-        TextColor3 = Color3.fromRGB(255, 100, 100),
-        Font = Enum.Font.Gotham,
-        TextSize = 10,
-        Parent = main
-    })
-    
-    local btns = make("Frame", {
-        Size = UDim2.new(1, -28, 0, 34),
-        Position = UDim2.fromOffset(14, 155),
-        BackgroundTransparency = 1,
-        Parent = main
-    })
-    
-    make("UIListLayout", {
-        FillDirection = Enum.FillDirection.Horizontal,
-        HorizontalAlignment = Enum.HorizontalAlignment.Center,
-        Padding = UDim.new(0, 6),
-        Parent = btns
-    })
-    
-    local function btn(text, cb)
-        local b = make("TextButton", {
-            Size = UDim2.fromOffset(105, 34),
-            BackgroundColor3 = t.element,
-            Text = text,
-            TextColor3 = t.text,
-            Font = Enum.Font.GothamMedium,
-            TextSize = 12,
-            AutoButtonColor = false,
-            Parent = btns
-        })
-        
-        make("UICorner", {
-            CornerRadius = UDim.new(0, 6),
-            Parent = b
-        })
-        
-        b.MouseEnter:Connect(function()
-            kyri.svc.tw:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
-        end)
-        
-        b.MouseLeave:Connect(function()
-            kyri.svc.tw:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = t.element}):Play()
-        end)
-        
-        b.MouseButton1Click:Connect(cb)
-        return b
-    end
-    
-    btn("verify", function()
-        if key_input.Text == config.Key then
-            status.Text = "correct"
-            status.TextColor3 = Color3.fromRGB(100, 255, 100)
-            task.wait(0.3)
-            key_gui:Destroy()
-            callback()
-        else
-            status.Text = "wrong key"
-            status.TextColor3 = Color3.fromRGB(255, 100, 100)
-            key_input.Text = ""
-        end
-    end)
-    
-    if config.KeyLink then
-        btn("get key", function()
-            setclipboard(config.KeyLink)
-            status.Text = "copied"
-            status.TextColor3 = t.subtext
-        end)
-    end
-end
-
-function kyri.new(title, options)
-    options = options or {}
-    
-    if options.KeySystem and options.KeySystem.Enabled then
-        local key_validated = false
-        create_key_system(options.KeySystem, function()
-            key_validated = true
-        end)
-        
-        repeat task.wait() until key_validated
-    end
-    
+function kyri.new(title)
     local existing = kyri.svc.plr.LocalPlayer.PlayerGui:FindFirstChild("Kyri")
     if existing then
         existing:Destroy()
@@ -261,8 +50,6 @@ function kyri.new(title, options)
     w.active = nil
     w.accents = {}
     w.sounds = {}
-    w.flags = {}
-    w.game_name = options.GameName or "Default"
     
     local t = kyri.theme
     
@@ -523,9 +310,8 @@ function kyri.new(title, options)
     
     w.gui.Parent = kyri.svc.plr.LocalPlayer.PlayerGui
     
-    local settings_tab = nil
-    
     function w:tab(name)
+        local tab = {}
         tab.name = name
         tab.elements = {}
         
@@ -704,12 +490,8 @@ function kyri.new(title, options)
             return box
         end
         
-        function tab:toggle(text, def, callback, flag)
+        function tab:toggle(text, def, callback)
             local state = def or false
-            
-            if flag then
-                w.flags[flag] = state
-            end
             
             local box = make("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
@@ -772,10 +554,6 @@ function kyri.new(title, options)
                 state = not state
                 play(state and "toggle_on" or "toggle_off")
                 
-                if flag then
-                    w.flags[flag] = state
-                end
-                
                 for i, v in ipairs(w.accents) do
                     if v.obj == tog_bg and v.is_toggle then
                         table.remove(w.accents, i)
@@ -803,12 +581,8 @@ function kyri.new(title, options)
             return box
         end
         
-        function tab:slider(text, min, max, def, callback, flag)
+        function tab:slider(text, min, max, def, callback)
             local val = def or min
-            
-            if flag then
-                w.flags[flag] = val
-            end
             
             local box = make("Frame", {
                 Size = UDim2.new(1, 0, 0, 58),
@@ -894,11 +668,6 @@ function kyri.new(title, options)
                 fill.Size = UDim2.new(pct, 0, 1, 0)
                 handle.Position = UDim2.new(pct, 0, 0.5, 0)
                 val_lbl.Text = tostring(val)
-                
-                if flag then
-                    w.flags[flag] = val
-                end
-                
                 if callback then callback(val) end
             end
             
