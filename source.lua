@@ -1048,7 +1048,7 @@ function kyri.new(title, options)
         
         local function refresh_configs()
             for _, child in ipairs(settings.page:GetChildren()) do
-                if child.Name:match("^%[") then
+                if child:IsA("Frame") and child.Name ~= "Label_config management" and child.Name ~= "Label_saved configs" and child.Name ~= "TextBox_config name" and child.Name ~= "Button_save config" then
                     child:Destroy()
                 end
             end
