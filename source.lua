@@ -37,7 +37,53 @@ local function make(c, p)
     return o
 end
 
-function kyri.new(title)
+local CONFIG_FOLDER = "KyriLib"
+
+local function save_config(game_name, config_name, data)
+    local path = CONFIG_FOLDER .. "/" .. game_name
+    if not isfolder(CONFIG_FOLDER) then
+        makefolder(CONFIG_FOLDER)
+    end
+    if not isfolder(path) then
+        makefolder(path)
+    end
+    writefile(path .. "/" .. config_name .. ".json", kyri.svc.http:JSONEncode(data))
+end
+
+local function load_config(game_name, config_name)
+    local path = CONFIG_FOLDER .. "/" .. game_name .. "/" .. config_name .. ".json"
+    if isfile(path) then
+        return kyri.svc.http:JSONDecode(readfile(path))
+    end
+    return nil
+end
+
+local function list_configs(game_name)
+    local path = CONFIG_FOLDER .. "/" .. game_name
+    if not isfolder(path) then
+        return {}
+    end
+    local files = listfiles(path)
+    local configs = {}
+    for _, file in ipairs(files) do
+        local name = file:match("([^/\\]+)%.json$")
+        if name then
+            table.insert(configs, name)
+        end
+    end
+    return configs
+end
+
+local function delete_config(game_name, config_name)
+    local path = CONFIG_FOLDER .. "/" .. game_name .. "/" .. config_name .. ".json"
+    if isfile(path) then
+        delfile(path)
+    end
+end
+
+function kyri.new(title, options)
+    options = options or {}
+    
     local existing = kyri.svc.plr.LocalPlayer.PlayerGui:FindFirstChild("Kyri")
     if existing then
         existing:Destroy()
@@ -50,6 +96,8 @@ function kyri.new(title)
     w.active = nil
     w.accents = {}
     w.sounds = {}
+    w.flags = {}
+    w.game_name = options.GameName or "Default"
     
     local t = kyri.theme
     
@@ -280,35 +328,46 @@ function kyri.new(title)
         Parent = main
     })
     
-    local drag, drag_start, frame_start = false, nil, nil
+    local drag, drag_input, drag_start, input_start = false, nil, nil, nil
+    
+    local function update_input(input)
+        local delta = input.Position - drag_start
+        local position = UDim2.new(
+            input_start.X.Scale,
+            input_start.X.Offset + delta.X,
+            input_start.Y.Scale, 
+            input_start.Y.Offset + delta.Y
+        )
+        
+        kyri.svc.tw:Create(main, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Position = position
+        }):Play()
+    end
     
     top.InputBegan:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
             drag = true
             drag_start = inp.Position
-            frame_start = main.AbsolutePosition
+            input_start = main.Position
+            drag_input = inp
+            
+            inp.Changed:Connect(function()
+                if inp.UserInputState == Enum.UserInputState.End then
+                    drag = false
+                end
+            end)
         end
     end)
     
-    kyri.svc.inp.InputChanged:Connect(function(inp)
-        if drag and inp.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = inp.Position - drag_start
-            local vp = workspace.CurrentCamera.ViewportSize
-            local sz = main.AbsoluteSize
-            
-            local new_x = frame_start.X + delta.X
-            local new_y = frame_start.Y + delta.Y
-            
-            new_x = math.clamp(new_x, 0, vp.X - sz.X)
-            new_y = math.clamp(new_y, 0, vp.Y - sz.Y)
-            
-            main.Position = UDim2.fromOffset(new_x, new_y)
+    top.InputChanged:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+            drag_input = inp
         end
     end)
     
-    kyri.svc.inp.InputEnded:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-            drag = false
+    kyri.svc.run.Heartbeat:Connect(function()
+        if drag and drag_input then
+            update_input(drag_input)
         end
     end)
     
@@ -494,8 +553,12 @@ function kyri.new(title)
             return box
         end
         
-        function tab:toggle(text, def, callback)
+        function tab:toggle(text, def, callback, flag)
             local state = def or false
+            
+            if flag then
+                w.flags[flag] = state
+            end
             
             local box = make("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
@@ -558,6 +621,10 @@ function kyri.new(title)
                 state = not state
                 play(state and "toggle_on" or "toggle_off")
                 
+                if flag then
+                    w.flags[flag] = state
+                end
+                
                 for i, v in ipairs(w.accents) do
                     if v.obj == tog_bg and v.is_toggle then
                         table.remove(w.accents, i)
@@ -585,8 +652,12 @@ function kyri.new(title)
             return box
         end
         
-        function tab:slider(text, min, max, def, callback)
+        function tab:slider(text, min, max, def, callback, flag)
             local val = def or min
+            
+            if flag then
+                w.flags[flag] = val
+            end
             
             local box = make("Frame", {
                 Size = UDim2.new(1, 0, 0, 58),
@@ -672,6 +743,11 @@ function kyri.new(title)
                 fill.Size = UDim2.new(pct, 0, 1, 0)
                 handle.Position = UDim2.new(pct, 0, 0.5, 0)
                 val_lbl.Text = tostring(val)
+                
+                if flag then
+                    w.flags[flag] = val
+                end
+                
                 if callback then callback(val) end
             end
             
@@ -796,6 +872,48 @@ function kyri.new(title)
         
         return tab
     end
+    
+    function w:create_settings()
+        local settings = self:tab("Settings")
+        
+        settings:label("config management")
+        
+        local config_name_box = settings:input("config name", "MyConfig", function() end)
+        
+        settings:button("save config", function()
+            local input_box = config_name_box:FindFirstChild("TextBox", true)
+            if input_box and input_box.Text ~= "" then
+                local data = {}
+                for flag, value in pairs(w.flags) do
+                    data[flag] = value
+                end
+                save_config(w.game_name, input_box.Text, data)
+                print("saved config:", input_box.Text)
+            end
+        end)
+        
+        settings:label("saved configs")
+        
+        local configs = list_configs(w.game_name)
+        for _, cfg_name in ipairs(configs) do
+            settings:button("load: " .. cfg_name, function()
+                local data = load_config(w.game_name, cfg_name)
+                if data then
+                    for flag, value in pairs(data) do
+                        w.flags[flag] = value
+                    end
+                    print("loaded config:", cfg_name)
+                end
+            end)
+        end
+        
+        return settings
+    end
+    
+    task.spawn(function()
+        task.wait(0.1)
+        w:create_settings()
+    end)
     
     function w:accent(color)
         t.accent = color
