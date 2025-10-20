@@ -98,7 +98,7 @@ local function create_key_system(config, callback)
     })
     
     local main = make("Frame", {
-        Size = UDim2.fromOffset(400, 280),
+        Size = UDim2.fromOffset(380, 240),
         Position = UDim2.fromScale(0.5, 0.5),
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = t.bg,
@@ -106,88 +106,74 @@ local function create_key_system(config, callback)
     })
     
     make("UICorner", {
-        CornerRadius = UDim.new(0, 12),
-        Parent = main
-    })
-    
-    local glow = make("ImageLabel", {
-        Size = UDim2.fromScale(1, 1),
-        Position = UDim2.fromScale(0.5, 0.5),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundTransparency = 1,
-        Image = "rbxassetid://5028857084",
-        ImageColor3 = t.accent,
-        ImageTransparency = 0.85,
-        ScaleType = Enum.ScaleType.Slice,
-        SliceCenter = Rect.new(24, 24, 276, 276),
+        CornerRadius = UDim.new(0, 10),
         Parent = main
     })
     
     make("TextLabel", {
-        Size = UDim2.new(1, -40, 0, 40),
-        Position = UDim2.fromOffset(20, 20),
+        Size = UDim2.new(1, -32, 0, 30),
+        Position = UDim2.fromOffset(16, 16),
         BackgroundTransparency = 1,
         Text = config.Title or "key system",
         TextColor3 = t.text,
         Font = Enum.Font.GothamBold,
-        TextSize = 20,
+        TextSize = 18,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = main
     })
     
     make("TextLabel", {
-        Size = UDim2.new(1, -40, 0, 30),
-        Position = UDim2.fromOffset(20, 65),
+        Size = UDim2.new(1, -32, 0, 24),
+        Position = UDim2.fromOffset(16, 50),
         BackgroundTransparency = 1,
-        Text = config.Subtitle or "enter your key to continue",
+        Text = config.Subtitle or "enter key",
         TextColor3 = t.subtext,
         Font = Enum.Font.Gotham,
-        TextSize = 13,
+        TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
-        TextWrapped = true,
         Parent = main
     })
     
-    local input_frame = make("Frame", {
-        Size = UDim2.new(1, -40, 0, 40),
-        Position = UDim2.fromOffset(20, 110),
+    local input_box = make("Frame", {
+        Size = UDim2.new(1, -32, 0, 38),
+        Position = UDim2.fromOffset(16, 90),
         BackgroundColor3 = t.element,
         Parent = main
     })
     
     make("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = input_frame
+        CornerRadius = UDim.new(0, 6),
+        Parent = input_box
     })
     
     local key_input = make("TextBox", {
-        Size = UDim2.new(1, -20, 1, 0),
-        Position = UDim2.fromOffset(10, 0),
+        Size = UDim2.new(1, -16, 1, 0),
+        Position = UDim2.fromOffset(8, 0),
         BackgroundTransparency = 1,
         Text = "",
-        PlaceholderText = "enter key",
+        PlaceholderText = "key",
         PlaceholderColor3 = t.subtext,
         TextColor3 = t.text,
         Font = Enum.Font.Gotham,
-        TextSize = 14,
+        TextSize = 13,
         ClearTextOnFocus = false,
-        Parent = input_frame
+        Parent = input_box
     })
     
-    local status_label = make("TextLabel", {
-        Size = UDim2.new(1, -40, 0, 20),
-        Position = UDim2.fromOffset(20, 160),
+    local status = make("TextLabel", {
+        Size = UDim2.new(1, -32, 0, 18),
+        Position = UDim2.fromOffset(16, 136),
         BackgroundTransparency = 1,
         Text = "",
         TextColor3 = Color3.fromRGB(255, 100, 100),
         Font = Enum.Font.Gotham,
-        TextSize = 12,
+        TextSize = 11,
         Parent = main
     })
     
-    local button_container = make("Frame", {
-        Size = UDim2.new(1, -40, 0, 40),
-        Position = UDim2.fromOffset(20, 195),
+    local btns = make("Frame", {
+        Size = UDim2.new(1, -32, 0, 36),
+        Position = UDim2.fromOffset(16, 165),
         BackgroundTransparency = 1,
         Parent = main
     })
@@ -195,60 +181,58 @@ local function create_key_system(config, callback)
     make("UIListLayout", {
         FillDirection = Enum.FillDirection.Horizontal,
         HorizontalAlignment = Enum.HorizontalAlignment.Center,
-        Padding = UDim.new(0, 10),
-        Parent = button_container
+        Padding = UDim.new(0, 8),
+        Parent = btns
     })
     
-    local function create_button(text, callback_func)
-        local btn = make("TextButton", {
-            Size = UDim2.fromOffset(120, 40),
-            BackgroundColor3 = t.accent,
+    local function btn(text, cb)
+        local b = make("TextButton", {
+            Size = UDim2.fromOffset(110, 36),
+            BackgroundColor3 = t.element,
             Text = text,
             TextColor3 = t.text,
-            Font = Enum.Font.GothamBold,
-            TextSize = 14,
+            Font = Enum.Font.GothamMedium,
+            TextSize = 13,
             AutoButtonColor = false,
-            Parent = button_container
+            Parent = btns
         })
         
         make("UICorner", {
-            CornerRadius = UDim.new(0, 8),
-            Parent = btn
+            CornerRadius = UDim.new(0, 6),
+            Parent = b
         })
         
-        btn.MouseEnter:Connect(function()
-            kyri.svc.tw:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = t.hover}):Play()
+        b.MouseEnter:Connect(function()
+            kyri.svc.tw:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
         end)
         
-        btn.MouseLeave:Connect(function()
-            kyri.svc.tw:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = t.accent}):Play()
+        b.MouseLeave:Connect(function()
+            kyri.svc.tw:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = t.element}):Play()
         end)
         
-        btn.MouseButton1Click:Connect(callback_func)
-        
-        return btn
+        b.MouseButton1Click:Connect(cb)
+        return b
     end
     
-    create_button("submit", function()
-        local entered_key = key_input.Text
-        if entered_key == config.Key then
-            status_label.Text = "correct key!"
-            status_label.TextColor3 = Color3.fromRGB(100, 255, 100)
-            task.wait(0.5)
+    btn("verify", function()
+        if key_input.Text == config.Key then
+            status.Text = "correct"
+            status.TextColor3 = Color3.fromRGB(100, 255, 100)
+            task.wait(0.3)
             key_gui:Destroy()
             callback()
         else
-            status_label.Text = "incorrect key"
-            status_label.TextColor3 = Color3.fromRGB(255, 100, 100)
+            status.Text = "wrong key"
+            status.TextColor3 = Color3.fromRGB(255, 100, 100)
             key_input.Text = ""
         end
     end)
     
     if config.KeyLink then
-        create_button("get key", function()
+        btn("copy link", function()
             setclipboard(config.KeyLink)
-            status_label.Text = "link copied to clipboard"
-            status_label.TextColor3 = t.subtext
+            status.Text = "copied"
+            status.TextColor3 = t.subtext
         end)
     end
 end
@@ -542,6 +526,8 @@ function kyri.new(title, options)
     local settings_tab
     
     function w:create_settings_tab()
+        if settings_tab then return end
+        
         settings_tab = self:tab("Settings")
         
         settings_tab:label("configuration")
