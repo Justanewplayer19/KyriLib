@@ -617,9 +617,8 @@ function kyri.new(title, options)
             
             local ti_tog = TweenInfo.new(0.18, Enum.EasingStyle.Quad)
             
-            tog_bg.MouseButton1Click:Connect(function()
-                state = not state
-                play(state and "toggle_on" or "toggle_off")
+            local function set_state(new_state, run_callback)
+                state = new_state
                 
                 if flag then
                     w.flags[flag] = state
@@ -646,7 +645,18 @@ function kyri.new(title, options)
                     TextColor3 = state and t.text or t.subtext
                 }):Play()
                 
-                if callback then callback(state) end
+                if run_callback and callback then
+                    callback(state)
+                end
+            end
+            
+            if flag then
+                w.flags[flag .. "_set"] = set_state
+            end
+            
+            tog_bg.MouseButton1Click:Connect(function()
+                play(state and "toggle_off" or "toggle_on")
+                set_state(not state, true)
             end)
             
             return box
@@ -884,7 +894,7 @@ function kyri.new(title, options)
         
         local function refresh_configs()
             for _, child in ipairs(settings.page:GetChildren()) do
-                if child.Name:match("^load:") then
+                if child.Name:match("^load:") or child.Name:match("^delete:") then
                     child:Destroy()
                 end
             end
@@ -897,45 +907,19 @@ function kyri.new(title, options)
                         for flag, value in pairs(data) do
                             w.flags[flag] = value
                             
-                            for tab_name, tab_data in pairs(w.tabs) do
-                                for _, element in ipairs(tab_data.page:GetChildren()) do
-                                    if element:IsA("Frame") then
-                                        local toggle_bg = element:FindFirstChild("SwitchBackground") or element:FindFirstChild("TextButton", true)
-                                        if toggle_bg and toggle_bg:IsA("TextButton") then
-                                            local knob = toggle_bg:FindFirstChild("Knob")
-                                            local lbl = element:FindFirstChild("TextLabel")
-                                            
-                                            if knob and lbl then
-                                                local state = value
-                                                local ti = TweenInfo.new(0.18, Enum.EasingStyle.Quad)
-                                                local color = state and kyri.theme.accent or kyri.theme.container
-                                                
-                                                kyri.svc.tw:Create(toggle_bg, ti, {BackgroundColor3 = color}):Play()
-                                                kyri.svc.tw:Create(knob, ti, {
-                                                    Position = state and UDim2.new(1, -3, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
-                                                    AnchorPoint = Vector2.new(state and 1 or 0, 0.5)
-                                                }):Play()
-                                                kyri.svc.tw:Create(lbl, ti, {
-                                                    TextColor3 = state and kyri.theme.text or kyri.theme.subtext
-                                                }):Play()
-                                            end
-                                        end
-                                        
-                                        local slider_handle = element:FindFirstChild("Frame", true)
-                                        if slider_handle and slider_handle.Name == "Knob" then
-                                            local val_lbl = element:FindFirstChild("TextLabel", true)
-                                            local fill = element:FindFirstChild("Frame", true)
-                                            
-                                            if val_lbl and fill and val_lbl.Name ~= "Label" then
-                                                val_lbl.Text = tostring(value)
-                                            end
-                                        end
-                                    end
-                                end
+                            local set_func = w.flags[flag .. "_set"]
+                            if set_func then
+                                set_func(value, true)
                             end
                         end
                         print("loaded config:", cfg_name)
                     end
+                end)
+                
+                settings:button("delete: " .. cfg_name, function()
+                    delete_config(w.game_name, cfg_name)
+                    print("deleted config:", cfg_name)
+                    refresh_configs()
                 end)
             end
         end
