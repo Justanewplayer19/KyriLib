@@ -286,7 +286,7 @@ function kyri.new(title)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
             drag = true
             drag_start = inp.Position
-            frame_start = main.Position
+            frame_start = main.AbsolutePosition
         end
     end)
     
@@ -296,8 +296,8 @@ function kyri.new(title)
             local vp = workspace.CurrentCamera.ViewportSize
             local sz = main.AbsoluteSize
             
-            local new_x = frame_start.X.Offset + delta.X
-            local new_y = frame_start.Y.Offset + delta.Y
+            local new_x = frame_start.X + delta.X
+            local new_y = frame_start.Y + delta.Y
             
             new_x = math.clamp(new_x, 0, vp.X - sz.X)
             new_y = math.clamp(new_y, 0, vp.Y - sz.Y)
