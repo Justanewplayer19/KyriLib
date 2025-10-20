@@ -523,67 +523,9 @@ function kyri.new(title, options)
     
     w.gui.Parent = kyri.svc.plr.LocalPlayer.PlayerGui
     
-    local settings_tab
-    
-    function w:create_settings_tab()
-        if settings_tab then return end
-        
-        settings_tab = self:tab("Settings")
-        
-        settings_tab:label("configuration")
-        
-        local config_input
-        config_input = settings_tab:input("config name", "enter name", function(text)
-            if text ~= "" then
-                local data = {}
-                for flag, value in pairs(w.flags) do
-                    data[flag] = value
-                end
-                save_config(w.game_name, text, data)
-                print("saved config:", text)
-            end
-        end)
-        
-        settings_tab:button("save current config", function()
-            local name = config_input:FindFirstChild("Input", true)
-            if name and name.Text ~= "" then
-                local data = {}
-                for flag, value in pairs(w.flags) do
-                    data[flag] = value
-                end
-                save_config(w.game_name, name.Text, data)
-                print("saved config:", name.Text)
-            end
-        end)
-        
-        settings_tab:label("load configuration")
-        
-        local function refresh_configs()
-            local configs = list_configs(w.game_name)
-            for _, config_name in ipairs(configs) do
-                settings_tab:button("load: " .. config_name, function()
-                    local data = load_config(w.game_name, config_name)
-                    if data then
-                        for flag, value in pairs(data) do
-                            w.flags[flag] = value
-                        end
-                        print("loaded config:", config_name)
-                    end
-                end)
-            end
-        end
-        
-        refresh_configs()
-    end
-    
-    w:create_settings_tab()
+    local settings_tab = nil
     
     function w:tab(name)
-        if name == "Settings" and settings_tab then
-            return settings_tab
-        end
-        
-        local tab = {}
         tab.name = name
         tab.elements = {}
         
