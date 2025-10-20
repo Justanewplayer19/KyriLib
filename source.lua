@@ -938,20 +938,112 @@ function kyri.new(title, options)
         
         local config_name_box = settings:input("config name", "MyConfig", function() end)
         
-        local delete_mode = false
-        
-        local mode_toggle = settings:button("mode: load", function() end)
-        
-        local mode_btn = mode_toggle:FindFirstChild("TextButton", true)
-        if mode_btn then
-            mode_btn.MouseButton1Click:Connect(function()
-                delete_mode = not delete_mode
-                local lbl = mode_toggle:FindFirstChild("TextLabel", true)
-                if lbl then
-                    lbl.Text = delete_mode and "mode: delete" or "mode: load"
-                end
-                refresh_configs()
-            end)
+        local function create_popup(title, message, on_yes)
+            local popup_gui = make("ScreenGui", {
+                Name = "KyriPopup",
+                ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+                ResetOnSpawn = false,
+                IgnoreGuiInset = true,
+                DisplayOrder = 999999999,
+                Parent = kyri.svc.plr.LocalPlayer.PlayerGui
+            })
+            
+            local overlay = make("Frame", {
+                Size = UDim2.fromScale(1, 1),
+                BackgroundColor3 = Color3.new(0, 0, 0),
+                BackgroundTransparency = 0.5,
+                Parent = popup_gui
+            })
+            
+            local popup = make("Frame", {
+                Size = UDim2.fromOffset(320, 160),
+                Position = UDim2.fromScale(0.5, 0.5),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundColor3 = kyri.theme.bg,
+                Parent = overlay
+            })
+            
+            make("UICorner", {
+                CornerRadius = UDim.new(0, 10),
+                Parent = popup
+            })
+            
+            make("TextLabel", {
+                Size = UDim2.new(1, -32, 0, 30),
+                Position = UDim2.fromOffset(16, 16),
+                BackgroundTransparency = 1,
+                Text = title,
+                TextColor3 = kyri.theme.text,
+                Font = Enum.Font.GothamBold,
+                TextSize = 16,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = popup
+            })
+            
+            make("TextLabel", {
+                Size = UDim2.new(1, -32, 0, 40),
+                Position = UDim2.fromOffset(16, 50),
+                BackgroundTransparency = 1,
+                Text = message,
+                TextColor3 = kyri.theme.subtext,
+                Font = Enum.Font.Gotham,
+                TextSize = 13,
+                TextWrapped = true,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = popup
+            })
+            
+            local btn_container = make("Frame", {
+                Size = UDim2.new(1, -32, 0, 36),
+                Position = UDim2.fromOffset(16, 108),
+                BackgroundTransparency = 1,
+                Parent = popup
+            })
+            
+            make("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal,
+                HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                Padding = UDim.new(0, 8),
+                Parent = btn_container
+            })
+            
+            local function create_btn(text, is_yes)
+                local btn = make("TextButton", {
+                    Size = UDim2.fromOffset(140, 36),
+                    BackgroundColor3 = is_yes and kyri.theme.accent or kyri.theme.element,
+                    Text = text,
+                    TextColor3 = kyri.theme.text,
+                    Font = Enum.Font.GothamMedium,
+                    TextSize = 13,
+                    AutoButtonColor = false,
+                    Parent = btn_container
+                })
+                
+                make("UICorner", {
+                    CornerRadius = UDim.new(0, 6),
+                    Parent = btn
+                })
+                
+                btn.MouseEnter:Connect(function()
+                    kyri.svc.tw:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = kyri.theme.hover}):Play()
+                end)
+                
+                btn.MouseLeave:Connect(function()
+                    kyri.svc.tw:Create(btn, TweenInfo.new(0.15), {
+                        BackgroundColor3 = is_yes and kyri.theme.accent or kyri.theme.element
+                    }):Play()
+                end)
+                
+                btn.MouseButton1Click:Connect(function()
+                    if is_yes and on_yes then
+                        on_yes()
+                    end
+                    popup_gui:Destroy()
+                end)
+            end
+            
+            create_btn("yes", true)
+            create_btn("no", false)
         end
         
         local function refresh_configs()
@@ -963,28 +1055,88 @@ function kyri.new(title, options)
             
             local configs = list_configs(w.game_name)
             for _, cfg_name in ipairs(configs) do
-                if delete_mode then
-                    settings:button("[delete] " .. cfg_name, function()
-                        delete_config(w.game_name, cfg_name)
-                        print("deleted config:", cfg_name)
-                        refresh_configs()
-                    end)
-                else
-                    settings:button("[load] " .. cfg_name, function()
-                        local data = load_config(w.game_name, cfg_name)
-                        if data then
-                            for flag, value in pairs(data) do
-                                w.flags[flag] = value
-                                
-                                local set_func = w.flags[flag .. "_set"]
-                                if set_func then
-                                    set_func(value, true)
-                                end
+                local cfg_btn = make("Frame", {
+                    Size = UDim2.new(1, 0, 0, 42),
+                    BackgroundColor3 = kyri.theme.element,
+                    Parent = settings.page
+                })
+                
+                make("UICorner", {
+                    CornerRadius = UDim.new(0, 8),
+                    Parent = cfg_btn
+                })
+                
+                local load_btn = make("TextButton", {
+                    Size = UDim2.new(1, -50, 1, 0),
+                    BackgroundTransparency = 1,
+                    Text = "",
+                    Parent = cfg_btn
+                })
+                
+                make("TextLabel", {
+                    Size = UDim2.new(1, -10, 1, 0),
+                    Position = UDim2.fromOffset(16, 0),
+                    BackgroundTransparency = 1,
+                    Text = cfg_name,
+                    TextColor3 = kyri.theme.text,
+                    Font = Enum.Font.GothamMedium,
+                    TextSize = 14,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = load_btn
+                })
+                
+                local delete_btn = make("ImageButton", {
+                    Size = UDim2.fromOffset(20, 20),
+                    Position = UDim2.new(1, -15, 0.5, 0),
+                    AnchorPoint = Vector2.new(1, 0.5),
+                    BackgroundTransparency = 1,
+                    Image = "rbxassetid://6022668885",
+                    ImageColor3 = kyri.theme.subtext,
+                    Parent = cfg_btn
+                })
+                
+                load_btn.MouseEnter:Connect(function()
+                    kyri.svc.tw:Create(cfg_btn, TweenInfo.new(0.15), {BackgroundColor3 = kyri.theme.hover}):Play()
+                end)
+                
+                load_btn.MouseLeave:Connect(function()
+                    kyri.svc.tw:Create(cfg_btn, TweenInfo.new(0.15), {BackgroundColor3 = kyri.theme.element}):Play()
+                end)
+                
+                delete_btn.MouseEnter:Connect(function()
+                    kyri.svc.tw:Create(delete_btn, TweenInfo.new(0.15), {ImageColor3 = Color3.fromRGB(255, 100, 100)}):Play()
+                end)
+                
+                delete_btn.MouseLeave:Connect(function()
+                    kyri.svc.tw:Create(delete_btn, TweenInfo.new(0.15), {ImageColor3 = kyri.theme.subtext}):Play()
+                end)
+                
+                load_btn.MouseButton1Click:Connect(function()
+                    local data = load_config(w.game_name, cfg_name)
+                    if data then
+                        for flag, value in pairs(data) do
+                            w.flags[flag] = value
+                            
+                            local set_func = w.flags[flag .. "_set"]
+                            if set_func then
+                                set_func(value, true)
                             end
-                            print("loaded config:", cfg_name)
                         end
-                    end)
-                end
+                        print("loaded config:", cfg_name)
+                    end
+                end)
+                
+                delete_btn.MouseButton1Click:Connect(function()
+                    create_popup(
+                        "delete config",
+                        "are you sure you want to delete '" .. cfg_name .. "'?",
+                        function()
+                            delete_config(w.game_name, cfg_name)
+                            print("deleted config:", cfg_name)
+                            refresh_configs()
+                        end
+                    )
+                end)
             end
         end
         
