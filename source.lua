@@ -293,12 +293,16 @@ function kyri.new(title)
     kyri.svc.inp.InputChanged:Connect(function(inp)
         if drag and inp.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = inp.Position - drag_start
-            main.Position = UDim2.new(
-                frame_start.X.Scale,
-                frame_start.X.Offset + delta.X,
-                frame_start.Y.Scale,
-                frame_start.Y.Offset + delta.Y
-            )
+            local vp = workspace.CurrentCamera.ViewportSize
+            local sz = main.AbsoluteSize
+            
+            local new_x = frame_start.X.Offset + delta.X
+            local new_y = frame_start.Y.Offset + delta.Y
+            
+            new_x = math.clamp(new_x, 0, vp.X - sz.X)
+            new_y = math.clamp(new_y, 0, vp.Y - sz.Y)
+            
+            main.Position = UDim2.fromOffset(new_x, new_y)
         end
     end)
     
