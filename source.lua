@@ -98,12 +98,6 @@ function kyri.new(title, options)
         Parent = kyri.svc.plr.LocalPlayer.PlayerGui
     })
     
-    local load_bg = make("Frame", {
-        Size = UDim2.fromScale(1, 1),
-        BackgroundColor3 = Color3.new(0, 0, 0),
-        Parent = load_gui
-    })
-    
     local logo = make("ImageLabel", {
         Size = UDim2.fromOffset(300, 300),
         Position = UDim2.fromScale(0.5, 0.5),
@@ -111,8 +105,10 @@ function kyri.new(title, options)
         BackgroundTransparency = 1,
         Image = "",
         ImageTransparency = 1,
-        Parent = load_bg
+        Parent = load_gui
     })
+    
+    local loaded = false
     
     task.spawn(function()
         local url = "https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/kyriliblogo.png"
@@ -134,10 +130,12 @@ function kyri.new(title, options)
         kyri.svc.tw:Create(logo, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
         task.wait(3)
         kyri.svc.tw:Create(logo, TweenInfo.new(0.5), {ImageTransparency = 1}):Play()
-        kyri.svc.tw:Create(load_bg, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
         task.wait(0.5)
         load_gui:Destroy()
+        loaded = true
     end)
+    
+    repeat task.wait() until loaded
     
     local w = {}
     
@@ -940,37 +938,53 @@ function kyri.new(title, options)
         
         local config_name_box = settings:input("config name", "MyConfig", function() end)
         
-        local config_list_container = settings:label("")
+        local delete_mode = false
+        
+        local mode_toggle = settings:button("mode: load", function() end)
+        
+        local mode_btn = mode_toggle:FindFirstChild("TextButton", true)
+        if mode_btn then
+            mode_btn.MouseButton1Click:Connect(function()
+                delete_mode = not delete_mode
+                local lbl = mode_toggle:FindFirstChild("TextLabel", true)
+                if lbl then
+                    lbl.Text = delete_mode and "mode: delete" or "mode: load"
+                end
+                refresh_configs()
+            end)
+        end
         
         local function refresh_configs()
             for _, child in ipairs(settings.page:GetChildren()) do
-                if child.Name:match("^load:") or child.Name:match("^delete:") then
+                if child.Name:match("^%[") then
                     child:Destroy()
                 end
             end
             
             local configs = list_configs(w.game_name)
             for _, cfg_name in ipairs(configs) do
-                settings:button("load: " .. cfg_name, function()
-                    local data = load_config(w.game_name, cfg_name)
-                    if data then
-                        for flag, value in pairs(data) do
-                            w.flags[flag] = value
-                            
-                            local set_func = w.flags[flag .. "_set"]
-                            if set_func then
-                                set_func(value, true)
+                if delete_mode then
+                    settings:button("[delete] " .. cfg_name, function()
+                        delete_config(w.game_name, cfg_name)
+                        print("deleted config:", cfg_name)
+                        refresh_configs()
+                    end)
+                else
+                    settings:button("[load] " .. cfg_name, function()
+                        local data = load_config(w.game_name, cfg_name)
+                        if data then
+                            for flag, value in pairs(data) do
+                                w.flags[flag] = value
+                                
+                                local set_func = w.flags[flag .. "_set"]
+                                if set_func then
+                                    set_func(value, true)
+                                end
                             end
+                            print("loaded config:", cfg_name)
                         end
-                        print("loaded config:", cfg_name)
-                    end
-                end)
-                
-                settings:button("delete: " .. cfg_name, function()
-                    delete_config(w.game_name, cfg_name)
-                    print("deleted config:", cfg_name)
-                    refresh_configs()
-                end)
+                    end)
+                end
             end
         end
         
@@ -979,7 +993,9 @@ function kyri.new(title, options)
             if input_box and input_box.Text ~= "" then
                 local data = {}
                 for flag, value in pairs(w.flags) do
-                    data[flag] = value
+                    if not flag:match("_set$") then
+                        data[flag] = value
+                    end
                 end
                 save_config(w.game_name, input_box.Text, data)
                 print("saved config:", input_box.Text)
