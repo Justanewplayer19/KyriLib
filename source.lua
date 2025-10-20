@@ -89,6 +89,56 @@ function kyri.new(title, options)
         existing:Destroy()
     end
     
+    local load_gui = make("ScreenGui", {
+        Name = "KyriLoad",
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false,
+        IgnoreGuiInset = true,
+        DisplayOrder = 999999999,
+        Parent = kyri.svc.plr.LocalPlayer.PlayerGui
+    })
+    
+    local load_bg = make("Frame", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundColor3 = Color3.new(0, 0, 0),
+        Parent = load_gui
+    })
+    
+    local logo = make("ImageLabel", {
+        Size = UDim2.fromOffset(300, 300),
+        Position = UDim2.fromScale(0.5, 0.5),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Image = "",
+        ImageTransparency = 1,
+        Parent = load_bg
+    })
+    
+    task.spawn(function()
+        local url = "https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/kyriliblogo.png"
+        local path = "kyrilib_logo.png"
+        
+        if not isfile(path) then
+            local success, data = pcall(function()
+                return game:HttpGet(url)
+            end)
+            if success then
+                writefile(path, data)
+            end
+        end
+        
+        if isfile(path) then
+            logo.Image = getcustomasset(path)
+        end
+        
+        kyri.svc.tw:Create(logo, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
+        task.wait(3)
+        kyri.svc.tw:Create(logo, TweenInfo.new(0.5), {ImageTransparency = 1}):Play()
+        kyri.svc.tw:Create(load_bg, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+        task.wait(0.5)
+        load_gui:Destroy()
+    end)
+    
     local w = {}
     
     w.title = title or "kyri"
