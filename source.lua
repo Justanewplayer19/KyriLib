@@ -444,20 +444,26 @@ function kyri.new(title, options)
         local text_offset = has_icon and 36 or 12
         
         if has_icon then
-            local icon_frame = make("Frame", {
-                Size = UDim2.fromOffset(20, 20),
-                Position = UDim2.fromOffset(10, 9),
+            local icon_img = make("ImageLabel", {
+                Size = UDim2.fromOffset(18, 18),
+                Position = UDim2.fromOffset(11, 10),
                 BackgroundTransparency = 1,
+                Image = "rbxassetid://0",
+                ImageColor3 = t.subtext,
                 Parent = btn
             })
             
-            local icon_img = make("ImageLabel", {
-                Size = UDim2.fromScale(1, 1),
-                BackgroundTransparency = 1,
-                Image = "https://api.iconify.design/lucide:" .. icon .. ".svg",
-                ImageColor3 = t.subtext,
-                Parent = icon_frame
-            })
+            task.spawn(function()
+                local success, result = pcall(function()
+                    return game:HttpGet("https://api.iconify.design/lucide:" .. icon .. ".svg?color=white")
+                end)
+                
+                if success and result then
+                    local temp_path = "kyri_icon_" .. icon .. ".svg"
+                    writefile(temp_path, result)
+                    icon_img.Image = getcustomasset(temp_path)
+                end
+            end)
             
             tab.icon = icon_img
         end
@@ -991,18 +997,17 @@ function kyri.new(title, options)
             })
             
             local list_frame = make("Frame", {
-                Size = UDim2.new(0, 100, 0, 0),
-                Position = UDim2.new(1, -16, 1, 4),
-                AnchorPoint = Vector2.new(1, 0),
-                BackgroundColor3 = t.container,
+                Size = UDim2.new(1, 0, 0, 0),
+                Position = UDim2.fromOffset(0, 42),
+                BackgroundColor3 = t.bg,
                 ClipsDescendants = true,
                 Visible = false,
-                ZIndex = 10,
+                ZIndex = 2,
                 Parent = container
             })
             
             make("UICorner", {
-                CornerRadius = UDim.new(0, 6),
+                CornerRadius = UDim.new(0, 8),
                 Parent = list_frame
             })
             
@@ -1021,16 +1026,23 @@ function kyri.new(title, options)
             make("UIPadding", {
                 PaddingTop = UDim.new(0, 4),
                 PaddingBottom = UDim.new(0, 4),
+                PaddingLeft = UDim.new(0, 8),
+                PaddingRight = UDim.new(0, 8),
                 Parent = list_container
             })
             
             for i, option in ipairs(options) do
                 local opt_btn = make("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 26),
+                    Size = UDim2.new(1, 0, 0, 30),
                     BackgroundColor3 = t.element,
                     Text = "",
                     AutoButtonColor = false,
                     Parent = list_container
+                })
+                
+                make("UICorner", {
+                    CornerRadius = UDim.new(0, 6),
+                    Parent = opt_btn
                 })
                 
                 local opt_lbl = make("TextLabel", {
@@ -1084,9 +1096,12 @@ function kyri.new(title, options)
                     end
                     
                     open = false
-                    list_frame.Visible = false
-                    kyri.svc.tw:Create(list_frame, TweenInfo.new(0.2), {Size = UDim2.new(0, 100, 0, 0)}):Play()
+                    local content_height = list_layout.AbsoluteContentSize.Y + 8
+                    kyri.svc.tw:Create(container, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 42)}):Play()
+                    kyri.svc.tw:Create(list_frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 0)}):Play()
                     kyri.svc.tw:Create(arrow, TweenInfo.new(0.2), {Rotation = 0}):Play()
+                    task.wait(0.2)
+                    list_frame.Visible = false
                     
                     if callback then callback(option) end
                 end)
@@ -1098,13 +1113,18 @@ function kyri.new(title, options)
                 
                 if open then
                     local content_height = list_layout.AbsoluteContentSize.Y + 8
+                    local max_height = math.min(content_height, 150)
                     list_frame.Visible = true
+                    kyri.svc.tw:Create(container, TweenInfo.new(0.2), {
+                        Size = UDim2.new(1, 0, 0, 42 + max_height + 4)
+                    }):Play()
                     kyri.svc.tw:Create(list_frame, TweenInfo.new(0.2), {
-                        Size = UDim2.new(0, 100, 0, math.min(content_height, 150))
+                        Size = UDim2.new(1, 0, 0, max_height)
                     }):Play()
                     kyri.svc.tw:Create(arrow, TweenInfo.new(0.2), {Rotation = 180}):Play()
                 else
-                    kyri.svc.tw:Create(list_frame, TweenInfo.new(0.2), {Size = UDim2.new(0, 100, 0, 0)}):Play()
+                    kyri.svc.tw:Create(container, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 42)}):Play()
+                    kyri.svc.tw:Create(list_frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 0)}):Play()
                     kyri.svc.tw:Create(arrow, TweenInfo.new(0.2), {Rotation = 0}):Play()
                     task.wait(0.2)
                     list_frame.Visible = false
