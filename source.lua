@@ -421,7 +421,7 @@ function kyri.new(title, options)
     
     w.gui.Parent = kyri.svc.plr.LocalPlayer.PlayerGui
     
-    function w:tab(name)
+    function w:tab(name, icon)
         local tab = {}
         tab.name = name
         tab.elements = {}
@@ -440,9 +440,31 @@ function kyri.new(title, options)
             Parent = btn
         })
         
+        local has_icon = icon ~= nil
+        local text_offset = has_icon and 36 or 12
+        
+        if has_icon then
+            local icon_frame = make("Frame", {
+                Size = UDim2.fromOffset(20, 20),
+                Position = UDim2.fromOffset(10, 9),
+                BackgroundTransparency = 1,
+                Parent = btn
+            })
+            
+            local icon_img = make("ImageLabel", {
+                Size = UDim2.fromScale(1, 1),
+                BackgroundTransparency = 1,
+                Image = "https://api.iconify.design/lucide:" .. icon .. ".svg",
+                ImageColor3 = t.subtext,
+                Parent = icon_frame
+            })
+            
+            tab.icon = icon_img
+        end
+        
         local txt = make("TextLabel", {
-            Size = UDim2.new(1, -12, 1, 0),
-            Position = UDim2.fromOffset(12, 0),
+            Size = UDim2.new(1, -text_offset - 12, 1, 0),
+            Position = UDim2.fromOffset(text_offset, 0),
             BackgroundTransparency = 1,
             Text = name,
             TextColor3 = t.subtext,
@@ -506,12 +528,18 @@ function kyri.new(title, options)
                 kyri.svc.tw:Create(tb.btn, ti, {BackgroundColor3 = t.element}):Play()
                 kyri.svc.tw:Create(tb.txt, ti, {TextColor3 = t.subtext}):Play()
                 kyri.svc.tw:Create(tb.indicator, ti, {Size = UDim2.new(0, 0, 0, 38)}):Play()
+                if tb.icon then
+                    kyri.svc.tw:Create(tb.icon, ti, {ImageColor3 = t.subtext}):Play()
+                end
             end
             
             page.Visible = true
             kyri.svc.tw:Create(btn, ti, {BackgroundColor3 = t.hover}):Play()
             kyri.svc.tw:Create(txt, ti, {TextColor3 = t.text}):Play()
             kyri.svc.tw:Create(indicator, ti, {Size = UDim2.new(0, 3, 0, 38)}):Play()
+            if tab.icon then
+                kyri.svc.tw:Create(tab.icon, ti, {ImageColor3 = t.text}):Play()
+            end
             w.active = tab
         end)
         
@@ -895,6 +923,206 @@ function kyri.new(title, options)
             return {box = box, input = inp}
         end
         
+        function tab:dropdown(text, options, def, callback)
+            local selected = def or (options[1] or "none")
+            local open = false
+            
+            local container = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 42),
+                BackgroundColor3 = t.element,
+                Parent = page
+            })
+            
+            make("UICorner", {
+                CornerRadius = UDim.new(0, 8),
+                Parent = container
+            })
+            
+            make("TextLabel", {
+                Size = UDim2.new(1, -110, 1, 0),
+                Position = UDim2.fromOffset(16, 0),
+                BackgroundTransparency = 1,
+                Text = text,
+                TextColor3 = t.text,
+                Font = Enum.Font.GothamMedium,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = container
+            })
+            
+            local dropdown_btn = make("TextButton", {
+                Size = UDim2.fromOffset(100, 28),
+                Position = UDim2.new(1, -16, 0.5, 0),
+                AnchorPoint = Vector2.new(1, 0.5),
+                BackgroundColor3 = t.container,
+                Text = "",
+                AutoButtonColor = false,
+                Parent = container
+            })
+            
+            make("UICorner", {
+                CornerRadius = UDim.new(0, 6),
+                Parent = dropdown_btn
+            })
+            
+            local selected_lbl = make("TextLabel", {
+                Size = UDim2.new(1, -30, 1, 0),
+                Position = UDim2.fromOffset(10, 0),
+                BackgroundTransparency = 1,
+                Text = selected,
+                TextColor3 = t.text,
+                Font = Enum.Font.Gotham,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                Parent = dropdown_btn
+            })
+            
+            local arrow = make("TextLabel", {
+                Size = UDim2.fromOffset(20, 28),
+                Position = UDim2.new(1, -5, 0, 0),
+                AnchorPoint = Vector2.new(1, 0),
+                BackgroundTransparency = 1,
+                Text = "▼",
+                TextColor3 = t.subtext,
+                Font = Enum.Font.Gotham,
+                TextSize = 10,
+                Parent = dropdown_btn
+            })
+            
+            local list_frame = make("Frame", {
+                Size = UDim2.new(0, 100, 0, 0),
+                Position = UDim2.new(1, -16, 1, 4),
+                AnchorPoint = Vector2.new(1, 0),
+                BackgroundColor3 = t.container,
+                ClipsDescendants = true,
+                Visible = false,
+                ZIndex = 10,
+                Parent = container
+            })
+            
+            make("UICorner", {
+                CornerRadius = UDim.new(0, 6),
+                Parent = list_frame
+            })
+            
+            local list_container = make("Frame", {
+                Size = UDim2.fromScale(1, 1),
+                BackgroundTransparency = 1,
+                Parent = list_frame
+            })
+            
+            local list_layout = make("UIListLayout", {
+                Padding = UDim.new(0, 2),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Parent = list_container
+            })
+            
+            make("UIPadding", {
+                PaddingTop = UDim.new(0, 4),
+                PaddingBottom = UDim.new(0, 4),
+                Parent = list_container
+            })
+            
+            for i, option in ipairs(options) do
+                local opt_btn = make("TextButton", {
+                    Size = UDim2.new(1, 0, 0, 26),
+                    BackgroundColor3 = t.element,
+                    Text = "",
+                    AutoButtonColor = false,
+                    Parent = list_container
+                })
+                
+                local opt_lbl = make("TextLabel", {
+                    Size = UDim2.new(1, -16, 1, 0),
+                    Position = UDim2.fromOffset(8, 0),
+                    BackgroundTransparency = 1,
+                    Text = option,
+                    TextColor3 = option == selected and t.accent or t.text,
+                    Font = Enum.Font.Gotham,
+                    TextSize = 13,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = opt_btn
+                })
+                
+                if option == selected then
+                    table.insert(w.accents, {obj = opt_lbl, prop = "TextColor3"})
+                end
+                
+                opt_btn.MouseEnter:Connect(function()
+                    kyri.svc.tw:Create(opt_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
+                end)
+                
+                opt_btn.MouseLeave:Connect(function()
+                    kyri.svc.tw:Create(opt_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.element}):Play()
+                end)
+                
+                opt_btn.MouseButton1Click:Connect(function()
+                    play("click")
+                    selected = option
+                    selected_lbl.Text = option
+                    
+                    for _, child in ipairs(list_container:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            local lbl = child:FindFirstChildOfClass("TextLabel")
+                            if lbl then
+                                for i, v in ipairs(w.accents) do
+                                    if v.obj == lbl then
+                                        table.remove(w.accents, i)
+                                        break
+                                    end
+                                end
+                                
+                                if lbl.Text == selected then
+                                    lbl.TextColor3 = t.accent
+                                    table.insert(w.accents, {obj = lbl, prop = "TextColor3"})
+                                else
+                                    lbl.TextColor3 = t.text
+                                end
+                            end
+                        end
+                    end
+                    
+                    open = false
+                    list_frame.Visible = false
+                    kyri.svc.tw:Create(list_frame, TweenInfo.new(0.2), {Size = UDim2.new(0, 100, 0, 0)}):Play()
+                    kyri.svc.tw:Create(arrow, TweenInfo.new(0.2), {Rotation = 0}):Play()
+                    
+                    if callback then callback(option) end
+                end)
+            end
+            
+            dropdown_btn.MouseButton1Click:Connect(function()
+                play("click")
+                open = not open
+                
+                if open then
+                    local content_height = list_layout.AbsoluteContentSize.Y + 8
+                    list_frame.Visible = true
+                    kyri.svc.tw:Create(list_frame, TweenInfo.new(0.2), {
+                        Size = UDim2.new(0, 100, 0, math.min(content_height, 150))
+                    }):Play()
+                    kyri.svc.tw:Create(arrow, TweenInfo.new(0.2), {Rotation = 180}):Play()
+                else
+                    kyri.svc.tw:Create(list_frame, TweenInfo.new(0.2), {Size = UDim2.new(0, 100, 0, 0)}):Play()
+                    kyri.svc.tw:Create(arrow, TweenInfo.new(0.2), {Rotation = 0}):Play()
+                    task.wait(0.2)
+                    list_frame.Visible = false
+                end
+            end)
+            
+            dropdown_btn.MouseEnter:Connect(function()
+                play("hover")
+                kyri.svc.tw:Create(dropdown_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
+            end)
+            
+            dropdown_btn.MouseLeave:Connect(function()
+                kyri.svc.tw:Create(dropdown_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.container}):Play()
+            end)
+            
+            return container
+        end
+        
         function tab:label(text)
             local lbl = make("TextLabel", {
                 Size = UDim2.new(1, 0, 0, 32),
@@ -925,6 +1153,9 @@ function kyri.new(title, options)
             kyri.svc.tw:Create(btn, ti, {BackgroundColor3 = t.hover}):Play()
             kyri.svc.tw:Create(txt, ti, {TextColor3 = t.text}):Play()
             kyri.svc.tw:Create(indicator, ti, {Size = UDim2.new(0, 3, 0, 38)}):Play()
+            if tab.icon then
+                kyri.svc.tw:Create(tab.icon, ti, {ImageColor3 = t.text}):Play()
+            end
             w.active = tab
         end
         
