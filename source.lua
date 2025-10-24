@@ -877,7 +877,7 @@ function kyri.new(title, options)
             return box
         end
         
-        function tab:input(text, placeholder, callback)
+        function tab:input(text, placeholder, callback, flag)
             local box = make("Frame", {
                 Size = UDim2.new(1, 0, 0, 68),
                 BackgroundColor3 = t.element,
@@ -927,10 +927,24 @@ function kyri.new(title, options)
                 Parent = inp
             })
             
+            if flag then
+                w.flags[flag] = inp.Text
+            end
+            
             inp.FocusLost:Connect(function(enter)
+                if flag then
+                    w.flags[flag] = inp.Text
+                end
+                
                 if callback and enter then
                     play("click")
                     callback(inp.Text)
+                end
+            end)
+            
+            inp:GetPropertyChangedSignal("Text"):Connect(function()
+                if flag then
+                    w.flags[flag] = inp.Text
                 end
             end)
             
@@ -1445,6 +1459,114 @@ function kyri.new(title, options)
         task.wait(0.1)
         w:create_settings()
     end)
+    
+    function w:notify(title, text, duration)
+        duration = duration or 3
+        
+        local notif_gui = kyri.svc.plr.LocalPlayer.PlayerGui:FindFirstChild("KyriNotifications")
+        if not notif_gui then
+            notif_gui = make("ScreenGui", {
+                Name = "KyriNotifications",
+                ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+                ResetOnSpawn = false,
+                IgnoreGuiInset = true,
+                DisplayOrder = 999999998,
+                Parent = kyri.svc.plr.LocalPlayer.PlayerGui
+            })
+            
+            local container = make("Frame", {
+                Name = "Container",
+                Size = UDim2.new(0, 300, 1, 0),
+                Position = UDim2.new(1, -20, 0, 20),
+                AnchorPoint = Vector2.new(1, 0),
+                BackgroundTransparency = 1,
+                Parent = notif_gui
+            })
+            
+            make("UIListLayout", {
+                Padding = UDim.new(0, 8),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                VerticalAlignment = Enum.VerticalAlignment.Top,
+                Parent = container
+            })
+        end
+        
+        local container = notif_gui.Container
+        
+        local notif = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 0),
+            BackgroundColor3 = t.bg,
+            Parent = container
+        })
+        
+        make("UICorner", {
+            CornerRadius = UDim.new(0, 10),
+            Parent = notif
+        })
+        
+        local accent_bar = make("Frame", {
+            Size = UDim2.new(0, 3, 1, 0),
+            BackgroundColor3 = t.accent,
+            BorderSizePixel = 0,
+            Parent = notif
+        })
+        
+        make("UICorner", {
+            CornerRadius = UDim.new(0, 10),
+            Parent = accent_bar
+        })
+        
+        local title_lbl = make("TextLabel", {
+            Size = UDim2.new(1, -20, 0, 20),
+            Position = UDim2.fromOffset(12, 8),
+            BackgroundTransparency = 1,
+            Text = title,
+            TextColor3 = t.text,
+            Font = Enum.Font.GothamBold,
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = notif
+        })
+        
+        local text_lbl = make("TextLabel", {
+            Size = UDim2.new(1, -20, 0, 0),
+            Position = UDim2.fromOffset(12, 30),
+            BackgroundTransparency = 1,
+            Text = text,
+            TextColor3 = t.subtext,
+            Font = Enum.Font.Gotham,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Top,
+            TextWrapped = true,
+            Parent = notif
+        })
+        
+        local text_bounds = kyri.svc.gui:GetTextBoundsAsync(make("GetTextBoundsParams", {
+            Text = text,
+            Font = Enum.Font.Gotham,
+            Size = 13,
+            Width = 268
+        }))
+        
+        local total_height = 8 + 20 + 4 + text_bounds.Y + 8
+        text_lbl.Size = UDim2.new(1, -20, 0, text_bounds.Y)
+        notif.Size = UDim2.new(1, 0, 0, total_height)
+        
+        notif.Position = UDim2.new(0, 320, 0, 0)
+        kyri.svc.tw:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+            Position = UDim2.new(0, 0, 0, 0)
+        }):Play()
+        
+        task.delay(duration, function()
+            kyri.svc.tw:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+                Position = UDim2.new(0, 320, 0, 0)
+            }):Play()
+            
+            task.wait(0.3)
+            notif:Destroy()
+        end)
+    end
     
     function w:accent(color)
         t.accent = color
