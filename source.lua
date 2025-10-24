@@ -1476,7 +1476,7 @@ function kyri.new(title, options)
             
             local container = make("Frame", {
                 Name = "Container",
-                Size = UDim2.new(0, 300, 1, 0),
+                Size = UDim2.new(0, 320, 1, 0),
                 Position = UDim2.new(1, -20, 0, 20),
                 AnchorPoint = Vector2.new(1, 0),
                 BackgroundTransparency = 1,
@@ -1484,7 +1484,7 @@ function kyri.new(title, options)
             })
             
             make("UIListLayout", {
-                Padding = UDim.new(0, 8),
+                Padding = UDim.new(0, 10),
                 SortOrder = Enum.SortOrder.LayoutOrder,
                 VerticalAlignment = Enum.VerticalAlignment.Top,
                 Parent = container
@@ -1494,9 +1494,9 @@ function kyri.new(title, options)
         local container = notif_gui.Container
         
         local notif = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 0),
-            BackgroundColor3 = t.bg,
-            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 0, 70),
+            BackgroundColor3 = t.container,
+            BackgroundTransparency = 0,
             Parent = container
         })
         
@@ -1505,8 +1505,14 @@ function kyri.new(title, options)
             Parent = notif
         })
         
+        make("UIStroke", {
+            Color = t.accent,
+            Thickness = 2,
+            Parent = notif
+        })
+        
         local accent_bar = make("Frame", {
-            Size = UDim2.new(0, 3, 1, 0),
+            Size = UDim2.new(0, 4, 1, 0),
             BackgroundColor3 = t.accent,
             BorderSizePixel = 0,
             Parent = notif
@@ -1518,23 +1524,23 @@ function kyri.new(title, options)
         })
         
         local title_lbl = make("TextLabel", {
-            Size = UDim2.new(1, -20, 0, 20),
-            Position = UDim2.fromOffset(12, 8),
+            Size = UDim2.new(1, -24, 0, 20),
+            Position = UDim2.fromOffset(16, 10),
             BackgroundTransparency = 1,
             Text = title,
             TextColor3 = t.text,
             Font = Enum.Font.GothamBold,
-            TextSize = 14,
+            TextSize = 15,
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = notif
         })
         
         local text_lbl = make("TextLabel", {
-            Size = UDim2.new(1, -20, 0, 0),
-            Position = UDim2.fromOffset(12, 30),
+            Size = UDim2.new(1, -24, 0, 35),
+            Position = UDim2.fromOffset(16, 32),
             BackgroundTransparency = 1,
             Text = text,
-            TextColor3 = t.subtext,
+            TextColor3 = t.text,
             Font = Enum.Font.Gotham,
             TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left,
@@ -1543,26 +1549,14 @@ function kyri.new(title, options)
             Parent = notif
         })
         
-        local text_size = kyri.svc.gui:GetTextBoundsAsync(Instance.new("GetTextBoundsParams", {
-            Text = text,
-            Font = Font.fromEnum(Enum.Font.Gotham),
-            Size = 13,
-            Width = 268
-        }))
-        
-        local total_height = 8 + 20 + 4 + text_size.Y + 8
-        text_lbl.Size = UDim2.new(1, -20, 0, text_size.Y)
-        
-        notif.Size = UDim2.new(0, 0, 0, total_height)
+        notif.Position = UDim2.new(0, 340, 0, 0)
         kyri.svc.tw:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-            Size = UDim2.new(1, 0, 0, total_height),
-            BackgroundTransparency = 0
+            Position = UDim2.new(0, 0, 0, 0)
         }):Play()
         
         task.delay(duration, function()
             kyri.svc.tw:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-                Size = UDim2.new(0, 0, 0, total_height),
-                BackgroundTransparency = 1
+                Position = UDim2.new(0, 340, 0, 0)
             }):Play()
             
             task.wait(0.3)
