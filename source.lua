@@ -147,7 +147,17 @@ function kyri.new(title, options)
     w.flags = {}
     w.game_name = options.GameName or "Default"
     
-    local t = kyri.theme
+    local t = {
+        bg = (options.Theme and options.Theme.bg) or kyri.theme.bg,
+        container = (options.Theme and options.Theme.container) or kyri.theme.container,
+        element = (options.Theme and options.Theme.element) or kyri.theme.element,
+        hover = (options.Theme and options.Theme.hover) or kyri.theme.hover,
+        active = (options.Theme and options.Theme.active) or kyri.theme.active,
+        accent = (options.Theme and options.Theme.accent) or kyri.theme.accent,
+        text = (options.Theme and options.Theme.text) or kyri.theme.text,
+        subtext = (options.Theme and options.Theme.subtext) or kyri.theme.subtext,
+        border = (options.Theme and options.Theme.border) or kyri.theme.border
+    }
     
     w.gui = make("ScreenGui", {
         Name = "Kyri",
