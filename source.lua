@@ -1463,11 +1463,10 @@ function kyri.new(title, options)
     function w:notify(title, text, duration)
         duration = duration or 3
         
-        kyri.svc.plr.PlayerGui:SetCore("SendNotification", {
+        game:GetService("StarterGui"):SetCore("SendNotification", {
             Title = title,
             Text = text,
-            Duration = duration,
-            Icon = ""
+            Duration = duration
         })
     end
     
