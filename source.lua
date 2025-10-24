@@ -444,37 +444,24 @@ function kyri.new(title, options)
         local text_offset = has_icon and 36 or 12
         
         if has_icon then
+            local icon_map = {
+                sword = "rbxassetid://7733674079",
+                move = "rbxassetid://7743871002",
+                user = "rbxassetid://7743875962",
+                music = "rbxassetid://7734042071",
+                settings = "rbxassetid://7734053495"
+            }
+            
+            local icon_id = icon_map[icon] or "rbxassetid://7743875962"
+            
             local icon_img = make("ImageLabel", {
                 Size = UDim2.fromOffset(18, 18),
                 Position = UDim2.fromOffset(11, 10),
                 BackgroundTransparency = 1,
-                Image = "rbxassetid://0",
+                Image = icon_id,
                 ImageColor3 = t.subtext,
                 Parent = btn
             })
-            
-            task.spawn(function()
-                local icon_path = "kyrilib_icons/" .. icon .. ".svg"
-                
-                if not isfolder("kyrilib_icons") then
-                    makefolder("kyrilib_icons")
-                end
-                
-                if not isfile(icon_path) then
-                    local url = "https://api.iconify.design/lucide:" .. icon .. ".svg?color=white"
-                    local success, result = pcall(function()
-                        return game:HttpGet(url)
-                    end)
-                    
-                    if success and result then
-                        writefile(icon_path, result)
-                    end
-                end
-                
-                if isfile(icon_path) then
-                    icon_img.Image = getcustomasset(icon_path)
-                end
-            end)
             
             tab.icon = icon_img
         end
@@ -1009,7 +996,7 @@ function kyri.new(title, options)
             
             local list_frame = make("Frame", {
                 Size = UDim2.new(1, 0, 0, 0),
-                Position = UDim2.fromOffset(0, 42),
+                Position = UDim2.fromOffset(0, 46),
                 BackgroundColor3 = t.bg,
                 ClipsDescendants = true,
                 Visible = false,
