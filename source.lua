@@ -943,7 +943,7 @@ function kyri.new(title, options)
             })
             
             make("TextLabel", {
-                Size = UDim2.new(1, -110, 1, 0),
+                Size = UDim2.new(1, -110, 0, 42),
                 Position = UDim2.fromOffset(16, 0),
                 BackgroundTransparency = 1,
                 Text = text,
@@ -951,16 +951,18 @@ function kyri.new(title, options)
                 Font = Enum.Font.GothamMedium,
                 TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 3,
                 Parent = container
             })
             
             local dropdown_btn = make("TextButton", {
                 Size = UDim2.fromOffset(100, 28),
-                Position = UDim2.new(1, -16, 0.5, 0),
-                AnchorPoint = Vector2.new(1, 0.5),
+                Position = UDim2.new(1, -16, 0, 7),
+                AnchorPoint = Vector2.new(1, 0),
                 BackgroundColor3 = t.container,
                 Text = "",
                 AutoButtonColor = false,
+                ZIndex = 3,
                 Parent = container
             })
             
