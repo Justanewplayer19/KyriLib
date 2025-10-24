@@ -1496,6 +1496,7 @@ function kyri.new(title, options)
         local notif = make("Frame", {
             Size = UDim2.new(1, 0, 0, 0),
             BackgroundColor3 = t.bg,
+            BackgroundTransparency = 1,
             Parent = container
         })
         
@@ -1542,25 +1543,26 @@ function kyri.new(title, options)
             Parent = notif
         })
         
-        local text_bounds = kyri.svc.gui:GetTextBoundsAsync(make("GetTextBoundsParams", {
+        local text_size = kyri.svc.gui:GetTextBoundsAsync(Instance.new("GetTextBoundsParams", {
             Text = text,
-            Font = Enum.Font.Gotham,
+            Font = Font.fromEnum(Enum.Font.Gotham),
             Size = 13,
             Width = 268
         }))
         
-        local total_height = 8 + 20 + 4 + text_bounds.Y + 8
-        text_lbl.Size = UDim2.new(1, -20, 0, text_bounds.Y)
-        notif.Size = UDim2.new(1, 0, 0, total_height)
+        local total_height = 8 + 20 + 4 + text_size.Y + 8
+        text_lbl.Size = UDim2.new(1, -20, 0, text_size.Y)
         
-        notif.Position = UDim2.new(0, 320, 0, 0)
+        notif.Size = UDim2.new(0, 0, 0, total_height)
         kyri.svc.tw:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-            Position = UDim2.new(0, 0, 0, 0)
+            Size = UDim2.new(1, 0, 0, total_height),
+            BackgroundTransparency = 0
         }):Play()
         
         task.delay(duration, function()
             kyri.svc.tw:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-                Position = UDim2.new(0, 320, 0, 0)
+                Size = UDim2.new(0, 0, 0, total_height),
+                BackgroundTransparency = 1
             }):Play()
             
             task.wait(0.3)
