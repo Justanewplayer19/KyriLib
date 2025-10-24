@@ -454,14 +454,25 @@ function kyri.new(title, options)
             })
             
             task.spawn(function()
-                local success, result = pcall(function()
-                    return game:HttpGet("https://api.iconify.design/lucide:" .. icon .. ".svg?color=white")
-                end)
+                local icon_path = "kyrilib_icons/" .. icon .. ".svg"
                 
-                if success and result then
-                    local temp_path = "kyri_icon_" .. icon .. ".svg"
-                    writefile(temp_path, result)
-                    icon_img.Image = getcustomasset(temp_path)
+                if not isfolder("kyrilib_icons") then
+                    makefolder("kyrilib_icons")
+                end
+                
+                if not isfile(icon_path) then
+                    local url = "https://api.iconify.design/lucide:" .. icon .. ".svg?color=white"
+                    local success, result = pcall(function()
+                        return game:HttpGet(url)
+                    end)
+                    
+                    if success and result then
+                        writefile(icon_path, result)
+                    end
+                end
+                
+                if isfile(icon_path) then
+                    icon_img.Image = getcustomasset(icon_path)
                 end
             end)
             
@@ -1011,11 +1022,18 @@ function kyri.new(title, options)
                 Parent = list_frame
             })
             
-            local list_container = make("Frame", {
+            local list_container = make("ScrollingFrame", {
                 Size = UDim2.fromScale(1, 1),
                 BackgroundTransparency = 1,
+                ScrollBarThickness = 3,
+                ScrollBarImageColor3 = t.accent,
+                CanvasSize = UDim2.new(0, 0, 0, 0),
+                ScrollingDirection = Enum.ScrollingDirection.Y,
+                BorderSizePixel = 0,
                 Parent = list_frame
             })
+            
+            table.insert(w.accents, {obj = list_container, prop = "ScrollBarImageColor3"})
             
             local list_layout = make("UIListLayout", {
                 Padding = UDim.new(0, 2),
@@ -1030,6 +1048,10 @@ function kyri.new(title, options)
                 PaddingRight = UDim.new(0, 8),
                 Parent = list_container
             })
+            
+            list_layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                list_container.CanvasSize = UDim2.new(0, 0, 0, list_layout.AbsoluteContentSize.Y + 8)
+            end)
             
             for i, option in ipairs(options) do
                 local opt_btn = make("TextButton", {
@@ -1113,7 +1135,7 @@ function kyri.new(title, options)
                 
                 if open then
                     local content_height = list_layout.AbsoluteContentSize.Y + 8
-                    local max_height = math.min(content_height, 150)
+                    local max_height = math.min(content_height, 200)
                     list_frame.Visible = true
                     kyri.svc.tw:Create(container, TweenInfo.new(0.2), {
                         Size = UDim2.new(1, 0, 0, 42 + max_height + 4)
