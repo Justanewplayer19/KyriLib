@@ -1498,19 +1498,13 @@ function kyri.new(title, options)
         
         local notif = make("Frame", {
             Size = UDim2.new(1, 0, 0, 70),
-            BackgroundColor3 = t.container,
-            BackgroundTransparency = 0,
+            BackgroundColor3 = t.bg,
+            BackgroundTransparency = 0.2,
             Parent = container
         })
         
         make("UICorner", {
             CornerRadius = UDim.new(0, 10),
-            Parent = notif
-        })
-        
-        make("UIStroke", {
-            Color = t.accent,
-            Thickness = 2,
             Parent = notif
         })
         
@@ -1558,11 +1552,23 @@ function kyri.new(title, options)
         }):Play()
         
         task.delay(duration, function()
-            kyri.svc.tw:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-                Position = UDim2.new(0, 340, 0, 0)
+            kyri.svc.tw:Create(notif, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {
+                BackgroundTransparency = 1
             }):Play()
             
-            task.wait(0.3)
+            kyri.svc.tw:Create(title_lbl, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {
+                TextTransparency = 1
+            }):Play()
+            
+            kyri.svc.tw:Create(text_lbl, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {
+                TextTransparency = 1
+            }):Play()
+            
+            kyri.svc.tw:Create(accent_bar, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {
+                BackgroundTransparency = 1
+            }):Play()
+            
+            task.wait(0.5)
             notif:Destroy()
         end)
     end
