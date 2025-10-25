@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KyriLib Documentation</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #ffffff;
+            color: #1c1e21;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body.dark {
+            background: #1b1b1d;
+            color: #e3e3e3;
+        }
+
+        .navbar {
+            height: 60px;
+            background: #ffffff;
+            border-bottom: 1px solid #e3e3e3;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        body.dark .navbar {
+            background: #1b1b1d;
+            border-bottom: 1px solid #2d2d2f;
+        }
+
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1c1e21;
+            text-decoration: none;
+        }
+
+        body.dark .navbar-brand {
+            color: #e3e3e3;
+        }
+
+        .navbar-links {
+            margin-left: auto;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: transparent;
+            border: 1px solid #e3e3e3;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #525860;
+            margin-right: 20px;
+        }
+
+        body.dark .menu-toggle {
+            border-color: #2d2d2f;
+            color: #a8a8a8;
+        }
+
+        @media (max-width: 996px) {
+            .menu-toggle {
+                display: block;
+            }
+        }
+
+        .navbar-links a {
+            color: #525860;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
+        body.dark .navbar-links a {
+            color: #a8a8a8;
+        }
+
+        .navbar-links a:hover {
+            color: #1c1e21;
+        }
+
+        body.dark .navbar-links a:hover {
+            color: #e3e3e3;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid #e3e3e3;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #525860;
+            transition: all 0.3s;
+        }
+
+        body.dark .theme-toggle {
+            border-color: #2d2d2f;
+            color: #a8a8a8;
+        }
+
+        .theme-toggle:hover {
+            background: #f6f8fa;
+        }
+
+        body.dark .theme-toggle:hover {
+            background: #2d2d2f;
+        }
+
+        .container {
+            display: flex;
+            margin-top: 60px;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #f7f7f7;
+            height: calc(100vh - 60px);
+            position: fixed;
+            overflow-y: auto;
+            border-right: 1px solid #e3e3e3;
+            padding: 20px 0;
+            transition: background 0.3s, border-color 0.3s, transform 0.3s;
+            z-index: 50;
+        }
+
+        body.dark .sidebar {
+            background: #18181a;
+            border-right: 1px solid #2d2d2f;
+        }
+
+        @media (max-width: 996px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #8c8c8c;
+            padding: 0 20px;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        body.dark .sidebar-title {
+            color: #6e6e6e;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 6px 20px;
+            color: #525860;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        body.dark .sidebar-link {
+            color: #a8a8a8;
+        }
+
+        .sidebar-link:hover {
+            background: #e8e8e8;
+            color: #1c1e21;
+        }
+
+        body.dark .sidebar-link:hover {
+            background: #2d2d2f;
+            color: #e3e3e3;
+        }
+
+        .sidebar-link.active {
+            color: #8a74f9;
+            font-weight: 500;
+            border-left: 2px solid #8a74f9;
+            background: #ffffff;
+        }
+
+        body.dark .sidebar-link.active {
+            background: #1b1b1d;
+        }
+
+        .content {
+            margin-left: 280px;
+            padding: 40px;
+            max-width: 1000px;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        @media (max-width: 996px) {
+            .content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .sidebar {
+                width: 250px;
+            }
+        }
+
+        h1 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #1c1e21;
+        }
+
+        body.dark h1 {
+            color: #e3e3e3;
+        }
+
+        h2 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-top: 48px;
+            margin-bottom: 16px;
+            color: #1c1e21;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e3e3e3;
+        }
+
+        body.dark h2 {
+            color: #e3e3e3;
+            border-bottom: 1px solid #2d2d2f;
+        }
+
+        h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 12px;
+            color: #1c1e21;
+        }
+
+        body.dark h3 {
+            color: #e3e3e3;
+        }
+
+        h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 24px;
+            margin-bottom: 8px;
+            color: #1c1e21;
+        }
+
+        body.dark h4 {
+            color: #e3e3e3;
+        }
+
+        p {
+            line-height: 1.7;
+            margin-bottom: 16px;
+            color: #525860;
+        }
+
+        body.dark p {
+            color: #a8a8a8;
+        }
+
+        code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #e83e8c;
+        }
+
+        body.dark code {
+            background: #2d2d2f;
+            color: #ff79c6;
+        }
+
+        pre {
+            background: #f6f8fa;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 16px 0;
+            border: 1px solid #e3e3e3;
+            position: relative;
+        }
+
+        body.dark pre {
+            background: #2d2d2f;
+            border: 1px solid #3d3d3f;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #ffffff;
+            color: #1c1e21;
+            border: 1px solid #e3e3e3;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body.dark .copy-button {
+            background: #1b1b1d;
+            color: #e3e3e3;
+            border: 1px solid #2d2d2f;
+        }
+
+        pre:hover .copy-button {
+            opacity: 1;
+        }
+
+        .copy-button:hover {
+            background: #f6f8fa;
+        }
+
+        body.dark .copy-button:hover {
+            background: #2d2d2f;
+        }
+
+        .copy-button.copied {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+
+        .copy-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: #1c1e21;
+        }
+
+        body.dark pre code {
+            color: #e3e3e3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #e3e3e3;
+        }
+
+        body.dark th, body.dark td {
+            border: 1px solid #2d2d2f;
+        }
+
+        th {
+            background: #f6f8fa;
+            font-weight: 600;
+        }
+
+        body.dark th {
+            background: #2d2d2f;
+        }
+
+        .admonition {
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 6px;
+            border-left: 4px solid;
+        }
+
+        .admonition-info {
+            background: #e7f2ff;
+            border-color: #2196f3;
+        }
+
+        body.dark .admonition-info {
+            background: #1a2a3a;
+            border-color: #2196f3;
+        }
+
+        .admonition-warning {
+            background: #fff4e5;
+            border-color: #ff9800;
+        }
+
+        body.dark .admonition-warning {
+            background: #2a2410;
+            border-color: #ff9800;
+        }
+
+        .admonition-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        ul {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.7;
+            color: #525860;
+        }
+
+        body.dark li {
+            color: #a8a8a8;
+        }
+
+        a {
+            color: #8a74f9;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #ffffff;
+            color: #1c1e21;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin-right: 12px;
+            margin-top: 12px;
+            border: 1px solid #e3e3e3;
+        }
+
+        body.dark .button {
+            background: #1b1b1d;
+            color: #e3e3e3;
+            border: 1px solid #2d2d2f;
+        }
+
+        .button:hover {
+            background: #f6f8fa;
+            text-decoration: none;
+        }
+
+        body.dark .button:hover {
+            background: #2d2d2f;
+        }
+
+        .button-outline {
+            background: transparent;
+            border: 1px solid #e3e3e3;
+            color: #1c1e21;
+        }
+
+        body.dark .button-outline {
+            border: 1px solid #2d2d2f;
+            color: #e3e3e3;
+        }
+
+        .button-outline:hover {
+            background: #f6f8fa;
+        }
+
+        body.dark .button-outline:hover {
+            background: #2d2d2f;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰ Menu</button>
+        <a href="#" class="navbar-brand">KyriLib</a>
+        <div class="navbar-links">
+            <a href="#introduction">Docs</a>
+            <a href="https://github.com/Justanewplayer19/KyriLib">GitHub</a>
+            <button class="theme-toggle" onclick="toggleTheme()">good morning</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Getting Started</div>
+                <a href="#introduction" class="sidebar-link active">Introduction</a>
+                <a href="#installation" class="sidebar-link">Installation</a>
+                <a href="#basic-usage" class="sidebar-link">Basic Usage</a>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">API Reference</div>
+                <a href="#window" class="sidebar-link">Window</a>
+                <a href="#tabs" class="sidebar-link">Tabs</a>
+                <a href="#elements" class="sidebar-link">Elements</a>
+                <a href="#notifications" class="sidebar-link">Notifications</a>
+                <a href="#config" class="sidebar-link">Config System</a>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Examples</div>
+                <a href="#complete-example" class="sidebar-link">Complete Example</a>
+            </div>
+        </aside>
+
+        <main class="content">
+            <section id="introduction">
+                <h1>Introduction</h1>
+                <p>KyriLib is a modern, easy-to-use UI library for Roblox scripts. It provides a clean interface with smooth animations, a built-in config system, and rich UI elements.</p>
+
+                <a href="#installation" class="button">Get Started</a>
+                <a href="https://github.com/Justanewplayer19/KyriLib" class="button button-outline">GitHub</a>
+
+                <h2>Features</h2>
+                <ul>
+                    <li>Modern, clean interface with smooth animations</li>
+                    <li>Built-in save/load config system</li>
+                    <li>Custom notifications with fade animations</li>
+                    <li>Rich elements: buttons, toggles, sliders, inputs, dropdowns</li>
+                    <li>Customizable themes</li>
+                    <li>Optional Lucide icons for tabs</li>
+                    <li>Draggable and resizable windows</li>
+                </ul>
+            </section>
+
+            <section id="installation">
+                <h2>Installation</h2>
+                <p>Load the library using the following code:</p>
+                <pre><code>local KyriLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()</code></pre>
+            </section>
+
+            <section id="basic-usage">
+                <h2>Basic Usage</h2>
+                <pre><code>-- Create a window
+local window = KyriLib.new("My Script", {
+    GameName = "MyGame"
+})
+
+-- Create a tab
+local main = window:tab("Main")
+
+-- Add a button
+main:button("Click Me", function()
+    print("Button clicked!")
+end)
+
+-- Add a toggle
+main:toggle("Enable Feature", false, function(state)
+    print("Toggle state:", state)
+end, "feature_flag")
+
+-- Send a notification
+window:notify("Success", "Script loaded!", 3)</code></pre>
+            </section>
+
+            <section id="window">
+                <h2>Window</h2>
+                
+                <h3>Creating a Window</h3>
+                <pre><code>KyriLib.new(title, options)</code></pre>
+
+                <h4>Parameters</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>title</td>
+                            <td>string</td>
+                            <td>The window title</td>
+                        </tr>
+                        <tr>
+                            <td>options</td>
+                            <td>table</td>
+                            <td>Optional settings (GameName, Theme)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Custom Theme</h3>
+                <p>You can customize the colors by passing a Theme table:</p>
+                <pre><code>local window = KyriLib.new("My Script", {
+    GameName = "MyGame",
+    Theme = {
+        bg = Color3.fromRGB(10, 10, 15),
+        accent = Color3.fromRGB(255, 100, 100),
+        text = Color3.fromRGB(255, 255, 255)
+    }
+})</code></pre>
+
+                <div class="admonition admonition-info">
+                    <div class="admonition-title">Info</div>
+                    <p>You only need to specify the colors you want to change. Any colors not specified will use the default theme.</p>
+                </div>
+
+                <h3>Change Accent Color</h3>
+                <pre><code>window:accent(Color3.fromRGB(255, 100, 100))</code></pre>
+            </section>
+
+            <section id="tabs">
+                <h2>Tabs</h2>
+                
+                <h3>Creating a Tab</h3>
+                <pre><code>window:tab(name, icon)</code></pre>
+
+                <h4>Parameters</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>name</td>
+                            <td>string</td>
+                            <td>Tab name</td>
+                        </tr>
+                        <tr>
+                            <td>icon</td>
+                            <td>string (optional)</td>
+                            <td>Lucide icon name</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Example with Icons</h3>
+                <pre><code>local weapons = window:tab("Weapons", "sword")
+local settings = window:tab("Settings", "settings")</code></pre>
+
+                <div class="admonition admonition-info">
+                    <div class="admonition-title">Icon Names</div>
+                    <p>Available icons: sword, shield, user, settings, move, music, home, star, heart, and more. See <a href="https://lucide.dev">lucide.dev</a> for all icon names.</p>
+                </div>
+            </section>
+
+            <section id="elements">
+                <h2>Elements</h2>
+
+                <h3>Button</h3>
+                <pre><code>tab:button(text, callback)</code></pre>
+                <p>Creates a clickable button.</p>
+
+                <h3>Toggle</h3>
+                <pre><code>tab:toggle(text, default, callback, flag)</code></pre>
+                <p>Creates a toggle switch. If a flag is provided, the state is saved to configs.</p>
+
+                <h3>Slider</h3>
+                <pre><code>tab:slider(text, min, max, default, callback, flag)</code></pre>
+                <p>Creates a slider for number values.</p>
+
+                <h3>Input</h3>
+                <pre><code>tab:input(text, placeholder, callback, flag)</code></pre>
+                <p>Creates a text input box.</p>
+
+                <h3>Dropdown</h3>
+                <pre><code>tab:dropdown(text, options, default, callback)</code></pre>
+                <p>Creates a dropdown menu with selectable options.</p>
+
+                <div class="admonition admonition-warning">
+                    <div class="admonition-title">Warning</div>
+                    <p>Dropdowns do not save to configs automatically to avoid bugs.</p>
+                </div>
+
+                <h3>Label</h3>
+                <pre><code>tab:label(text)</code></pre>
+                <p>Creates a text label for organizing sections.</p>
+
+                <h3>Example</h3>
+                <pre><code>local main = window:tab("Main")
+
+main:label("player options")
+
+main:button("Reset", function()
+    print("Reset clicked")
+end)
+
+main:toggle("Fly", false, function(state)
+    print("Fly:", state)
+end, "fly")
+
+main:slider("Speed", 16, 200, 16, function(value)
+    print("Speed:", value)
+end, "speed")
+
+main:input("Username", "Enter name", function(text)
+    print("Name:", text)
+end, "username")
+
+main:dropdown("Location", {"Spawn", "Base", "Shop"}, "Spawn", function(value)
+    print("Selected:", value)
+end)</code></pre>
+            </section>
+
+            <section id="notifications">
+                <h2>Notifications</h2>
+                
+                <h3>Send Notification</h3>
+                <pre><code>window:notify(title, text, duration)</code></pre>
+
+                <h4>Parameters</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>title</td>
+                            <td>string</td>
+                            <td>Notification title</td>
+                        </tr>
+                        <tr>
+                            <td>text</td>
+                            <td>string</td>
+                            <td>Notification message</td>
+                        </tr>
+                        <tr>
+                            <td>duration</td>
+                            <td>number</td>
+                            <td>Duration in seconds (default: 3)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Example</h3>
+                <pre><code>window:notify("Success", "Feature enabled", 2)
+window:notify("Error", "Something went wrong", 5)</code></pre>
+            </section>
+
+            <section id="config">
+                <h2>Config System</h2>
+                <p>KyriLib automatically saves and loads settings for elements with flags. A Settings tab is automatically created with save/load functionality.</p>
+
+                <h3>Accessing Flags</h3>
+                <pre><code>-- Get value
+local speed = window.flags.speed_flag
+
+-- Set value programmatically
+window.flags.fly_flag_set(true, true)</code></pre>
+
+                <div class="admonition admonition-info">
+                    <div class="admonition-title">Info</div>
+                    <p>Configs are saved per-game using the GameName option. Users can save multiple configs with different names.</p>
+                </div>
+            </section>
+
+            <section id="complete-example">
+                <h2>Complete Example</h2>
+                <pre><code>local KyriLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
+
+local window = KyriLib.new("prison life", {
+    GameName = "PrisonLife"
+})
+
+local main = window:tab("Main", "home")
+local combat = window:tab("Combat", "sword")
+
+main:label("movement")
+
+main:toggle("fly", false, function(state)
+    if state then
+        window:notify("Movement", "Fly enabled", 2)
+        -- fly code here
+    else
+        window:notify("Movement", "Fly disabled", 2)
+        -- stop fly
+    end
+end, "fly_toggle")
+
+main:slider("walkspeed", 16, 200, 16, function(value)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
+end, "walkspeed")
+
+main:dropdown("teleport to", {"spawn", "prison", "criminal base"}, "spawn", function(value)
+    window:notify("Teleport", "Teleported to " .. value, 2)
+    -- teleport code here
+end)
+
+combat:label("weapons")
+
+combat:button("give all weapons", function()
+    window:notify("Weapons", "Gave all weapons", 2)
+    -- weapon code here
+end)
+
+combat:dropdown("gun mode", {"normal", "rapid fire", "one shot"}, "normal", function(value)
+    window:notify("Gun Mode", "Set to " .. value, 2)
+    -- gun mod code here
+end)
+
+window:accent(Color3.fromRGB(138, 116, 249))</code></pre>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark');
+            const button = document.querySelector('.theme-toggle');
+            if (document.body.classList.contains('dark')) {
+                button.textContent = 'night night';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                button.textContent = 'good morning';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+            document.querySelector('.theme-toggle').textContent = 'night night';
+        }
+
+        document.querySelectorAll('pre code').forEach((block) => {
+            const pre = block.parentElement;
+            const button = document.createElement('button');
+            button.className = 'copy-button';
+            
+            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            icon.setAttribute('class', 'copy-icon');
+            icon.setAttribute('viewBox', '0 0 24 24');
+            icon.setAttribute('fill', 'none');
+            icon.setAttribute('stroke', 'currentColor');
+            icon.setAttribute('stroke-width', '2');
+            icon.innerHTML = '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>';
+            
+            button.appendChild(icon);
+            
+            button.addEventListener('click', async () => {
+                const code = block.textContent;
+                try {
+                    await navigator.clipboard.writeText(code);
+                    button.classList.add('copied');
+                    icon.innerHTML = '<path d="M20 6L9 17l-5-5"/>';
+                    setTimeout(() => {
+                        button.classList.remove('copied');
+                        icon.innerHTML = '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy');
+                }
+            });
+            
+            pre.appendChild(button);
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        const sections = document.querySelectorAll('section');
+        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            sidebarLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
