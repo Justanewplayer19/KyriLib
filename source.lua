@@ -84,7 +84,9 @@ end
 function kyri.new(title, options)
     options = options or {}
     
-    local existing = kyri.svc.plr.LocalPlayer.PlayerGui:FindFirstChild("Kyri")
+    local localPlayer = kyri.svc.plr.LocalPlayer
+    
+    local existing = localPlayer.PlayerGui:FindFirstChild("Kyri")
     if existing then
         existing:Destroy()
     end
@@ -95,7 +97,7 @@ function kyri.new(title, options)
         ResetOnSpawn = false,
         IgnoreGuiInset = true,
         DisplayOrder = 999999999,
-        Parent = kyri.svc.plr.LocalPlayer.PlayerGui
+        Parent = localPlayer.PlayerGui
     })
     
     local logo = make("ImageLabel", {
@@ -429,7 +431,8 @@ function kyri.new(title, options)
         end
     end)
     
-    w.gui.Parent = kyri.svc.plr.LocalPlayer.PlayerGui
+    w.gui.Parent = localPlayer.PlayerGui
+    w.localPlayer = localPlayer
     
     function w:tab(name, icon)
         local tab = {}
@@ -1463,11 +1466,15 @@ function kyri.new(title, options)
     function w:notify(title, text, duration)
         duration = duration or 3
         
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = title,
-            Text = text,
-            Duration = duration
-        })
+        task.spawn(function()
+            pcall(function()
+                game:GetService("StarterGui"):SetCore("SendNotification", {
+                    Title = title,
+                    Text = text,
+                    Duration = duration
+                })
+            end)
+        end)
     end
     
     function w:accent(color)
