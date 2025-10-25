@@ -1466,14 +1466,104 @@ function kyri.new(title, options)
     function w:notify(title, text, duration)
         duration = duration or 3
         
-        task.spawn(function()
-            pcall(function()
-                game:GetService("StarterGui"):SetCore("SendNotification", {
-                    Title = title,
-                    Text = text,
-                    Duration = duration
-                })
-            end)
+        local notif_gui = w.localPlayer.PlayerGui:FindFirstChild("KyriNotifications")
+        if not notif_gui then
+            notif_gui = make("ScreenGui", {
+                Name = "KyriNotifications",
+                ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+                ResetOnSpawn = false,
+                IgnoreGuiInset = true,
+                DisplayOrder = 999999998,
+                Parent = w.localPlayer.PlayerGui
+            })
+            
+            local container = make("Frame", {
+                Name = "Container",
+                Size = UDim2.new(0, 320, 1, 0),
+                Position = UDim2.new(1, -20, 0, 20),
+                AnchorPoint = Vector2.new(1, 0),
+                BackgroundTransparency = 1,
+                Parent = notif_gui
+            })
+            
+            make("UIListLayout", {
+                Padding = UDim.new(0, 10),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                VerticalAlignment = Enum.VerticalAlignment.Top,
+                Parent = container
+            })
+        end
+        
+        local container = notif_gui.Container
+        
+        local notif = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 70),
+            BackgroundColor3 = t.container,
+            BackgroundTransparency = 0,
+            Parent = container
+        })
+        
+        make("UICorner", {
+            CornerRadius = UDim.new(0, 10),
+            Parent = notif
+        })
+        
+        make("UIStroke", {
+            Color = t.accent,
+            Thickness = 2,
+            Parent = notif
+        })
+        
+        local accent_bar = make("Frame", {
+            Size = UDim2.new(0, 4, 1, 0),
+            BackgroundColor3 = t.accent,
+            BorderSizePixel = 0,
+            Parent = notif
+        })
+        
+        make("UICorner", {
+            CornerRadius = UDim.new(0, 10),
+            Parent = accent_bar
+        })
+        
+        local title_lbl = make("TextLabel", {
+            Size = UDim2.new(1, -24, 0, 20),
+            Position = UDim2.fromOffset(16, 10),
+            BackgroundTransparency = 1,
+            Text = title,
+            TextColor3 = t.text,
+            Font = Enum.Font.GothamBold,
+            TextSize = 15,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = notif
+        })
+        
+        local text_lbl = make("TextLabel", {
+            Size = UDim2.new(1, -24, 0, 35),
+            Position = UDim2.fromOffset(16, 32),
+            BackgroundTransparency = 1,
+            Text = text,
+            TextColor3 = t.text,
+            Font = Enum.Font.Gotham,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Top,
+            TextWrapped = true,
+            Parent = notif
+        })
+        
+        notif.Position = UDim2.new(0, 340, 0, 0)
+        kyri.svc.tw:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+            Position = UDim2.new(0, 0, 0, 0)
+        }):Play()
+        
+        task.delay(duration, function()
+            kyri.svc.tw:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+                Position = UDim2.new(0, 340, 0, 0)
+            }):Play()
+            
+            task.wait(0.3)
+            notif:Destroy()
         end)
     end
     
