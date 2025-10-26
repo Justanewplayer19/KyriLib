@@ -1181,6 +1181,119 @@ function kyri.new(title, options)
             return container
         end
         
+        function tab:keybind(text, default, hold_to_interact, callback, flag)
+            local current_key = default or "None"
+            local listening = false
+            local holding = false
+            
+            if flag then
+                w.flags[flag] = current_key
+            end
+            
+            local box = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 42),
+                BackgroundColor3 = t.element,
+                Parent = page
+            })
+            
+            make("UICorner", {
+                CornerRadius = UDim.new(0, 8),
+                Parent = box
+            })
+            
+            local lbl = make("TextLabel", {
+                Size = UDim2.new(1, -130, 1, 0),
+                Position = UDim2.fromOffset(16, 0),
+                BackgroundTransparency = 1,
+                Text = text,
+                TextColor3 = t.text,
+                Font = Enum.Font.GothamMedium,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = box
+            })
+            
+            local keybind_btn = make("TextButton", {
+                Size = UDim2.fromOffset(100, 28),
+                Position = UDim2.new(1, -16, 0.5, 0),
+                AnchorPoint = Vector2.new(1, 0.5),
+                BackgroundColor3 = t.container,
+                Text = current_key,
+                TextColor3 = t.text,
+                Font = Enum.Font.Gotham,
+                TextSize = 13,
+                AutoButtonColor = false,
+                Parent = box
+            })
+            
+            make("UICorner", {
+                CornerRadius = UDim.new(0, 6),
+                Parent = keybind_btn
+            })
+            
+            local function update_key(new_key)
+                current_key = new_key
+                keybind_btn.Text = new_key
+                
+                if flag then
+                    w.flags[flag] = new_key
+                end
+            end
+            
+            keybind_btn.MouseButton1Click:Connect(function()
+                if listening then return end
+                
+                listening = true
+                keybind_btn.Text = "..."
+                play("click")
+                
+                local connection
+                connection = kyri.svc.inp.InputBegan:Connect(function(input, gpe)
+                    if gpe then return end
+                    
+                    local key = input.KeyCode.Name
+                    if key ~= "Unknown" then
+                        connection:Disconnect()
+                        listening = false
+                        update_key(key)
+                    end
+                end)
+            end)
+            
+            kyri.svc.inp.InputBegan:Connect(function(input, gpe)
+                if gpe or listening then return end
+                
+                if input.KeyCode.Name == current_key then
+                    if hold_to_interact then
+                        holding = true
+                        if callback then callback(true) end
+                    else
+                        if callback then callback() end
+                    end
+                end
+            end)
+            
+            kyri.svc.inp.InputEnded:Connect(function(input, gpe)
+                if not hold_to_interact or not holding then return end
+                
+                if input.KeyCode.Name == current_key then
+                    holding = false
+                    if callback then callback(false) end
+                end
+            end)
+            
+            keybind_btn.MouseEnter:Connect(function()
+                play("hover")
+                kyri.svc.tw:Create(keybind_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
+            end)
+            
+            keybind_btn.MouseLeave:Connect(function()
+                kyri.svc.tw:Create(keybind_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.container}):Play()
+            end)
+            
+            return box
+        end
+        
         function tab:label(text)
             local lbl = make("TextLabel", {
                 Size = UDim2.new(1, 0, 0, 32),
