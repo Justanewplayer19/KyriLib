@@ -11,7 +11,8 @@ kyri.svc = {
     plr = svc("Players"),
     gui = svc("GuiService"),
     run = svc("RunService"),
-    http = svc("HttpService")
+    http = svc("HttpService"),
+    cas = svc("ContextActionService")
 }
 
 kyri.theme = {
@@ -148,6 +149,7 @@ function kyri.new(title, options)
     w.sounds = {}
     w.flags = {}
     w.game_name = options.GameName or "Default"
+    w.is_mobile = kyri.svc.inp.TouchEnabled and not kyri.svc.inp.KeyboardEnabled
     
     local t = {
         bg = (options.Theme and options.Theme.bg) or kyri.theme.bg,
@@ -196,6 +198,7 @@ function kyri.new(title, options)
         Position = UDim2.new(0.5, -260, 0.5, -200),
         BackgroundColor3 = t.bg,
         ClipsDescendants = true,
+        Visible = not w.is_mobile,
         Parent = w.gui
     })
     
@@ -212,44 +215,47 @@ function kyri.new(title, options)
         Image = "rbxassetid://6023426962",
         ImageColor3 = t.subtext,
         ZIndex = 100,
+        Visible = not w.is_mobile,
         Parent = main
     })
     
-    local resizing = false
-    local resize_start = nil
-    local size_start = nil
-    local min_size = Vector2.new(400, 300)
-    
-    resize_handle.InputBegan:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-            resizing = true
-            resize_start = inp.Position
-            size_start = main.Size
-        end
-    end)
-    
-    kyri.svc.inp.InputChanged:Connect(function(inp)
-        if resizing and inp.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = inp.Position - resize_start
-            local new_x = math.max(size_start.X.Offset + delta.X, min_size.X)
-            local new_y = math.max(size_start.Y.Offset + delta.Y, min_size.Y)
-            main.Size = UDim2.fromOffset(new_x, new_y)
-        end
-    end)
-    
-    kyri.svc.inp.InputEnded:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-            resizing = false
-        end
-    end)
-    
-    resize_handle.MouseEnter:Connect(function()
-        kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.text}):Play()
-    end)
-    
-    resize_handle.MouseLeave:Connect(function()
-        kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.subtext}):Play()
-    end)
+    if not w.is_mobile then
+        local resizing = false
+        local resize_start = nil
+        local size_start = nil
+        local min_size = Vector2.new(400, 300)
+        
+        resize_handle.InputBegan:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                resizing = true
+                resize_start = inp.Position
+                size_start = main.Size
+            end
+        end)
+        
+        kyri.svc.inp.InputChanged:Connect(function(inp)
+            if resizing and inp.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = inp.Position - resize_start
+                local new_x = math.max(size_start.X.Offset + delta.X, min_size.X)
+                local new_y = math.max(size_start.Y.Offset + delta.Y, min_size.Y)
+                main.Size = UDim2.fromOffset(new_x, new_y)
+            end
+        end)
+        
+        kyri.svc.inp.InputEnded:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                resizing = false
+            end
+        end)
+        
+        resize_handle.MouseEnter:Connect(function()
+            kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.text}):Play()
+        end)
+        
+        resize_handle.MouseLeave:Connect(function()
+            kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.subtext}):Play()
+        end)
+    end
     
     local glow = make("ImageLabel", {
         Size = UDim2.fromScale(1, 1),
@@ -405,7 +411,7 @@ function kyri.new(title, options)
     end
     
     top.InputBegan:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 or (w.is_mobile and inp.UserInputType == Enum.UserInputType.Touch) then
             drag = true
             drag_start = inp.Position
             input_start = main.Position
@@ -420,7 +426,7 @@ function kyri.new(title, options)
     end)
     
     top.InputChanged:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+        if inp.UserInputType == Enum.UserInputType.MouseMovement or (w.is_mobile and inp.UserInputType == Enum.UserInputType.Touch) then
             drag_input = inp
         end
     end)
@@ -433,6 +439,27 @@ function kyri.new(title, options)
     
     w.gui.Parent = localPlayer.PlayerGui
     w.localPlayer = localPlayer
+    
+    local function toggle_gui()
+        main.Visible = not main.Visible
+    end
+    
+    if w.is_mobile then
+        kyri.svc.cas:BindAction("KyriToggle", function(name, state, input)
+            if state == Enum.UserInputState.Begin then
+                toggle_gui()
+            end
+        end, true, Enum.KeyCode.ButtonR3)
+        kyri.svc.cas:SetTitle("KyriToggle", "Kyri")
+        kyri.svc.cas:SetPosition("KyriToggle", UDim2.new(1, -70, 1, -70))
+    else
+        kyri.svc.inp.InputBegan:Connect(function(input, gpe)
+            if gpe then return end
+            if input.KeyCode == Enum.KeyCode.K then
+                toggle_gui()
+            end
+        end)
+    end
     
     function w:tab(name, icon)
         local tab = {}
@@ -763,7 +790,7 @@ function kyri.new(title, options)
             end
             
             local box = make("Frame", {
-                Size = UDim2.new(1, 0, 0, 58),
+                Size = UDim2.new(1, 0, 0, w.is_mobile and 78 or 58),
                 BackgroundColor3 = t.element,
                 Parent = page
             })
@@ -800,82 +827,192 @@ function kyri.new(title, options)
             
             table.insert(w.accents, {obj = val_lbl, prop = "TextColor3"})
             
-            local track = make("Frame", {
-                Size = UDim2.new(1, -32, 0, 5),
-                Position = UDim2.fromOffset(16, 40),
-                BackgroundColor3 = t.container,
-                Parent = box
-            })
-            
-            make("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = track
-            })
-            
-            local fill = make("Frame", {
-                Size = UDim2.new((val - min) / (max - min), 0, 1, 0),
-                BackgroundColor3 = t.accent,
-                Parent = track
-            })
-            
-            table.insert(w.accents, {obj = fill, prop = "BackgroundColor3"})
-            
-            make("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = fill
-            })
-            
-            local handle = make("Frame", {
-                Size = UDim2.fromOffset(13, 13),
-                Position = UDim2.new((val - min) / (max - min), 0, 0.5, 0),
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                BackgroundColor3 = t.text,
-                Parent = track
-            })
-            
-            make("UICorner", {
-                CornerRadius = UDim.new(1, 0),
-                Parent = handle
-            })
-            
-            local dragging = false
-            
-            local function update(inp)
-                local pct = math.clamp((inp.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-                val = math.floor(min + (max - min) * pct)
-                fill.Size = UDim2.new(pct, 0, 1, 0)
-                handle.Position = UDim2.new(pct, 0, 0.5, 0)
-                val_lbl.Text = tostring(val)
+            if w.is_mobile then
+                local btn_container = make("Frame", {
+                    Size = UDim2.new(1, -32, 0, 36),
+                    Position = UDim2.fromOffset(16, 38),
+                    BackgroundTransparency = 1,
+                    Parent = box
+                })
                 
-                if flag then
-                    w.flags[flag] = val
-                end
+                make("UIListLayout", {
+                    FillDirection = Enum.FillDirection.Horizontal,
+                    HorizontalAlignment = Enum.HorizontalAlignment.Center,
+                    Padding = UDim.new(0, 8),
+                    Parent = btn_container
+                })
                 
-                if callback then callback(val) end
-            end
-            
-            track.InputBegan:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging = true
-                    play("toggle_on")
-                    update(inp)
-                end
-            end)
-            
-            kyri.svc.inp.InputChanged:Connect(function(inp)
-                if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
-                    update(inp)
-                end
-            end)
-            
-            kyri.svc.inp.InputEnded:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-                    if dragging then
-                        play("toggle_off")
+                local minus_btn = make("TextButton", {
+                    Size = UDim2.new(0.3, 0, 1, 0),
+                    BackgroundColor3 = t.container,
+                    Text = "-",
+                    TextColor3 = t.text,
+                    Font = Enum.Font.GothamBold,
+                    TextSize = 20,
+                    AutoButtonColor = false,
+                    Parent = btn_container
+                })
+                
+                make("UICorner", {
+                    CornerRadius = UDim.new(0, 6),
+                    Parent = minus_btn
+                })
+                
+                local input_box = make("TextBox", {
+                    Size = UDim2.new(0.4, -16, 1, 0),
+                    BackgroundColor3 = t.container,
+                    Text = tostring(val),
+                    TextColor3 = t.text,
+                    Font = Enum.Font.GothamBold,
+                    TextSize = 16,
+                    Parent = btn_container
+                })
+                
+                make("UICorner", {
+                    CornerRadius = UDim.new(0, 6),
+                    Parent = input_box
+                })
+                
+                local plus_btn = make("TextButton", {
+                    Size = UDim2.new(0.3, 0, 1, 0),
+                    BackgroundColor3 = t.container,
+                    Text = "+",
+                    TextColor3 = t.text,
+                    Font = Enum.Font.GothamBold,
+                    TextSize = 20,
+                    AutoButtonColor = false,
+                    Parent = btn_container
+                })
+                
+                make("UICorner", {
+                    CornerRadius = UDim.new(0, 6),
+                    Parent = plus_btn
+                })
+                
+                local function update_val(new_val)
+                    val = math.clamp(new_val, min, max)
+                    val_lbl.Text = tostring(val)
+                    input_box.Text = tostring(val)
+                    
+                    if flag then
+                        w.flags[flag] = val
                     end
-                    dragging = false
+                    
+                    if callback then callback(val) end
                 end
-            end)
+                
+                minus_btn.MouseButton1Click:Connect(function()
+                    play("click")
+                    update_val(val - 1)
+                end)
+                
+                plus_btn.MouseButton1Click:Connect(function()
+                    play("click")
+                    update_val(val + 1)
+                end)
+                
+                input_box.FocusLost:Connect(function()
+                    local num = tonumber(input_box.Text)
+                    if num then
+                        update_val(math.floor(num))
+                    else
+                        input_box.Text = tostring(val)
+                    end
+                end)
+                
+                minus_btn.MouseEnter:Connect(function()
+                    kyri.svc.tw:Create(minus_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
+                end)
+                
+                minus_btn.MouseLeave:Connect(function()
+                    kyri.svc.tw:Create(minus_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.container}):Play()
+                end)
+                
+                plus_btn.MouseEnter:Connect(function()
+                    kyri.svc.tw:Create(plus_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
+                end)
+                
+                plus_btn.MouseLeave:Connect(function()
+                    kyri.svc.tw:Create(plus_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.container}):Play()
+                end)
+            else
+                local track = make("Frame", {
+                    Size = UDim2.new(1, -32, 0, 5),
+                    Position = UDim2.fromOffset(16, 40),
+                    BackgroundColor3 = t.container,
+                    Parent = box
+                })
+                
+                make("UICorner", {
+                    CornerRadius = UDim.new(1, 0),
+                    Parent = track
+                })
+                
+                local fill = make("Frame", {
+                    Size = UDim2.new((val - min) / (max - min), 0, 1, 0),
+                    BackgroundColor3 = t.accent,
+                    Parent = track
+                })
+                
+                table.insert(w.accents, {obj = fill, prop = "BackgroundColor3"})
+                
+                make("UICorner", {
+                    CornerRadius = UDim.new(1, 0),
+                    Parent = fill
+                })
+                
+                local handle = make("Frame", {
+                    Size = UDim2.fromOffset(13, 13),
+                    Position = UDim2.new((val - min) / (max - min), 0, 0.5, 0),
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    BackgroundColor3 = t.text,
+                    Parent = track
+                })
+                
+                make("UICorner", {
+                    CornerRadius = UDim.new(1, 0),
+                    Parent = handle
+                })
+                
+                local dragging = false
+                
+                local function update(inp)
+                    local pct = math.clamp((inp.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+                    val = math.floor(min + (max - min) * pct)
+                    fill.Size = UDim2.new(pct, 0, 1, 0)
+                    handle.Position = UDim2.new(pct, 0, 0.5, 0)
+                    val_lbl.Text = tostring(val)
+                    
+                    if flag then
+                        w.flags[flag] = val
+                    end
+                    
+                    if callback then callback(val) end
+                end
+                
+                track.InputBegan:Connect(function(inp)
+                    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = true
+                        play("toggle_on")
+                        update(inp)
+                    end
+                end)
+                
+                kyri.svc.inp.InputChanged:Connect(function(inp)
+                    if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
+                        update(inp)
+                    end
+                end)
+                
+                kyri.svc.inp.InputEnded:Connect(function(inp)
+                    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if dragging then
+                            play("toggle_off")
+                        end
+                        dragging = false
+                    end
+                end)
+            end
             
             return box
         end
