@@ -455,7 +455,7 @@ function kyri.new(title, options)
     else
         kyri.svc.inp.InputBegan:Connect(function(input, gpe)
             if gpe then return end
-            if input.KeyCode == Enum.KeyCode.K then
+            if input.KeyCode == Enum.KeyCode.RightControl then
                 toggle_gui()
             end
         end)
