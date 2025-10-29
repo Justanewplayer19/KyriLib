@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/x-icon"
-	href="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/favicon.png">
+	<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/favicon.png">
 	<title>KyriLib Documentation</title>
 	<style>
-		html,
-		body {
+		html, body {
 			margin: 0;
 			padding: 0;
 			box-sizing: border-box;
@@ -385,15 +382,13 @@
 			font-size: 14px;
 		}
 
-		th,
-		td {
+		th, td {
 			padding: 12px;
 			text-align: left;
 			border: 1px solid #e3e3e3;
 		}
 
-		body.dark th,
-		body.dark td {
+		body.dark th, body.dark td {
 			border: 1px solid #2d2d2f;
 		}
 
@@ -508,128 +503,144 @@
 		body.dark .button-outline:hover {
 			background: #2d2d2f;
 		}
+
+		.mobile-overlay {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 40;
+		}
+
+		.mobile-overlay.active {
+			display: block;
+		}
 	</style>
 </head>
-
 <body>
 	<nav class="navbar">
-		<button class="menu-toggle" onclick="toggleSidebar()">☰ Menu</button>
+		<button class="menu-toggle" onclick="toggleSidebar()">☰ menu</button>
 		<a href="#" class="navbar-brand">KyriLib</a>
 		<div class="navbar-links">
-			<a href="#introduction">Docs</a>
-			<a href="https://github.com/Justanewplayer19/KyriLib">GitHub</a>
+			<a href="#introduction">docs</a>
+			<a href="https://github.com/Justanewplayer19/KyriLib">github</a>
 			<button class="theme-toggle" onclick="toggleTheme()">good morning</button>
 		</div>
 	</nav>
 
+	<div class="mobile-overlay" onclick="toggleSidebar()"></div>
+
 	<div class="container">
 		<aside class="sidebar">
 			<div class="sidebar-section">
-				<div class="sidebar-title">Getting Started</div>
-				<a href="#introduction" class="sidebar-link active">Introduction</a>
-				<a href="#installation" class="sidebar-link">Installation</a>
-				<a href="#basic-usage" class="sidebar-link">Basic Usage</a>
+				<div class="sidebar-title">getting started</div>
+				<a href="#introduction" class="sidebar-link active">introduction</a>
+				<a href="#installation" class="sidebar-link">installation</a>
+				<a href="#basic-usage" class="sidebar-link">basic usage</a>
 			</div>
 
 			<div class="sidebar-section">
-				<div class="sidebar-title">API Reference</div>
-				<a href="#window" class="sidebar-link">Window</a>
-				<a href="#tabs" class="sidebar-link">Tabs</a>
-				<a href="#elements" class="sidebar-link">Elements</a>
-				<a href="#keybinds" class="sidebar-link">Keybinds</a>
-				<a href="#notifications" class="sidebar-link">Notifications</a>
-				<a href="#config" class="sidebar-link">Config System</a>
+				<div class="sidebar-title">api reference</div>
+				<a href="#window" class="sidebar-link">window</a>
+				<a href="#tabs" class="sidebar-link">tabs</a>
+				<a href="#elements" class="sidebar-link">elements</a>
+				<a href="#keybinds" class="sidebar-link">keybinds</a>
+				<a href="#notifications" class="sidebar-link">notifications</a>
+				<a href="#config" class="sidebar-link">config system</a>
 			</div>
 
 			<div class="sidebar-section">
-				<div class="sidebar-title">Examples</div>
-				<a href="#complete-example" class="sidebar-link">Complete Example</a>
+				<div class="sidebar-title">examples</div>
+				<a href="#complete-example" class="sidebar-link">complete example</a>
 			</div>
 		</aside>
 
 		<main class="content">
 			<section id="introduction">
-				<h1>Introduction</h1>
-				<p>KyriLib is a modern, easy-to-use UI library for Roblox scripts. It provides a clean interface with
-					smooth animations, a built-in config system, and rich UI elements.</p>
+				<h1>introduction</h1>
+				<p>KyriLib is a modern UI library for Roblox scripts. clean interface with smooth animations, built-in config system, and rich UI elements.</p>
 
-				<a href="#installation" class="button">Get Started</a>
-				<a href="https://github.com/Justanewplayer19/KyriLib" class="button button-outline">GitHub</a>
+				<a href="#installation" class="button">get started</a>
+				<a href="https://github.com/Justanewplayer19/KyriLib" class="button button-outline">github</a>
 
-				<h2>Features</h2>
+				<h2>features</h2>
 				<ul>
-					<li>Modern, clean interface with smooth animations</li>
-					<li>Built-in save/load config system</li>
-					<li>Custom notifications with fade animations</li>
-					<li>Rich elements: buttons, toggles, sliders, inputs, dropdowns, keybinds</li>
-					<li>Customizable themes with 9 color options</li>
-					<li>Optional Lucide icons for tabs</li>
-					<li>Draggable and resizable windows</li>
-					<li>Keybind system with hold to interact support</li>
+					<li>modern interface with smooth animations</li>
+					<li>built-in save/load config system</li>
+					<li>custom notifications with fade animations</li>
+					<li>mobile support with touch controls</li>
+					<li>buttons, toggles, sliders, inputs, dropdowns, keybinds</li>
+					<li>customizable themes with 9 color options</li>
+					<li>optional icons for tabs</li>
+					<li>draggable and resizable windows</li>
+					<li>keybind system with hold to interact support</li>
 				</ul>
 			</section>
 
 			<section id="installation">
-				<h2>Installation</h2>
-				<p>Load the library using the following code:</p>
+				<h2>installation</h2>
+				<p>load the library:</p>
 				<pre><code>local KyriLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()</code></pre>
 			</section>
 
 			<section id="basic-usage">
-				<h2>Basic Usage</h2>
-				<pre><code>-- Create a window
+				<h2>basic usage</h2>
+				<pre><code>-- create window
 local window = KyriLib.new("My Script", {
     GameName = "MyGame"
 })
 
--- Create a tab
+-- create tab
 local main = window:tab("Main")
 
--- Add a button
+-- add button
 main:button("Click Me", function()
-    print("Button clicked!")
+    print("clicked")
 end)
 
--- Add a toggle
+-- add toggle
 main:toggle("Enable Feature", false, function(state)
-    print("Toggle state:", state)
+    print("state:", state)
 end, "feature_flag")
 
--- Send a notification
-window:notify("Success", "Script loaded!", 3)</code></pre>
+-- send notification
+window:notify("Success", "script loaded", 3)</code></pre>
 			</section>
 
 			<section id="window">
-				<h2>Window</h2>
+				<h2>window</h2>
 
-				<h3>Creating a Window</h3>
+				<h3>creating a window</h3>
 				<pre><code>KyriLib.new(title, options)</code></pre>
 
-				<h4>Parameters</h4>
+				<h4>parameters</h4>
 				<table>
 					<thead>
 						<tr>
-							<th>Parameter</th>
-							<th>Type</th>
-							<th>Description</th>
+							<th>parameter</th>
+							<th>type</th>
+							<th>description</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
 							<td>title</td>
 							<td>string</td>
-							<td>The window title</td>
+							<td>window title</td>
 						</tr>
 						<tr>
 							<td>options</td>
 							<td>table</td>
-							<td>Optional settings (GameName, Theme)</td>
+							<td>optional settings (GameName, Theme)</td>
 						</tr>
 					</tbody>
 				</table>
 
-				<h3>Custom Theme</h3>
-				<p>You can customize the colors by passing a Theme table:</p>
+				<h3>custom theme</h3>
+				<p>customize colors by passing a Theme table:</p>
 				<pre><code>local window = KyriLib.new("My Script", {
     GameName = "MyGame",
     Theme = {
@@ -646,255 +657,238 @@ window:notify("Success", "Script loaded!", 3)</code></pre>
 })</code></pre>
 
 				<div class="admonition admonition-info">
-					<div class="admonition-title">Info</div>
-					<p>You only need to specify the colors you want to change. Any colors not specified will use the
-						default theme. All 9 color options are shown above.</p>
+					<div class="admonition-title">info</div>
+					<p>only specify colors you want to change. unspecified colors use default theme. all 9 color options shown above.</p>
 				</div>
 
-				<h3>Change Accent Color</h3>
+				<h3>change accent color</h3>
 				<pre><code>window:accent(Color3.fromRGB(255, 100, 100))</code></pre>
+
+				<h3>mobile support</h3>
+				<p>KyriLib automatically detects mobile and adjusts UI. mobile users get a toggle button in bottom right, PC users press K to toggle.</p>
 			</section>
 
 			<section id="tabs">
-				<h2>Tabs</h2>
+				<h2>tabs</h2>
 
-				<h3>Creating a Tab</h3>
+				<h3>creating a tab</h3>
 				<pre><code>window:tab(name, icon)</code></pre>
 
-				<h4>Parameters</h4>
+				<h4>parameters</h4>
 				<table>
 					<thead>
 						<tr>
-							<th>Parameter</th>
-							<th>Type</th>
-							<th>Description</th>
+							<th>parameter</th>
+							<th>type</th>
+							<th>description</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
 							<td>name</td>
 							<td>string</td>
-							<td>Tab name</td>
+							<td>tab name</td>
 						</tr>
 						<tr>
 							<td>icon</td>
 							<td>string (optional)</td>
-							<td>Lucide icon name</td>
+							<td>icon name</td>
 						</tr>
 					</tbody>
 				</table>
 
-				<h3>Example with Icons</h3>
+				<h3>example with icons</h3>
 				<pre><code>local weapons = window:tab("Weapons", "sword")
 local settings = window:tab("Settings", "settings")</code></pre>
 
 				<div class="admonition admonition-info">
-					<div class="admonition-title">Icon Names</div>
-					<p>Available icons: sword, shield, user, settings, move, music, home, star, heart, and more. See <a
-							href="https://lucide.dev">lucide.dev</a> for all icon names.</p>
+					<div class="admonition-title">icon names</div>
+					<p>available icons: sword, move, user, music, settings</p>
 				</div>
 			</section>
 
 			<section id="elements">
-				<h2>Elements</h2>
+				<h2>elements</h2>
 
-				<h3>Button</h3>
+				<h3>button</h3>
 				<pre><code>tab:button(text, callback)</code></pre>
-				<p>Creates a clickable button.</p>
+				<p>creates a clickable button.</p>
 
-				<h3>Toggle</h3>
+				<h3>toggle</h3>
 				<pre><code>tab:toggle(text, default, callback, flag)</code></pre>
-				<p>Creates a toggle switch. If a flag is provided, the state is saved to configs.</p>
+				<p>creates a toggle switch. if flag provided, state is saved to configs.</p>
 
-				<h3>Slider</h3>
+				<h3>slider</h3>
 				<pre><code>tab:slider(text, min, max, default, callback, flag)</code></pre>
-				<p>Creates a slider for number values.</p>
+				<p>creates a slider for number values. on mobile, shows +/- buttons instead of draggable slider.</p>
 
-				<h3>Input</h3>
+				<h3>input</h3>
 				<pre><code>tab:input(text, placeholder, callback, flag)</code></pre>
-				<p>Creates a text input box.</p>
+				<p>creates a text input box.</p>
 
-				<h3>Dropdown</h3>
+				<h3>dropdown</h3>
 				<pre><code>tab:dropdown(text, options, default, callback)</code></pre>
-				<p>Creates a dropdown menu with selectable options.</p>
+				<p>creates a dropdown menu with selectable options.</p>
 
 				<div class="admonition admonition-warning">
-					<div class="admonition-title">Warning</div>
-					<p>Dropdowns do not save to configs automatically to avoid bugs.</p>
+					<div class="admonition-title">warning</div>
+					<p>dropdowns don't save to configs automatically.</p>
 				</div>
 
-				<h3>Label</h3>
+				<h3>label</h3>
 				<pre><code>tab:label(text)</code></pre>
-				<p>Creates a text label for organizing sections.</p>
+				<p>creates a text label for organizing sections.</p>
 
-				<h3>Example</h3>
+				<h3>example</h3>
 				<pre><code>local main = window:tab("Main")
 
 main:label("player options")
 
 main:button("Reset", function()
-    print("Reset clicked")
+    print("reset")
 end)
 
 main:toggle("Fly", false, function(state)
-    print("Fly:", state)
+    print("fly:", state)
 end, "fly")
 
 main:slider("Speed", 16, 200, 16, function(value)
-    print("Speed:", value)
+    print("speed:", value)
 end, "speed")
 
-main:input("Username", "Enter name", function(text)
-    print("Name:", text)
+main:input("Username", "enter name", function(text)
+    print("name:", text)
 end, "username")
 
 main:dropdown("Location", {"Spawn", "Base", "Shop"}, "Spawn", function(value)
-    print("Selected:", value)
-end)
-
-main:keybind("Fly Key", "Q", false, function()
-    print("Fly toggled")
-end, "fly_key")
-
-main:keybind("Speed Boost", "LeftShift", true, function(holding)
-    if holding then
-        print("Boosting")
-    else
-        print("Stopped boosting")
-    end
-end, "boost_key")</code></pre>
+    print("selected:", value)
+end)</code></pre>
 			</section>
 
 			<section id="keybinds">
-				<h2>Keybinds</h2>
+				<h2>keybinds</h2>
 
-				<h3>Create Keybind</h3>
+				<h3>create keybind</h3>
 				<pre><code>tab:keybind(text, default, hold_to_interact, callback, flag)</code></pre>
 
-				<h4>Parameters</h4>
+				<h4>parameters</h4>
 				<table>
 					<thead>
 						<tr>
-							<th>Parameter</th>
-							<th>Type</th>
-							<th>Description</th>
+							<th>parameter</th>
+							<th>type</th>
+							<th>description</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
 							<td>text</td>
 							<td>string</td>
-							<td>Keybind label</td>
+							<td>keybind label</td>
 						</tr>
 						<tr>
 							<td>default</td>
 							<td>string</td>
-							<td>Default key (e.g. "Q", "LeftShift")</td>
+							<td>default key (e.g. "Q", "LeftShift")</td>
 						</tr>
 						<tr>
 							<td>hold_to_interact</td>
 							<td>boolean</td>
-							<td>If true, callback gets true/false when holding</td>
+							<td>if true, callback gets true/false when holding</td>
 						</tr>
 						<tr>
 							<td>callback</td>
 							<td>function</td>
-							<td>Function called when key is pressed</td>
+							<td>function called when key pressed</td>
 						</tr>
 						<tr>
 							<td>flag</td>
 							<td>string</td>
-							<td>Optional flag for config saving</td>
+							<td>optional flag for config saving</td>
 						</tr>
 					</tbody>
 				</table>
 
-				<h3>Examples</h3>
+				<h3>examples</h3>
 
-				<h4>Press to Toggle</h4>
+				<h4>press to toggle</h4>
 				<pre><code>main:keybind("Fly Key", "Q", false, function()
-    print("Fly toggled")
-    -- toggle fly on/off
+    print("fly toggled")
 end, "fly_key")</code></pre>
 
-				<h4>Hold to Activate</h4>
+				<h4>hold to activate</h4>
 				<pre><code>main:keybind("Speed Boost", "LeftShift", true, function(holding)
     if holding then
-        print("Speed boost active")
-        -- increase speed
+        print("boost active")
     else
-        print("Speed boost inactive")
-        -- reset speed
+        print("boost inactive")
     end
 end, "boost_key")</code></pre>
 
 				<div class="admonition admonition-info">
-					<div class="admonition-title">Info</div>
-					<p>Click the keybind box and press any key to rebind it. The new key is automatically saved if a
-						flag is provided.</p>
+					<div class="admonition-title">info</div>
+					<p>click the keybind box and press any key to rebind. new key is automatically saved if flag provided.</p>
 				</div>
 			</section>
 
 			<section id="notifications">
-				<h2>Notifications</h2>
+				<h2>notifications</h2>
 
-				<h3>Send Notification</h3>
+				<h3>send notification</h3>
 				<pre><code>window:notify(title, text, duration)</code></pre>
 
-				<h4>Parameters</h4>
+				<h4>parameters</h4>
 				<table>
 					<thead>
 						<tr>
-							<th>Parameter</th>
-							<th>Type</th>
-							<th>Description</th>
+							<th>parameter</th>
+							<th>type</th>
+							<th>description</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
 							<td>title</td>
 							<td>string</td>
-							<td>Notification title</td>
+							<td>notification title</td>
 						</tr>
 						<tr>
 							<td>text</td>
 							<td>string</td>
-							<td>Notification message</td>
+							<td>notification message</td>
 						</tr>
 						<tr>
 							<td>duration</td>
 							<td>number</td>
-							<td>Duration in seconds (default: 3)</td>
+							<td>duration in seconds (default: 3)</td>
 						</tr>
 					</tbody>
 				</table>
 
-				<h3>Example</h3>
-				<pre><code>window:notify("Success", "Feature enabled", 2)
-window:notify("Error", "Something went wrong", 5)</code></pre>
+				<h3>example</h3>
+				<pre><code>window:notify("Success", "feature enabled", 2)
+window:notify("Error", "something went wrong", 5)</code></pre>
 			</section>
 
 			<section id="config">
-				<h2>Config System</h2>
-				<p>KyriLib automatically saves and loads settings for elements with flags. A Settings tab is
-					automatically created with save/load functionality.</p>
+				<h2>config system</h2>
+				<p>KyriLib automatically saves and loads settings for elements with flags. a settings tab is automatically created with save/load functionality.</p>
 
-				<h3>Accessing Flags</h3>
-				<pre><code>-- Get value
+				<h3>accessing flags</h3>
+				<pre><code>-- get value
 local speed = window.flags.speed_flag
 
--- Set value programmatically
+-- set value programmatically
 window.flags.fly_flag_set(true, true)</code></pre>
 
 				<div class="admonition admonition-info">
-					<div class="admonition-title">Info</div>
-					<p>Configs are saved per-game using the GameName option. Users can save multiple configs with
-						different names.</p>
+					<div class="admonition-title">info</div>
+					<p>configs are saved per-game using the GameName option. users can save multiple configs with different names.</p>
 				</div>
 			</section>
 
 			<section id="complete-example">
-				<h2>Complete Example</h2>
+				<h2>complete example</h2>
 				<pre><code>local KyriLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
 
 local window = KyriLib.new("prison life", {
@@ -908,11 +902,9 @@ main:label("movement")
 
 main:toggle("fly", false, function(state)
     if state then
-        window:notify("Movement", "Fly enabled", 2)
-        -- fly code here
+        window:notify("Movement", "fly enabled", 2)
     else
-        window:notify("Movement", "Fly disabled", 2)
-        -- stop fly
+        window:notify("Movement", "fly disabled", 2)
     end
 end, "fly_toggle")
 
@@ -921,20 +913,17 @@ main:slider("walkspeed", 16, 200, 16, function(value)
 end, "walkspeed")
 
 main:dropdown("teleport to", {"spawn", "prison", "criminal base"}, "spawn", function(value)
-    window:notify("Teleport", "Teleported to " .. value, 2)
-    -- teleport code here
+    window:notify("Teleport", "teleported to " .. value, 2)
 end)
 
 combat:label("weapons")
 
 combat:button("give all weapons", function()
-    window:notify("Weapons", "Gave all weapons", 2)
-    -- weapon code here
+    window:notify("Weapons", "gave all weapons", 2)
 end)
 
 combat:dropdown("gun mode", {"normal", "rapid fire", "one shot"}, "normal", function(value)
-    window:notify("Gun Mode", "Set to " .. value, 2)
-    -- gun mod code here
+    window:notify("Gun Mode", "set to " .. value, 2)
 end)
 
 window:accent(Color3.fromRGB(138, 116, 249))</code></pre>
@@ -944,89 +933,92 @@ window:accent(Color3.fromRGB(138, 116, 249))</code></pre>
 
 	<script>
 		function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('active');
-        }
+			document.querySelector('.sidebar').classList.toggle('active');
+			document.querySelector('.mobile-overlay').classList.toggle('active');
+		}
 
-        function toggleTheme() {
-            document.body.classList.toggle('dark');
-            const button = document.querySelector('.theme-toggle');
-            if (document.body.classList.contains('dark')) {
-                button.textContent = 'night night';
-                localStorage.setItem('theme', 'dark');
-            } else {
-                button.textContent = 'good morning';
-                localStorage.setItem('theme', 'light');
-            }
-        }
+		function toggleTheme() {
+			document.body.classList.toggle('dark');
+			const button = document.querySelector('.theme-toggle');
+			if (document.body.classList.contains('dark')) {
+				button.textContent = 'night night';
+				localStorage.setItem('theme', 'dark');
+			} else {
+				button.textContent = 'good morning';
+				localStorage.setItem('theme', 'light');
+			}
+		}
 
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark');
-            document.querySelector('.theme-toggle').textContent = 'night night';
-        }
+		if (localStorage.getItem('theme') === 'dark') {
+			document.body.classList.add('dark');
+			document.querySelector('.theme-toggle').textContent = 'night night';
+		}
 
-        document.querySelectorAll('pre code').forEach((block) => {
-            const pre = block.parentElement;
-            const button = document.createElement('button');
-            button.className = 'copy-button';
-            
-            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            icon.setAttribute('class', 'copy-icon');
-            icon.setAttribute('viewBox', '0 0 24 24');
-            icon.setAttribute('fill', 'none');
-            icon.setAttribute('stroke', 'currentColor');
-            icon.setAttribute('stroke-width', '2');
-            icon.innerHTML = '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>';
-            
-            button.appendChild(icon);
-            
-            button.addEventListener('click', async () => {
-                const code = block.textContent;
-                try {
-                    await navigator.clipboard.writeText(code);
-                    button.classList.add('copied');
-                    icon.innerHTML = '<path d="M20 6L9 17l-5-5"/>';
-                    setTimeout(() => {
-                        button.classList.remove('copied');
-                        icon.innerHTML = '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>';
-                    }, 2000);
-                } catch (err) {
-                    console.error('Failed to copy');
-                }
-            });
-            
-            pre.appendChild(button);
-        });
+		document.querySelectorAll('pre code').forEach((block) => {
+			const pre = block.parentElement;
+			const button = document.createElement('button');
+			button.className = 'copy-button';
+			
+			const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			icon.setAttribute('class', 'copy-icon');
+			icon.setAttribute('viewBox', '0 0 24 24');
+			icon.setAttribute('fill', 'none');
+			icon.setAttribute('stroke', 'currentColor');
+			icon.setAttribute('stroke-width', '2');
+			icon.innerHTML = '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>';
+			
+			button.appendChild(icon);
+			
+			button.addEventListener('click', async () => {
+				const code = block.textContent;
+				try {
+					await navigator.clipboard.writeText(code);
+					button.classList.add('copied');
+					icon.innerHTML = '<path d="M20 6L9 17l-5-5"/>';
+					setTimeout(() => {
+						button.classList.remove('copied');
+						icon.innerHTML = '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>';
+					}, 2000);
+				} catch (err) {
+					console.error('failed to copy');
+				}
+			});
+			
+			pre.appendChild(button);
+		});
 
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
+		document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+			anchor.addEventListener('click', function (e) {
+				e.preventDefault();
+				const target = document.querySelector(this.getAttribute('href'));
+				if (target) {
+					target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+					if (window.innerWidth <= 996) {
+						toggleSidebar();
+					}
+				}
+			});
+		});
 
-        const sections = document.querySelectorAll('section');
-        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+		const sections = document.querySelectorAll('section');
+		const sidebarLinks = document.querySelectorAll('.sidebar-link');
 
-        window.addEventListener('scroll', () => {
-            let current = '';
-            sections.forEach(section => {
-                const sectionTop = section.offsetTop;
-                if (scrollY >= sectionTop - 100) {
-                    current = section.getAttribute('id');
-                }
-            });
+		window.addEventListener('scroll', () => {
+			let current = '';
+			sections.forEach(section => {
+				const sectionTop = section.offsetTop;
+				if (scrollY >= sectionTop - 100) {
+					current = section.getAttribute('id');
+				}
+			});
 
-            sidebarLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href') === '#' + current) {
-                    link.classList.add('active');
-                }
-            });
-        });
+			sidebarLinks.forEach(link => {
+				link.classList.remove('active');
+				if (link.getAttribute('href') === '#' + current) {
+					link.classList.add('active');
+				}
+			});
+		});
 	</script>
 </body>
-
-</html>
+</html
