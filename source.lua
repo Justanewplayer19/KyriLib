@@ -606,7 +606,15 @@ function kyri.new(title, options)
                 move = "rbxassetid://7743871002",
                 user = "rbxassetid://7743875962",
                 music = "rbxassetid://7734042071",
-                settings = "rbxassetid://7734053495"
+                settings = "rbxassetid://7734053495",
+                home = "rbxassetid://7743870827",
+                star = "rbxassetid://7743872535",
+                heart = "rbxassetid://7743873046",
+                shield = "rbxassetid://7743873596",
+                bolt = "rbxassetid://7743874067",
+                gear = "rbxassetid://7743874465",
+                info = "rbxassetid://7743874822",
+                check = "rbxassetid://7743875344"
             }
 
             local icon_id = icon_map[icon] or "rbxassetid://7743875962"
@@ -1253,6 +1261,7 @@ function kyri.new(title, options)
         function tab:dropdown(text, options, def, callback, flag)
             local selected = def or (options[1] or "none")
             local open = false
+            local search_text = ""
 
             if flag then w.flags[flag] = selected end
 
@@ -1324,8 +1333,27 @@ function kyri.new(title, options)
             })
             make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = list_frame})
 
+            local search_box = nil
+            if #options > 8 then
+                search_box = make("TextBox", {
+                    Size = UDim2.new(1, -16, 0, 28),
+                    Position = UDim2.fromOffset(8, 4),
+                    BackgroundColor3 = t.element,
+                    PlaceholderText = "search...",
+                    PlaceholderColor3 = t.subtext,
+                    Text = "",
+                    TextColor3 = t.text,
+                    Font = Enum.Font.Gotham,
+                    TextSize = 12,
+                    ClearTextOnFocus = false,
+                    Parent = list_frame
+                })
+                make("UICorner", {CornerRadius = UDim.new(0, 4), Parent = search_box})
+            end
+
             local list_container = make("ScrollingFrame", {
-                Size = UDim2.fromScale(1, 1),
+                Size = search_box and UDim2.new(1, 0, 1, -40) or UDim2.fromScale(1, 1),
+                Position = search_box and UDim2.fromOffset(0, 36) or UDim2.new(0, 0, 0, 0),
                 BackgroundTransparency = 1,
                 ScrollBarThickness = 3,
                 ScrollBarImageColor3 = t.accent,
@@ -1355,6 +1383,7 @@ function kyri.new(title, options)
             end)
 
             local selected_accent = nil
+            local option_buttons = {}
 
             local function close_dropdown()
                 open = false
@@ -1367,32 +1396,68 @@ function kyri.new(title, options)
                 end
             end
 
-            for i, option in ipairs(options) do
-                local opt_btn = make("TextButton", {
-                    Size = UDim2.new(1, 0, 0, 30),
-                    BackgroundColor3 = t.element,
-                    Text = "",
-                    AutoButtonColor = false,
-                    Parent = list_container
-                })
-                make("UICorner", {CornerRadius = UDim.new(0, 6), Parent = opt_btn})
-
-                local opt_lbl = make("TextLabel", {
-                    Size = UDim2.new(1, -16, 1, 0),
-                    Position = UDim2.fromOffset(8, 0),
-                    BackgroundTransparency = 1,
-                    Text = option,
-                    TextColor3 = option == selected and t.accent or t.text,
-                    Font = Enum.Font.Gotham,
-                    TextSize = 13,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    Parent = opt_btn
-                })
-
-                if option == selected then
-                    selected_accent = {obj = opt_lbl, prop = "TextColor3"}
-                    table.insert(w.accents, selected_accent)
+            local function refresh_options(filter)
+                for _, btn in ipairs(option_buttons) do
+                    btn:Destroy()
                 end
+                option_buttons = {}
+
+                for i, option in ipairs(options) do
+                    if not filter or option:lower():find(filter:lower(), 1, true) then
+                        local opt_btn = make("TextButton", {
+                            Size = UDim2.new(1, 0, 0, 30),
+                            BackgroundColor3 = t.element,
+                            Text = "",
+                            AutoButtonColor = false,
+                            Parent = list_container
+                        })
+                        make("UICorner", {CornerRadius = UDim.new(0, 6), Parent = opt_btn})
+                        table.insert(option_buttons, opt_btn)
+
+                        local opt_lbl = make("TextLabel", {
+                            Size = UDim2.new(1, -16, 1, 0),
+                            Position = UDim2.fromOffset(8, 0),
+                            BackgroundTransparency = 1,
+                            Text = option,
+                            TextColor3 = option == selected and t.accent or t.text,
+                            Font = Enum.Font.Gotham,
+                            TextSize = 13,
+                            TextXAlignment = Enum.TextXAlignment.Left,
+                            Parent = opt_btn
+                        })
+
+                        if option == selected then
+                            selected_accent = {obj = opt_lbl, prop = "TextColor3"}
+                            table.insert(w.accents, selected_accent)
+                        end
+
+                        opt_btn.MouseEnter:Connect(function()
+                            kyri.svc.tw:Create(opt_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
+                        end)
+                        opt_btn.MouseLeave:Connect(function()
+                            kyri.svc.tw:Create(opt_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.element}):Play()
+                        end)
+
+                        opt_btn.MouseButton1Click:Connect(function()
+                            play("click")
+                            selected = option
+                            selected_lbl.Text = option
+                            if flag then w.flags[flag] = selected end
+                            if callback then callback(option) end
+                            close_dropdown()
+                        end)
+                    end
+                end
+            end
+
+            refresh_options()
+
+            if search_box then
+                search_box:GetPropertyChangedSignal("Text"):Connect(function()
+                    search_text = search_box.Text
+                    refresh_options(search_text)
+                end)
+            end
 
                 opt_btn.MouseEnter:Connect(function()
                     kyri.svc.tw:Create(opt_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
