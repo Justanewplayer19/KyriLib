@@ -572,7 +572,9 @@
 					<li>built-in save/load config system</li>
 					<li>custom notifications with fade animations</li>
 					<li>mobile support with touch controls</li>
-					<li>buttons, toggles, sliders, inputs, dropdowns, keybinds</li>
+					<li>buttons, toggles, sliders, inputs, dropdowns, multiselects, keybinds</li>
+					<li>sections and paragraphs for UI organization</li>
+					<li>color pickers with HSV controls</li>
 					<li>customizable themes with 9 color options</li>
 					<li>optional icons for tabs</li>
 					<li>draggable and resizable windows</li>
@@ -735,6 +737,22 @@ local settings = window:tab("Settings", "settings")</code></pre>
 					<p>dropdowns don't save to configs automatically.</p>
 				</div>
 
+				<h3>multiselect</h3>
+				<pre><code>tab:multiselect(text, options, default, callback, flag)</code></pre>
+				<p>creates a multiselect dropdown where multiple options can be selected. if flag provided, selections are saved to configs.</p>
+
+				<h3>colorpicker</h3>
+				<pre><code>tab:colorpicker(text, default, callback, flag)</code></pre>
+				<p>creates a color picker with HSV controls. if flag provided, color is saved to configs.</p>
+
+				<h3>section</h3>
+				<pre><code>tab:section(text)</code></pre>
+				<p>creates a section divider with text for organizing UI elements.</p>
+
+				<h3>paragraph</h3>
+				<pre><code>tab:paragraph(title, text)</code></pre>
+				<p>creates a paragraph with title and body text for displaying information.</p>
+
 				<h3>label</h3>
 				<pre><code>tab:label(text)</code></pre>
 				<p>creates a text label for organizing sections.</p>
@@ -742,7 +760,11 @@ local settings = window:tab("Settings", "settings")</code></pre>
 				<h3>example</h3>
 				<pre><code>local main = window:tab("Main")
 
-main:label("player options")
+main:section("Player Options")
+
+main:paragraph("Information", "This section contains player-related settings.")
+
+main:label("basic settings")
 
 main:button("Reset", function()
     print("reset")
@@ -762,7 +784,15 @@ end, "username")
 
 main:dropdown("Location", {"Spawn", "Base", "Shop"}, "Spawn", function(value)
     print("selected:", value)
-end)</code></pre>
+end)
+
+main:multiselect("Weapons", {"Sword", "Gun", "Shield"}, {}, function(list)
+    print("selected weapons:", table.concat(list, ", "))
+end, "weapons")
+
+main:colorpicker("Accent Color", Color3.fromRGB(138, 116, 249), function(color)
+    print("color:", color)
+end, "accent")</code></pre>
 			</section>
 
 			<section id="keybinds">
@@ -887,7 +917,6 @@ window.flags.fly_flag_set(true, true)</code></pre>
 				</div>
 			</section>
 
-			<section id="complete-example">
 				<h2>complete example</h2>
 				<pre><code>local KyriLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
 
@@ -898,7 +927,9 @@ local window = KyriLib.new("prison life", {
 local main = window:tab("Main", "home")
 local combat = window:tab("Combat", "sword")
 
-main:label("movement")
+main:section("Movement")
+
+main:paragraph("Movement Settings", "Configure your character's movement options below.")
 
 main:toggle("fly", false, function(state)
     if state then
@@ -916,18 +947,21 @@ main:dropdown("teleport to", {"spawn", "prison", "criminal base"}, "spawn", func
     window:notify("Teleport", "teleported to " .. value, 2)
 end)
 
-combat:label("weapons")
+main:colorpicker("UI Accent", Color3.fromRGB(138, 116, 249), function(color)
+    window:accent(color)
+end, "ui_accent")
+
+combat:section("Weapons")
 
 combat:button("give all weapons", function()
     window:notify("Weapons", "gave all weapons", 2)
 end)
 
-combat:dropdown("gun mode", {"normal", "rapid fire", "one shot"}, "normal", function(value)
-    window:notify("Gun Mode", "set to " .. value, 2)
-end)
+combat:multiselect("weapon mods", {"rapid fire", "one shot", "infinite ammo"}, {"rapid fire"}, function(list)
+    window:notify("Weapon Mods", "applied: " .. table.concat(list, ", "), 2)
+end, "weapon_mods")
 
 window:accent(Color3.fromRGB(138, 116, 249))</code></pre>
-			</section>
 		</main>
 	</div>
 
