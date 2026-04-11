@@ -2329,9 +2329,13 @@ function kyri.new(title, options)
         for _, c in ipairs(conns) do
             pcall(function() c:Disconnect() end)
         end
-        if w.gui and w.gui.Parent then w.gui:Destroy() end
+        if w.gui and w.gui.Parent then
+            w.gui:Destroy()
+        end
         local ng = w.localPlayer.PlayerGui:FindFirstChild("KyriNotifications")
-        if ng then ng:Destroy() end
+        if ng then
+            ng:Destroy()
+        end
         if w.is_mobile then
             pcall(function() kyri.svc.cas:UnbindAction("KyriToggle") end)
         end
