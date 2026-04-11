@@ -7,10 +7,12 @@ Modern UI library for Roblox scripts with a clean interface, smooth animations, 
 - Modern, clean interface with smooth animations
 - Built-in save/load config system
 - Custom notifications with fade animations
-- Rich elements: buttons, toggles, sliders, inputs, dropdowns
-- Customizable themes
-- Optional Lucide icons for tabs
+- Rich elements: buttons, toggles, sliders, inputs, dropdowns, multiselects, color pickers
+- Sections and paragraphs for UI organization
+- Customizable themes with 9 color options
+- Optional icons for tabs
 - Draggable and resizable windows
+- Keybind system with hold to interact support
 
 ## Installation
 
@@ -41,6 +43,14 @@ end, "feature_flag")
 main:slider("Speed", 16, 200, 16, function(value)
     print("speed:", value)
 end, "speed_flag")
+
+main:multiselect("Weapons", {"Sword", "Gun"}, {}, function(list)
+    print("selected:", table.concat(list, ", "))
+end, "weapons_flag")
+
+main:colorpicker("Color", Color3.fromRGB(138, 116, 249), function(color)
+    print("color:", color)
+end, "color_flag")
 
 -- Send notification
 window:notify("Title", "Message", 3)
@@ -112,9 +122,34 @@ tab:input(text, placeholder, callback, flag)
 tab:dropdown(text, options, default, callback)
 ```
 
+**Multiselect**
+```lua
+tab:multiselect(text, options, default, callback, flag)
+```
+
+**Color Picker**
+```lua
+tab:colorpicker(text, default, callback, flag)
+```
+
+**Section**
+```lua
+tab:section(text)
+```
+
+**Paragraph**
+```lua
+tab:paragraph(title, text)
+```
+
 **Label**
 ```lua
 tab:label(text)
+```
+
+**Keybind**
+```lua
+tab:keybind(text, default, hold_to_interact, callback, flag)
 ```
 
 ### Notifications
@@ -146,7 +181,7 @@ local window = KyriLib.new("prison life", {
 
 local main = window:tab("Main", "home")
 
-main:label("movement")
+main:section("Movement")
 
 main:toggle("fly", false, function(state)
     if state then
