@@ -347,7 +347,6 @@ function kyri.new(title, options)
 
         if minimized then
             pre_min_size = main.Size
-            resize_handle.Visible = false
             sidebar.Visible = false
             content.Visible = false
             kyri.svc.tw:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
@@ -359,7 +358,6 @@ function kyri.new(title, options)
             }):Play()
             task.delay(0.25, function()
                 if not minimized then
-                    resize_handle.Visible = true
                     sidebar.Visible = true
                     content.Visible = true
                 end
