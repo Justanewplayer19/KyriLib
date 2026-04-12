@@ -27,6 +27,44 @@ kyri.theme = {
     border = Color3.fromRGB(32, 32, 40)
 }
 
+kyri.presets = {
+    ["kyri"] = {
+        bg = Color3.fromRGB(8,8,10), container = Color3.fromRGB(14,14,18),
+        element = Color3.fromRGB(20,20,26), hover = Color3.fromRGB(28,28,36),
+        active = Color3.fromRGB(32,32,42), accent = Color3.fromRGB(138,116,249),
+        text = Color3.fromRGB(245,245,250), subtext = Color3.fromRGB(165,165,180),
+        border = Color3.fromRGB(32,32,40),
+    },
+    ["midnight"] = {
+        bg = Color3.fromRGB(6,8,14), container = Color3.fromRGB(10,14,22),
+        element = Color3.fromRGB(16,20,32), hover = Color3.fromRGB(22,28,44),
+        active = Color3.fromRGB(26,34,52), accent = Color3.fromRGB(80,160,255),
+        text = Color3.fromRGB(240,245,255), subtext = Color3.fromRGB(140,160,200),
+        border = Color3.fromRGB(24,32,50),
+    },
+    ["rose"] = {
+        bg = Color3.fromRGB(12,8,10), container = Color3.fromRGB(18,12,16),
+        element = Color3.fromRGB(26,18,22), hover = Color3.fromRGB(36,24,30),
+        active = Color3.fromRGB(44,28,36), accent = Color3.fromRGB(255,110,150),
+        text = Color3.fromRGB(255,245,248), subtext = Color3.fromRGB(190,160,170),
+        border = Color3.fromRGB(40,26,32),
+    },
+    ["forest"] = {
+        bg = Color3.fromRGB(8,12,8), container = Color3.fromRGB(12,18,12),
+        element = Color3.fromRGB(18,26,18), hover = Color3.fromRGB(24,34,24),
+        active = Color3.fromRGB(30,42,30), accent = Color3.fromRGB(80,220,120),
+        text = Color3.fromRGB(240,250,240), subtext = Color3.fromRGB(150,190,155),
+        border = Color3.fromRGB(24,38,24),
+    },
+    ["slate"] = {
+        bg = Color3.fromRGB(12,12,14), container = Color3.fromRGB(18,18,22),
+        element = Color3.fromRGB(26,26,32), hover = Color3.fromRGB(34,34,42),
+        active = Color3.fromRGB(40,40,50), accent = Color3.fromRGB(160,160,185),
+        text = Color3.fromRGB(240,240,245), subtext = Color3.fromRGB(160,160,175),
+        border = Color3.fromRGB(36,36,44),
+    },
+}
+
 local function make(c, p)
     local o = Instance.new(c)
     for k, v in pairs(p) do
@@ -539,7 +577,7 @@ function kyri.new(title, options)
             Size = UDim2.fromOffset(100, 24),
             Position = UDim2.new(1, -20, 1, -12),
             AnchorPoint = Vector2.new(1, 1),
-            BackgroundColor3 = t.accent,
+            BackgroundColor3 = t.element,
             Text = "done",
             TextColor3 = t.text,
             Font = Enum.Font.GothamMedium,
@@ -2333,6 +2371,79 @@ function kyri.new(title, options)
         settings:label("saved configs")
         refresh_configs()
 
+        settings:space(8)
+        settings:section("theme")
+
+        local preset_names = {}
+        for name in pairs(kyri.presets) do table.insert(preset_names, name) end
+        table.sort(preset_names)
+        settings:dropdown("preset", preset_names, "kyri", function(name)
+            local p = kyri.presets[name]
+            if p then w:apply_theme(p) end
+        end)
+
+        settings:space(4)
+        settings:section("custom colors")
+
+        local theme_props = {
+            {"bg",        "background"},
+            {"container", "header"},
+            {"element",   "elements"},
+            {"accent",    "accent"},
+            {"text",      "text"},
+            {"subtext",   "subtext"},
+            {"border",    "border"},
+        }
+
+        for _, pair in ipairs(theme_props) do
+            local key, label = pair[1], pair[2]
+
+            local row = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 42),
+                BackgroundColor3 = t.element,
+                Parent = settings.page
+            })
+            make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = row})
+
+            make("TextLabel", {
+                Size = UDim2.new(1, -80, 1, 0),
+                Position = UDim2.fromOffset(16, 0),
+                BackgroundTransparency = 1,
+                Text = label,
+                TextColor3 = t.text,
+                Font = Enum.Font.GothamMedium,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = row
+            })
+
+            local swatch = make("TextButton", {
+                Size = UDim2.fromOffset(44, 22),
+                Position = UDim2.new(1, -16, 0.5, 0),
+                AnchorPoint = Vector2.new(1, 0.5),
+                BackgroundColor3 = t[key],
+                Text = "",
+                AutoButtonColor = false,
+                Parent = row
+            })
+            make("UICorner", {CornerRadius = UDim.new(0, 5), Parent = swatch})
+
+            row.MouseEnter:Connect(function()
+                kyri.svc.tw:Create(row, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
+            end)
+            row.MouseLeave:Connect(function()
+                kyri.svc.tw:Create(row, TweenInfo.new(0.15), {BackgroundColor3 = t.element}):Play()
+            end)
+
+            swatch.MouseButton1Click:Connect(function()
+                play("click")
+                make_colorpicker_popup(t[key], function(c)
+                    swatch.BackgroundColor3 = c
+                    w:apply_theme({[key] = c})
+                end)
+            end)
+        end
+
         return settings
     end
 
@@ -2486,6 +2597,39 @@ function kyri.new(title, options)
         for _, d in ipairs(w.accents) do
             if d.obj and d.obj.Parent then
                 d.obj[d.prop] = color
+            end
+        end
+    end
+
+    function w:apply_theme(overrides)
+        for key, new_color in pairs(overrides) do
+            local old_color = t[key]
+            t[key] = new_color
+            if key == "accent" then
+                for _, d in ipairs(w.accents) do
+                    if d.obj and d.obj.Parent then
+                        d.obj[d.prop] = new_color
+                    end
+                end
+            elseif old_color then
+                for _, obj in ipairs(main:GetDescendants()) do
+                    pcall(function()
+                        if obj:IsA("GuiObject") and obj.BackgroundColor3 == old_color then
+                            obj.BackgroundColor3 = new_color
+                        end
+                        if (obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox"))
+                           and obj.TextColor3 == old_color then
+                            obj.TextColor3 = new_color
+                        end
+                        if obj:IsA("UIStroke") and obj.Color == old_color then
+                            obj.Color = new_color
+                        end
+                        if (obj:IsA("ImageLabel") or obj:IsA("ImageButton"))
+                           and obj.ImageColor3 == old_color then
+                            obj.ImageColor3 = new_color
+                        end
+                    end)
+                end
             end
         end
     end
