@@ -40,17 +40,36 @@ end
 
 local CONFIG_FOLDER = "KyriLib"
 
+local function encode_val(v)
+    if typeof(v) == "Color3" then
+        return {__type = "Color3", r = v.R, g = v.G, b = v.B}
+    end
+    return v
+end
+
+local function decode_val(v)
+    if type(v) == "table" and v.__type == "Color3" then
+        return Color3.new(v.r, v.g, v.b)
+    end
+    return v
+end
+
 local function save_config(game_name, config_name, data)
     local path = CONFIG_FOLDER .. "/" .. game_name
     if not isfolder(CONFIG_FOLDER) then makefolder(CONFIG_FOLDER) end
     if not isfolder(path) then makefolder(path) end
-    writefile(path .. "/" .. config_name .. ".json", kyri.svc.http:JSONEncode(data))
+    local encoded = {}
+    for k, v in pairs(data) do encoded[k] = encode_val(v) end
+    writefile(path .. "/" .. config_name .. ".json", kyri.svc.http:JSONEncode(encoded))
 end
 
 local function load_config(game_name, config_name)
     local path = CONFIG_FOLDER .. "/" .. game_name .. "/" .. config_name .. ".json"
     if isfile(path) then
-        return kyri.svc.http:JSONDecode(readfile(path))
+        local raw = kyri.svc.http:JSONDecode(readfile(path))
+        local out = {}
+        for k, v in pairs(raw) do out[k] = decode_val(v) end
+        return out
     end
     return nil
 end
@@ -74,6 +93,13 @@ end
 
 function kyri.new(title, options)
     options = options or {}
+
+    if getgenv then
+        if getgenv().__kyri_inst then
+            pcall(function() getgenv().__kyri_inst:destroy() end)
+            getgenv().__kyri_inst = nil
+        end
+    end
 
     local localPlayer = kyri.svc.plr.LocalPlayer
 
@@ -609,7 +635,7 @@ function kyri.new(title, options)
                 settings = "rbxassetid://7734053495"
             }
 
-            local icon_id = icon_map[icon] or "rbxassetid://7743875962"
+            local icon_id = icon_map[icon] or (type(icon) == "string" and icon:find("rbxassetid://") and icon) or "rbxassetid://7743875962"
 
             local icon_img = make("ImageLabel", {
                 Size = UDim2.fromOffset(18, 18),
@@ -742,6 +768,14 @@ function kyri.new(title, options)
             })
 
             return frame
+        end
+
+        function tab:space(height)
+            make("Frame", {
+                Size = UDim2.new(1, 0, 0, height or 8),
+                BackgroundTransparency = 1,
+                Parent = page
+            })
         end
 
         function tab:paragraph(title, text)
@@ -983,7 +1017,7 @@ function kyri.new(title, options)
             return api
         end
 
-        function tab:slider(text, min, max, def, callback, flag)
+        function tab:slider(text, min, max, def, callback, flag, step)
             local val = def or min
             if flag then w.flags[flag] = val end
 
@@ -1083,11 +1117,11 @@ function kyri.new(title, options)
 
                 minus_btn.MouseButton1Click:Connect(function()
                     play("click")
-                    update_val(val - 1)
+                    update_val(val - (step or 1))
                 end)
                 plus_btn.MouseButton1Click:Connect(function()
                     play("click")
-                    update_val(val + 1)
+                    update_val(val + (step or 1))
                 end)
                 input_box.FocusLost:Connect(function()
                     local num = tonumber(input_box.Text)
@@ -1137,7 +1171,13 @@ function kyri.new(title, options)
 
                 local function update(inp)
                     local pct = math.clamp((inp.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-                    val = math.floor(min + (max - min) * pct)
+                    local raw = min + (max - min) * pct
+                    if step then
+                        val = math.floor(raw / step + 0.5) * step
+                        val = math.floor(val * 1000 + 0.5) / 1000
+                    else
+                        val = math.floor(raw)
+                    end
                     fill.Size = UDim2.new(pct, 0, 1, 0)
                     handle.Position = UDim2.new(pct, 0, 0.5, 0)
                     val_lbl.Text = tostring(val)
@@ -1146,7 +1186,13 @@ function kyri.new(title, options)
                 end
 
                 local function set_direct(new_val)
-                    val = math.clamp(math.floor(new_val), min, max)
+                    if step then
+                        new_val = math.floor(new_val / step + 0.5) * step
+                        new_val = math.floor(new_val * 1000 + 0.5) / 1000
+                    else
+                        new_val = math.floor(new_val)
+                    end
+                    val = math.clamp(new_val, min, max)
                     local pct = (val - min) / (max - min)
                     fill.Size = UDim2.new(pct, 0, 1, 0)
                     handle.Position = UDim2.new(pct, 0, 0.5, 0)
@@ -1164,18 +1210,18 @@ function kyri.new(title, options)
                     end
                 end)
 
-                kyri.svc.inp.InputChanged:Connect(function(inp)
+                table.insert(conns, kyri.svc.inp.InputChanged:Connect(function(inp)
                     if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
                         update(inp)
                     end
-                end)
+                end))
 
-                kyri.svc.inp.InputEnded:Connect(function(inp)
+                table.insert(conns, kyri.svc.inp.InputEnded:Connect(function(inp)
                     if inp.UserInputType == Enum.UserInputType.MouseButton1 then
                         if dragging then play("toggle_off") end
                         dragging = false
                     end
-                end)
+                end))
             end
 
             local api = {box = box}
@@ -1324,8 +1370,27 @@ function kyri.new(title, options)
             })
             make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = list_frame})
 
+            local search_box = make("TextBox", {
+                Size = UDim2.new(1, -16, 0, 26),
+                Position = UDim2.fromOffset(8, 4),
+                BackgroundColor3 = t.element,
+                Text = "",
+                PlaceholderText = "search...",
+                PlaceholderColor3 = t.subtext,
+                TextColor3 = t.text,
+                Font = Enum.Font.Gotham,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ClearTextOnFocus = false,
+                ZIndex = 3,
+                Parent = list_frame
+            })
+            make("UICorner", {CornerRadius = UDim.new(0, 5), Parent = search_box})
+            make("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), Parent = search_box})
+
             local list_container = make("ScrollingFrame", {
-                Size = UDim2.fromScale(1, 1),
+                Size = UDim2.new(1, 0, 1, -34),
+                Position = UDim2.fromOffset(0, 34),
                 BackgroundTransparency = 1,
                 ScrollBarThickness = 3,
                 ScrollBarImageColor3 = t.accent,
@@ -1354,10 +1419,13 @@ function kyri.new(title, options)
                 list_container.CanvasSize = UDim2.new(0, 0, 0, list_layout.AbsoluteContentSize.Y + 8)
             end)
 
+            local opt_refs = {}
             local selected_accent = nil
 
             local function close_dropdown()
                 open = false
+                search_box.Text = ""
+                for _, ref in ipairs(opt_refs) do ref.btn.Visible = true end
                 kyri.svc.tw:Create(container, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 42)}):Play()
                 kyri.svc.tw:Create(list_frame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 0)}):Play()
                 kyri.svc.tw:Create(arrow, TweenInfo.new(0.2), {Rotation = 0}):Play()
@@ -1388,6 +1456,8 @@ function kyri.new(title, options)
                     TextXAlignment = Enum.TextXAlignment.Left,
                     Parent = opt_btn
                 })
+
+                table.insert(opt_refs, {btn = opt_btn, lbl = opt_lbl, text = option})
 
                 if option == selected then
                     selected_accent = {obj = opt_lbl, prop = "TextColor3"}
@@ -1427,19 +1497,26 @@ function kyri.new(title, options)
                 end)
             end
 
+            search_box:GetPropertyChangedSignal("Text"):Connect(function()
+                local q = search_box.Text:lower()
+                for _, ref in ipairs(opt_refs) do
+                    ref.btn.Visible = q == "" or ref.text:lower():find(q, 1, true) ~= nil
+                end
+            end)
+
             dropdown_btn.MouseButton1Click:Connect(function()
                 play("click")
                 open = not open
 
                 if open then
                     local content_height = list_layout.AbsoluteContentSize.Y + 8
-                    local max_height = math.min(content_height, 200)
+                    local max_list = math.min(content_height, 166)
                     list_frame.Visible = true
                     kyri.svc.tw:Create(container, TweenInfo.new(0.2), {
-                        Size = UDim2.new(1, 0, 0, 42 + max_height + 4)
+                        Size = UDim2.new(1, 0, 0, 42 + 34 + max_list + 4)
                     }):Play()
                     kyri.svc.tw:Create(list_frame, TweenInfo.new(0.2), {
-                        Size = UDim2.new(1, 0, 0, max_height)
+                        Size = UDim2.new(1, 0, 0, 34 + max_list)
                     }):Play()
                     kyri.svc.tw:Create(arrow, TweenInfo.new(0.2), {Rotation = 180}):Play()
                 else
@@ -1801,6 +1878,100 @@ function kyri.new(title, options)
             return api
         end
 
+        function tab:image(id, height)
+            height = height or 120
+            local box = make("Frame", {
+                Size = UDim2.new(1, 0, 0, height),
+                BackgroundColor3 = t.element,
+                Parent = page
+            })
+            make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = box})
+
+            local img = make("ImageLabel", {
+                Size = UDim2.new(1, -8, 1, -8),
+                Position = UDim2.fromOffset(4, 4),
+                BackgroundTransparency = 1,
+                Image = id or "",
+                ScaleType = Enum.ScaleType.Fit,
+                Parent = box
+            })
+            make("UICorner", {CornerRadius = UDim.new(0, 6), Parent = img})
+
+            local api = {box = box, img = img}
+            function api:set(new_id) img.Image = new_id end
+            return api
+        end
+
+        function tab:progressbar(text, max_val)
+            max_val = max_val or 100
+            local cur = 0
+
+            local box = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 52),
+                BackgroundColor3 = t.element,
+                Parent = page
+            })
+            make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = box})
+
+            make("TextLabel", {
+                Size = UDim2.new(1, -90, 0, 20),
+                Position = UDim2.fromOffset(16, 8),
+                BackgroundTransparency = 1,
+                Text = text,
+                TextColor3 = t.text,
+                Font = Enum.Font.GothamMedium,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = box
+            })
+
+            local pct_lbl = make("TextLabel", {
+                Size = UDim2.fromOffset(60, 20),
+                Position = UDim2.new(1, -16, 0, 8),
+                AnchorPoint = Vector2.new(1, 0),
+                BackgroundTransparency = 1,
+                Text = "0%",
+                TextColor3 = t.accent,
+                Font = Enum.Font.GothamBold,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Right,
+                Parent = box
+            })
+            table.insert(w.accents, {obj = pct_lbl, prop = "TextColor3"})
+
+            local track = make("Frame", {
+                Size = UDim2.new(1, -32, 0, 5),
+                Position = UDim2.fromOffset(16, 34),
+                BackgroundColor3 = t.container,
+                Parent = box
+            })
+            make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = track})
+
+            local fill = make("Frame", {
+                Size = UDim2.fromScale(0, 1),
+                BackgroundColor3 = t.accent,
+                Parent = track
+            })
+            table.insert(w.accents, {obj = fill, prop = "BackgroundColor3"})
+            make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = fill})
+
+            local api = {box = box}
+            function api:set(val, animate)
+                cur = math.clamp(val, 0, max_val)
+                local pct = cur / max_val
+                pct_lbl.Text = math.floor(pct * 100) .. "%"
+                if animate then
+                    kyri.svc.tw:Create(fill, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+                        Size = UDim2.fromScale(pct, 1)
+                    }):Play()
+                else
+                    fill.Size = UDim2.fromScale(pct, 1)
+                end
+            end
+            function api:get() return cur end
+            return api
+        end
+
         function tab:keybind(text, default, hold_to_interact, callback, flag)
             local current_key = default or "None"
             local listening = false
@@ -2159,6 +2330,16 @@ function kyri.new(title, options)
     task.spawn(function()
         task.wait(0.1)
         w:create_settings()
+        if options.AutoLoad then
+            local data = load_config(w.game_name, options.AutoLoad)
+            if data then
+                for flag, value in pairs(data) do
+                    w.flags[flag] = value
+                    local set_func = w.flags[flag .. "_set"]
+                    if set_func then set_func(value, true) end
+                end
+            end
+        end
     end)
 
     function w:notify(title, text, duration)
@@ -2195,9 +2376,10 @@ function kyri.new(title, options)
         local container = notif_gui.Container
 
         local notif = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 70),
+            Size = UDim2.new(1, 0, 0, 76),
             BackgroundColor3 = t.bg,
             BackgroundTransparency = 0.2,
+            ClipsDescendants = true,
             Parent = container
         })
         make("UICorner", {CornerRadius = UDim.new(0, 10), Parent = notif})
@@ -2236,19 +2418,51 @@ function kyri.new(title, options)
             Parent = notif
         })
 
+        local prog_bg = make("Frame", {
+            Size = UDim2.new(1, -8, 0, 3),
+            Position = UDim2.new(0, 4, 1, -6),
+            BackgroundColor3 = t.container,
+            Parent = notif
+        })
+        make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = prog_bg})
+        local prog_fill = make("Frame", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundColor3 = t.accent,
+            Parent = prog_bg
+        })
+        make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = prog_fill})
+
+        local dismissed = false
+        local function dismiss()
+            if dismissed then return end
+            dismissed = true
+            kyri.svc.tw:Create(notif, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            kyri.svc.tw:Create(title_lbl, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            kyri.svc.tw:Create(text_lbl, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            kyri.svc.tw:Create(notif_bar, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            kyri.svc.tw:Create(prog_fill, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            task.wait(0.3)
+            if notif and notif.Parent then notif:Destroy() end
+        end
+
+        local click_btn = make("TextButton", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Text = "",
+            ZIndex = 5,
+            Parent = notif
+        })
+        click_btn.MouseButton1Click:Connect(dismiss)
+
         notif.Position = UDim2.new(0, 340, 0, 0)
         kyri.svc.tw:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
             Position = UDim2.new(0, 0, 0, 0)
         }):Play()
+        kyri.svc.tw:Create(prog_fill, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+            Size = UDim2.fromScale(0, 1)
+        }):Play()
 
-        task.delay(duration, function()
-            kyri.svc.tw:Create(notif, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-            kyri.svc.tw:Create(title_lbl, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-            kyri.svc.tw:Create(text_lbl, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-            kyri.svc.tw:Create(notif_bar, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-            task.wait(0.5)
-            notif:Destroy()
-        end)
+        task.delay(duration, dismiss)
     end
 
     function w:accent(color)
@@ -2272,6 +2486,7 @@ function kyri.new(title, options)
         end
     end
 
+    if getgenv then getgenv().__kyri_inst = w end
     return w
 end
 
