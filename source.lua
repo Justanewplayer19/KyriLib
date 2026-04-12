@@ -2376,7 +2376,7 @@ function kyri.new(title, options)
         local container = notif_gui.Container
 
         local notif = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 76),
+            Size = UDim2.new(1, 0, 0, 70),
             BackgroundColor3 = t.bg,
             BackgroundTransparency = 0.2,
             ClipsDescendants = true,
@@ -2384,17 +2384,9 @@ function kyri.new(title, options)
         })
         make("UICorner", {CornerRadius = UDim.new(0, 10), Parent = notif})
 
-        local notif_bar = make("Frame", {
-            Size = UDim2.new(0, 4, 1, 0),
-            BackgroundColor3 = t.accent,
-            BorderSizePixel = 0,
-            Parent = notif
-        })
-        make("UICorner", {CornerRadius = UDim.new(0, 10), Parent = notif_bar})
-
         local title_lbl = make("TextLabel", {
             Size = UDim2.new(1, -24, 0, 20),
-            Position = UDim2.fromOffset(16, 10),
+            Position = UDim2.fromOffset(14, 10),
             BackgroundTransparency = 1,
             Text = title,
             TextColor3 = t.text,
@@ -2405,11 +2397,11 @@ function kyri.new(title, options)
         })
 
         local text_lbl = make("TextLabel", {
-            Size = UDim2.new(1, -24, 0, 35),
-            Position = UDim2.fromOffset(16, 32),
+            Size = UDim2.new(1, -24, 0, 30),
+            Position = UDim2.fromOffset(14, 32),
             BackgroundTransparency = 1,
             Text = text,
-            TextColor3 = t.text,
+            TextColor3 = t.subtext,
             Font = Enum.Font.Gotham,
             TextSize = 13,
             TextXAlignment = Enum.TextXAlignment.Left,
@@ -2419,18 +2411,16 @@ function kyri.new(title, options)
         })
 
         local prog_bg = make("Frame", {
-            Size = UDim2.new(1, -8, 0, 3),
-            Position = UDim2.new(0, 4, 1, -6),
+            Size = UDim2.new(1, 0, 0, 3),
+            Position = UDim2.new(0, 0, 1, -3),
             BackgroundColor3 = t.container,
             Parent = notif
         })
-        make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = prog_bg})
         local prog_fill = make("Frame", {
             Size = UDim2.fromScale(1, 1),
             BackgroundColor3 = t.accent,
             Parent = prog_bg
         })
-        make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = prog_fill})
 
         local dismissed = false
         local function dismiss()
@@ -2439,7 +2429,6 @@ function kyri.new(title, options)
             kyri.svc.tw:Create(notif, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
             kyri.svc.tw:Create(title_lbl, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
             kyri.svc.tw:Create(text_lbl, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-            kyri.svc.tw:Create(notif_bar, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
             kyri.svc.tw:Create(prog_fill, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
             task.wait(0.3)
             if notif and notif.Parent then notif:Destroy() end
