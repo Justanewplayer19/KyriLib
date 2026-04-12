@@ -1,99 +1,78 @@
 # KyriLib
 
-Modern UI library for Roblox scripts with a clean interface, smooth animations, and built-in config system.
-
-## Features
-
-- Modern, clean interface with smooth animations
-- Built-in save/load config system
-- Custom notifications with fade animations
-- Rich elements: buttons, toggles, sliders, inputs, dropdowns, multiselects, color pickers
-- Sections and paragraphs for UI organization
-- Customizable themes with 9 color options
-- Optional icons for tabs
-- Draggable and resizable windows
-- Keybind system with hold to interact support
+Modern UI library for Roblox executor scripts. Clean dark theme, smooth animations, built-in config system.
 
 ## Installation
 
 ```lua
-local KyriLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
+local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
 ```
 
 ## Quick Start
 
 ```lua
--- Create window
-local window = KyriLib.new("My Script", {
-    GameName = "MyGame"
+local w = kyri.new("my script", {
+    GameName = "MyGame",
+    AutoLoad = "default"
 })
 
--- Create tab
-local main = window:tab("Main")
+local main = w:tab("Main", "sword")
 
--- Add elements
-main:button("Click Me", function()
-    print("clicked!")
+main:button("click me", function()
+    w:notify("clicked", "button fired", 2)
 end)
 
-main:toggle("Enable Feature", false, function(state)
-    print("toggled:", state)
-end, "feature_flag")
+main:toggle("enable thing", false, function(state)
+    print(state)
+end, "thing_enabled")
 
-main:slider("Speed", 16, 200, 16, function(value)
-    print("speed:", value)
-end, "speed_flag")
-
-main:multiselect("Weapons", {"Sword", "Gun"}, {}, function(list)
-    print("selected:", table.concat(list, ", "))
-end, "weapons_flag")
-
-main:colorpicker("Color", Color3.fromRGB(138, 116, 249), function(color)
-    print("color:", color)
-end, "color_flag")
-
--- Send notification
-window:notify("Title", "Message", 3)
+main:slider("walkspeed", 0, 500, 16, function(val)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = val
+end, "ws")
 ```
 
 ## Documentation
 
-Full documentation available at: [https://justanewplayer19.github.io/KyriLib](https://justanewplayer19.github.io/KyriLib)
+Full docs: [https://justanewplayer19.github.io/KyriLib](https://justanewplayer19.github.io/KyriLib)
 
 ## API Reference
 
-### Window
-
-```lua
-KyriLib.new(title, options)
-```
+### `kyri.new(title, options)`
 
 **Options:**
-- `GameName` - Name for config storage
-- `Theme` - Custom color theme
+| key | type | description |
+|-----|------|-------------|
+| `GameName` | string | used for config file storage |
+| `AutoLoad` | string | config name to load on startup |
+| `Theme` | table | override any theme colors at init |
 
-**Example with custom theme:**
-```lua
-local window = KyriLib.new("My Script", {
-    GameName = "MyGame",
-    Theme = {
-        bg = Color3.fromRGB(10, 10, 15),
-        accent = Color3.fromRGB(255, 100, 100)
-    }
-})
-```
-
-### Tabs
+### Window methods
 
 ```lua
-window:tab(name, icon)
+w:tab(name, icon)         -- create a tab, returns tab object
+w:notify(title, text, duration)  -- send a notification (click to dismiss)
+w:accent(color)           -- change accent color live
+w:apply_theme(overrides)  -- change any theme colors live (partial or full)
+w:destroy()               -- destroy the window
 ```
 
-**Example:**
+`kyri.presets` contains built-in themes: `kyri`, `midnight`, `rose`, `forest`, `slate`
+
 ```lua
-local main = window:tab("Main", "home")
-local settings = window:tab("Settings", "settings")
+w:apply_theme(kyri.presets["midnight"])
+w:apply_theme({ accent = Color3.fromRGB(255, 80, 80) })  -- partial override
 ```
+
+### Tab icons
+
+Pass a preset name or a raw asset id:
+
+```lua
+w:tab("Main", "sword")                          -- preset
+w:tab("Custom", "rbxassetid://7734053495")      -- raw id
+```
+
+Available presets: `sword`, `move`, `user`, `music`, `settings`
 
 ### Elements
 
@@ -107,9 +86,10 @@ tab:button(text, callback)
 tab:toggle(text, default, callback, flag)
 ```
 
-**Slider**
+**Slider** — drag the track, or click the value label to type a number directly
 ```lua
-tab:slider(text, min, max, default, callback, flag)
+tab:slider(text, min, max, default, callback, flag, step)
+-- step is optional (e.g. 0.1 for one decimal place)
 ```
 
 **Input**
@@ -117,9 +97,9 @@ tab:slider(text, min, max, default, callback, flag)
 tab:input(text, placeholder, callback, flag)
 ```
 
-**Dropdown**
+**Dropdown** — searchable
 ```lua
-tab:dropdown(text, options, default, callback)
+tab:dropdown(text, options, default, callback, flag)
 ```
 
 **Multiselect**
@@ -132,80 +112,77 @@ tab:multiselect(text, options, default, callback, flag)
 tab:colorpicker(text, default, callback, flag)
 ```
 
-**Section**
-```lua
-tab:section(text)
-```
-
-**Paragraph**
-```lua
-tab:paragraph(title, text)
-```
-
-**Label**
-```lua
-tab:label(text)
-```
-
 **Keybind**
 ```lua
 tab:keybind(text, default, hold_to_interact, callback, flag)
 ```
 
-### Notifications
-
+**Progress Bar**
 ```lua
-window:notify(title, text, duration)
+local pb = tab:progressbar(text, max)
+pb:set(value, animated)
 ```
 
-### Config System
-
-Settings with flags automatically save. Access them:
-
+**Image**
 ```lua
--- Get value
-local speed = window.flags.speed_flag
-
--- Set value
-window.flags.feature_flag_set(true, true)
+tab:image(asset_id, height)
 ```
 
-## Example Script
+**Layout helpers**
+```lua
+tab:section(text)
+tab:label(text)
+tab:paragraph(title, body)
+tab:space(height)   -- height defaults to 8
+```
+
+### Config
+
+Elements with a `flag` string automatically participate in the config system. A Settings tab is auto-created with save/load UI and a full theme editor (preset dropdown + per-property color pickers).
 
 ```lua
-local KyriLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
+-- read a value
+local val = w.flags.ws
 
-local window = KyriLib.new("prison life", {
-    GameName = "PrisonLife"
+-- set a value programmatically
+w.flags.ws_set(100, true)   -- second arg fires callback
+```
+
+### Toggle visibility
+
+Press `RightControl` to show/hide the window.
+
+## Example
+
+```lua
+local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
+
+local w = kyri.new("prison life", {
+    GameName = "PrisonLife",
+    AutoLoad = "default"
 })
 
-local main = window:tab("Main", "home")
+local main = w:tab("Main", "sword")
 
-main:section("Movement")
+main:section("movement")
 
 main:toggle("fly", false, function(state)
-    if state then
-        window:notify("Movement", "Fly enabled", 2)
-    else
-        window:notify("Movement", "Fly disabled", 2)
-    end
-end, "fly_toggle")
+    w:notify("fly", state and "on" or "off", 2)
+end, "fly")
 
-main:slider("walkspeed", 16, 200, 16, function(value)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
-end, "walkspeed")
+main:slider("walkspeed", 16, 500, 16, function(val)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = val
+end, "ws")
 
-main:dropdown("teleport to", {"spawn", "prison", "criminal base"}, "spawn", function(value)
-    window:notify("Teleport", "Teleported to " .. value, 2)
+main:slider("jump power", 50, 500, 50, function(val)
+    game.Players.LocalPlayer.Character.Humanoid.JumpPower = val
+end, "jp")
+
+main:dropdown("teleport", {"spawn", "prison", "criminal base"}, "spawn", function(val)
+    w:notify("teleport", "going to " .. val, 2)
 end)
-
-window:accent(Color3.fromRGB(138, 116, 249))
 ```
 
 ## License
 
-MIT License - feel free to use in your projects
-
-## Credits
-
-Made with ❤️ for the Roblox scripting community
+MIT
