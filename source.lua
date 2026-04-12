@@ -346,6 +346,9 @@ function kyri.new(title, options)
 
         if minimized then
             pre_min_size = main.Size
+            resize_handle.Visible = false
+            sidebar.Visible = false
+            content.Visible = false
             kyri.svc.tw:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
                 Size = UDim2.new(0, main.Size.X.Offset, 0, 52)
             }):Play()
@@ -353,6 +356,13 @@ function kyri.new(title, options)
             kyri.svc.tw:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
                 Size = pre_min_size
             }):Play()
+            task.delay(0.25, function()
+                if not minimized then
+                    resize_handle.Visible = true
+                    sidebar.Visible = true
+                    content.Visible = true
+                end
+            end)
         end
 
         kyri.svc.tw:Create(minimize, TweenInfo.new(0.25), {
