@@ -2375,12 +2375,27 @@ function kyri.new(title, options)
 
         local container = notif_gui.Container
 
+        -- wrapper holds all pieces as siblings so nothing clips anything
+        local wrapper = make("Frame", {
+            Size = UDim2.fromOffset(320, 77),
+            BackgroundTransparency = 1,
+            Parent = container
+        })
+
+        -- accent bar: sits to the left of the notif (bar rel X=-16, Y=4, W=13, H=63)
+        local bar = make("Frame", {
+            Size = UDim2.fromOffset(13, 63),
+            Position = UDim2.fromOffset(-16, 4),
+            BackgroundColor3 = t.accent,
+            Parent = wrapper
+        })
+        make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = bar})
+
         local notif = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 70),
+            Size = UDim2.fromOffset(320, 70),
             BackgroundColor3 = t.bg,
             BackgroundTransparency = 0.2,
-            ClipsDescendants = true,
-            Parent = container
+            Parent = wrapper
         })
         make("UICorner", {CornerRadius = UDim.new(0, 10), Parent = notif})
 
@@ -2410,11 +2425,12 @@ function kyri.new(title, options)
             Parent = notif
         })
 
+        -- progress bar: sits below the notif (prog rel Y=74, H=3)
         local prog_bg = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 3),
-            Position = UDim2.new(0, 0, 1, -3),
+            Size = UDim2.fromOffset(320, 3),
+            Position = UDim2.fromOffset(0, 74),
             BackgroundColor3 = t.container,
-            Parent = notif
+            Parent = wrapper
         })
         local prog_fill = make("Frame", {
             Size = UDim2.fromScale(1, 1),
@@ -2427,11 +2443,13 @@ function kyri.new(title, options)
             if dismissed then return end
             dismissed = true
             kyri.svc.tw:Create(notif, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            kyri.svc.tw:Create(bar, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
             kyri.svc.tw:Create(title_lbl, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
             kyri.svc.tw:Create(text_lbl, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
             kyri.svc.tw:Create(prog_fill, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+            kyri.svc.tw:Create(prog_bg, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
             task.wait(0.3)
-            if notif and notif.Parent then notif:Destroy() end
+            if wrapper and wrapper.Parent then wrapper:Destroy() end
         end
 
         local click_btn = make("TextButton", {
@@ -2443,8 +2461,8 @@ function kyri.new(title, options)
         })
         click_btn.MouseButton1Click:Connect(dismiss)
 
-        notif.Position = UDim2.new(0, 340, 0, 0)
-        kyri.svc.tw:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+        wrapper.Position = UDim2.new(0, 340, 0, 0)
+        kyri.svc.tw:Create(wrapper, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
             Position = UDim2.new(0, 0, 0, 0)
         }):Play()
         kyri.svc.tw:Create(prog_fill, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
