@@ -1069,7 +1069,7 @@ function kyri.new(title, options)
             if flag then w.flags[flag] = val end
 
             local box = make("Frame", {
-                Size = UDim2.new(1, 0, 0, w.is_mobile and 78 or 58),
+                Size = UDim2.new(1, 0, 0, w.is_mobile and 82 or 58),
                 BackgroundColor3 = t.element,
                 Parent = page
             })
@@ -1087,8 +1087,9 @@ function kyri.new(title, options)
                 Parent = box
             })
 
-            local val_lbl = make("TextLabel", {
-                Size = UDim2.fromOffset(60, 20),
+            -- value display: click to type a number
+            local val_btn = make("TextButton", {
+                Size = UDim2.fromOffset(72, 20),
                 Position = UDim2.new(1, -16, 0, 10),
                 AnchorPoint = Vector2.new(1, 0),
                 BackgroundTransparency = 1,
@@ -1097,16 +1098,134 @@ function kyri.new(title, options)
                 Font = Enum.Font.GothamBold,
                 TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Right,
+                AutoButtonColor = false,
                 Parent = box
             })
-            table.insert(w.accents, {obj = val_lbl, prop = "TextColor3"})
+            table.insert(w.accents, {obj = val_btn, prop = "TextColor3"})
 
-            local set_val_fn = nil
+            local val_inp = make("TextBox", {
+                Size = UDim2.fromOffset(72, 20),
+                Position = UDim2.new(1, -16, 0, 10),
+                AnchorPoint = Vector2.new(1, 0),
+                BackgroundColor3 = t.container,
+                Text = tostring(val),
+                TextColor3 = t.text,
+                Font = Enum.Font.GothamBold,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Right,
+                Visible = false,
+                Parent = box
+            })
+            make("UICorner", {CornerRadius = UDim.new(0, 4), Parent = val_inp})
+            make("UIPadding", {PaddingRight = UDim.new(0, 4), Parent = val_inp})
 
+            -- track: 8px tall for easier targeting
+            local track = make("Frame", {
+                Size = UDim2.new(1, -32, 0, 8),
+                Position = UDim2.fromOffset(16, 36),
+                BackgroundColor3 = t.container,
+                Parent = box
+            })
+            make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = track})
+
+            local fill = make("Frame", {
+                Size = UDim2.new((val - min) / (max - min), 0, 1, 0),
+                BackgroundColor3 = t.accent,
+                Parent = track
+            })
+            table.insert(w.accents, {obj = fill, prop = "BackgroundColor3"})
+            make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = fill})
+
+            -- handle: 18x18 so it's easy to grab
+            local handle = make("Frame", {
+                Size = UDim2.fromOffset(18, 18),
+                Position = UDim2.new((val - min) / (max - min), 0, 0.5, 0),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                ZIndex = 2,
+                Parent = track
+            })
+            make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = handle})
+
+            -- shared apply: used by drag, type-in, api:set, and config load
+            local function apply(new_val, fire_cb)
+                if step then
+                    new_val = math.floor(new_val / step + 0.5) * step
+                    new_val = math.floor(new_val * 1000 + 0.5) / 1000
+                else
+                    new_val = math.floor(new_val)
+                end
+                val = math.clamp(new_val, min, max)
+                local pct = (val - min) / (max - min)
+                fill.Size = UDim2.new(pct, 0, 1, 0)
+                handle.Position = UDim2.new(pct, 0, 0.5, 0)
+                val_btn.Text = tostring(val)
+                if flag then w.flags[flag] = val end
+                if fire_cb and callback then callback(val) end
+            end
+
+            -- large transparent hit zone: 36px tall covering the track + padding
+            -- makes the slider trivial to click and drag on both PC and mobile
+            local hit = make("Frame", {
+                Size = UDim2.new(1, -32, 0, 36),
+                Position = UDim2.fromOffset(16, 20),
+                BackgroundTransparency = 1,
+                ZIndex = 3,
+                Parent = box
+            })
+
+            local dragging = false
+
+            local function drag_to(x)
+                local pct = math.clamp((x - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+                apply(min + (max - min) * pct, true)
+            end
+
+            hit.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1
+                   or inp.UserInputType == Enum.UserInputType.Touch then
+                    dragging = true
+                    play("toggle_on")
+                    drag_to(inp.Position.X)
+                end
+            end)
+
+            table.insert(conns, kyri.svc.inp.InputChanged:Connect(function(inp)
+                if not dragging then return end
+                if inp.UserInputType == Enum.UserInputType.MouseMovement
+                   or inp.UserInputType == Enum.UserInputType.Touch then
+                    drag_to(inp.Position.X)
+                end
+            end))
+
+            table.insert(conns, kyri.svc.inp.InputEnded:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1
+                   or inp.UserInputType == Enum.UserInputType.Touch then
+                    if dragging then play("toggle_off") end
+                    dragging = false
+                end
+            end))
+
+            -- click value label → type a number → apply
+            val_btn.MouseButton1Click:Connect(function()
+                val_btn.Visible = false
+                val_inp.Text = tostring(val)
+                val_inp.Visible = true
+                val_inp:CaptureFocus()
+            end)
+
+            val_inp.FocusLost:Connect(function()
+                local num = tonumber(val_inp.Text)
+                if num then apply(num, true) end
+                val_inp.Visible = false
+                val_btn.Visible = true
+            end)
+
+            -- mobile: keep +/- buttons below the track for fine control
             if w.is_mobile then
-                local btn_container = make("Frame", {
-                    Size = UDim2.new(1, -32, 0, 36),
-                    Position = UDim2.fromOffset(16, 38),
+                local btn_row = make("Frame", {
+                    Size = UDim2.new(1, -32, 0, 28),
+                    Position = UDim2.fromOffset(16, 50),
                     BackgroundTransparency = 1,
                     Parent = box
                 })
@@ -1114,68 +1233,39 @@ function kyri.new(title, options)
                     FillDirection = Enum.FillDirection.Horizontal,
                     HorizontalAlignment = Enum.HorizontalAlignment.Center,
                     Padding = UDim.new(0, 8),
-                    Parent = btn_container
+                    Parent = btn_row
                 })
-
                 local minus_btn = make("TextButton", {
-                    Size = UDim2.new(0.3, 0, 1, 0),
+                    Size = UDim2.new(0.45, 0, 1, 0),
                     BackgroundColor3 = t.container,
-                    Text = "-",
-                    TextColor3 = t.text,
-                    Font = Enum.Font.GothamBold,
-                    TextSize = 20,
-                    AutoButtonColor = false,
-                    Parent = btn_container
-                })
-                make("UICorner", {CornerRadius = UDim.new(0, 6), Parent = minus_btn})
-
-                local input_box = make("TextBox", {
-                    Size = UDim2.new(0.4, -16, 1, 0),
-                    BackgroundColor3 = t.container,
-                    Text = tostring(val),
+                    Text = "–",
                     TextColor3 = t.text,
                     Font = Enum.Font.GothamBold,
                     TextSize = 16,
-                    Parent = btn_container
+                    AutoButtonColor = false,
+                    Parent = btn_row
                 })
-                make("UICorner", {CornerRadius = UDim.new(0, 6), Parent = input_box})
-
+                make("UICorner", {CornerRadius = UDim.new(0, 6), Parent = minus_btn})
                 local plus_btn = make("TextButton", {
-                    Size = UDim2.new(0.3, 0, 1, 0),
+                    Size = UDim2.new(0.45, 0, 1, 0),
                     BackgroundColor3 = t.container,
                     Text = "+",
                     TextColor3 = t.text,
                     Font = Enum.Font.GothamBold,
-                    TextSize = 20,
+                    TextSize = 16,
                     AutoButtonColor = false,
-                    Parent = btn_container
+                    Parent = btn_row
                 })
                 make("UICorner", {CornerRadius = UDim.new(0, 6), Parent = plus_btn})
 
-                local function update_val(new_val)
-                    val = math.clamp(new_val, min, max)
-                    val_lbl.Text = tostring(val)
-                    input_box.Text = tostring(val)
-                    if flag then w.flags[flag] = val end
-                    if callback then callback(val) end
-                end
-
-                set_val_fn = update_val
-
                 minus_btn.MouseButton1Click:Connect(function()
                     play("click")
-                    update_val(val - (step or 1))
+                    apply(val - (step or 1), true)
                 end)
                 plus_btn.MouseButton1Click:Connect(function()
                     play("click")
-                    update_val(val + (step or 1))
+                    apply(val + (step or 1), true)
                 end)
-                input_box.FocusLost:Connect(function()
-                    local num = tonumber(input_box.Text)
-                    if num then update_val(math.floor(num))
-                    else input_box.Text = tostring(val) end
-                end)
-
                 minus_btn.MouseEnter:Connect(function()
                     kyri.svc.tw:Create(minus_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
                 end)
@@ -1188,93 +1278,15 @@ function kyri.new(title, options)
                 plus_btn.MouseLeave:Connect(function()
                     kyri.svc.tw:Create(plus_btn, TweenInfo.new(0.15), {BackgroundColor3 = t.container}):Play()
                 end)
-            else
-                local track = make("Frame", {
-                    Size = UDim2.new(1, -32, 0, 5),
-                    Position = UDim2.fromOffset(16, 40),
-                    BackgroundColor3 = t.container,
-                    Parent = box
-                })
-                make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = track})
-
-                local fill = make("Frame", {
-                    Size = UDim2.new((val - min) / (max - min), 0, 1, 0),
-                    BackgroundColor3 = t.accent,
-                    Parent = track
-                })
-                table.insert(w.accents, {obj = fill, prop = "BackgroundColor3"})
-                make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = fill})
-
-                local handle = make("Frame", {
-                    Size = UDim2.fromOffset(13, 13),
-                    Position = UDim2.new((val - min) / (max - min), 0, 0.5, 0),
-                    AnchorPoint = Vector2.new(0.5, 0.5),
-                    BackgroundColor3 = t.text,
-                    Parent = track
-                })
-                make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = handle})
-
-                local dragging = false
-
-                local function update(inp)
-                    local pct = math.clamp((inp.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-                    local raw = min + (max - min) * pct
-                    if step then
-                        val = math.floor(raw / step + 0.5) * step
-                        val = math.floor(val * 1000 + 0.5) / 1000
-                    else
-                        val = math.floor(raw)
-                    end
-                    fill.Size = UDim2.new(pct, 0, 1, 0)
-                    handle.Position = UDim2.new(pct, 0, 0.5, 0)
-                    val_lbl.Text = tostring(val)
-                    if flag then w.flags[flag] = val end
-                    if callback then callback(val) end
-                end
-
-                local function set_direct(new_val)
-                    if step then
-                        new_val = math.floor(new_val / step + 0.5) * step
-                        new_val = math.floor(new_val * 1000 + 0.5) / 1000
-                    else
-                        new_val = math.floor(new_val)
-                    end
-                    val = math.clamp(new_val, min, max)
-                    local pct = (val - min) / (max - min)
-                    fill.Size = UDim2.new(pct, 0, 1, 0)
-                    handle.Position = UDim2.new(pct, 0, 0.5, 0)
-                    val_lbl.Text = tostring(val)
-                    if flag then w.flags[flag] = val end
-                end
-
-                set_val_fn = set_direct
-
-                track.InputBegan:Connect(function(inp)
-                    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-                        dragging = true
-                        play("toggle_on")
-                        update(inp)
-                    end
-                end)
-
-                table.insert(conns, kyri.svc.inp.InputChanged:Connect(function(inp)
-                    if dragging and inp.UserInputType == Enum.UserInputType.MouseMovement then
-                        update(inp)
-                    end
-                end))
-
-                table.insert(conns, kyri.svc.inp.InputEnded:Connect(function(inp)
-                    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-                        if dragging then play("toggle_off") end
-                        dragging = false
-                    end
-                end))
             end
 
             local api = {box = box}
-            function api:set(new_val) if set_val_fn then set_val_fn(new_val) end end
+            function api:set(new_val) apply(new_val, false) end
             function api:get() return val end
             function api:setcallback(fn) callback = fn end
+            if flag then
+                w.flags[flag .. "_set"] = function(v, fire) apply(v, fire) end
+            end
             return api
         end
 
