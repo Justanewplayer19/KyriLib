@@ -229,6 +229,7 @@ function kyri.new(title, options)
 
     local minimized = false
     local pre_min_size = nil
+    local sidebar, content
 
     if not w.is_mobile then
         local resizing = false
@@ -370,7 +371,7 @@ function kyri.new(title, options)
         }):Play()
     end)
 
-    local sidebar = make("Frame", {
+    sidebar = make("Frame", {
         Size = UDim2.new(0, 140, 1, -64),
         Position = UDim2.fromOffset(12, 58),
         BackgroundTransparency = 1,
@@ -396,7 +397,7 @@ function kyri.new(title, options)
         tab_holder.CanvasSize = UDim2.new(0, 0, 0, tab_list.AbsoluteContentSize.Y)
     end)
 
-    local content = make("Frame", {
+    content = make("Frame", {
         Size = UDim2.new(1, -168, 1, -70),
         Position = UDim2.fromOffset(158, 58),
         BackgroundTransparency = 1,
