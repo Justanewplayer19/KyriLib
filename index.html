@@ -549,6 +549,7 @@
 				<a href="#elements" class="sidebar-link">elements</a>
 				<a href="#keybinds" class="sidebar-link">keybinds</a>
 				<a href="#notifications" class="sidebar-link">notifications</a>
+				<a href="#themes" class="sidebar-link">themes</a>
 				<a href="#config" class="sidebar-link">config system</a>
 			</div>
 
@@ -561,151 +562,102 @@
 		<main class="content">
 			<section id="introduction">
 				<h1>introduction</h1>
-				<p>KyriLib is a modern UI library for Roblox scripts. clean interface with smooth animations, built-in config system, and rich UI elements.</p>
+				<p>KyriLib is a UI library for Roblox executor scripts. dark theme, smooth animations, built-in config system, and a full theme editor.</p>
 
 				<a href="#installation" class="button">get started</a>
 				<a href="https://github.com/Justanewplayer19/KyriLib" class="button button-outline">github</a>
 
 				<h2>features</h2>
 				<ul>
-					<li>modern interface with smooth animations</li>
-					<li>built-in save/load config system</li>
-					<li>custom notifications with fade animations</li>
-					<li>mobile support with touch controls</li>
-					<li>buttons, toggles, sliders, inputs, dropdowns, multiselects, keybinds</li>
-					<li>sections and paragraphs for UI organization</li>
-					<li>color pickers with HSV controls</li>
-					<li>customizable themes with 9 color options</li>
-					<li>optional icons for tabs</li>
-					<li>draggable and resizable windows</li>
-					<li>keybind system with hold to interact support</li>
+					<li>buttons, toggles, sliders, inputs, dropdowns, multiselects, color pickers, keybinds</li>
+					<li>progress bars and image elements</li>
+					<li>searchable dropdowns</li>
+					<li>sliders with draggable track and click-to-type value input</li>
+					<li>notifications with timer bar and click-to-dismiss</li>
+					<li>5 built-in preset themes, full per-property theme editor in Settings</li>
+					<li>built-in save/load config system with auto-load support</li>
+					<li>draggable and resizable window</li>
+					<li>keybind system with press or hold modes</li>
+					<li>tab icons via preset names or raw asset ids</li>
+					<li>mobile support</li>
 				</ul>
 			</section>
 
 			<section id="installation">
 				<h2>installation</h2>
-				<p>load the library:</p>
-				<pre><code>local KyriLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()</code></pre>
+				<pre><code>local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()</code></pre>
 			</section>
 
 			<section id="basic-usage">
 				<h2>basic usage</h2>
-				<pre><code>-- create window
-local window = KyriLib.new("My Script", {
-    GameName = "MyGame"
+				<pre><code>local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
+
+local w = kyri.new("my script", {
+    GameName = "MyGame",
+    AutoLoad = "default"
 })
 
--- create tab
-local main = window:tab("Main")
+local main = w:tab("Main", "sword")
 
--- add button
-main:button("Click Me", function()
-    print("clicked")
+main:button("click me", function()
+    w:notify("hey", "button works", 2)
 end)
 
--- add toggle
-main:toggle("Enable Feature", false, function(state)
-    print("state:", state)
-end, "feature_flag")
+main:toggle("enable thing", false, function(state)
+    print(state)
+end, "thing")
 
--- send notification
-window:notify("Success", "script loaded", 3)</code></pre>
+main:slider("walkspeed", 0, 500, 16, function(val)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = val
+end, "ws")</code></pre>
 			</section>
 
 			<section id="window">
 				<h2>window</h2>
 
-				<h3>creating a window</h3>
-				<pre><code>KyriLib.new(title, options)</code></pre>
-
-				<h4>parameters</h4>
+				<h3>kyri.new(title, options)</h3>
 				<table>
 					<thead>
-						<tr>
-							<th>parameter</th>
-							<th>type</th>
-							<th>description</th>
-						</tr>
+						<tr><th>option</th><th>type</th><th>description</th></tr>
 					</thead>
 					<tbody>
-						<tr>
-							<td>title</td>
-							<td>string</td>
-							<td>window title</td>
-						</tr>
-						<tr>
-							<td>options</td>
-							<td>table</td>
-							<td>optional settings (GameName, Theme)</td>
-						</tr>
+						<tr><td>GameName</td><td>string</td><td>used for config file storage</td></tr>
+						<tr><td>AutoLoad</td><td>string</td><td>config name to load on startup</td></tr>
+						<tr><td>Theme</td><td>table</td><td>override theme colors at init (any subset)</td></tr>
 					</tbody>
 				</table>
 
-				<h3>custom theme</h3>
-				<p>customize colors by passing a Theme table:</p>
-				<pre><code>local window = KyriLib.new("My Script", {
+				<pre><code>local w = kyri.new("my script", {
     GameName = "MyGame",
+    AutoLoad = "default",
     Theme = {
-        bg = Color3.fromRGB(8, 8, 10),
-        container = Color3.fromRGB(14, 14, 18),
-        element = Color3.fromRGB(20, 20, 26),
-        hover = Color3.fromRGB(28, 28, 36),
-        active = Color3.fromRGB(32, 32, 42),
-        accent = Color3.fromRGB(138, 116, 249),
-        text = Color3.fromRGB(245, 245, 250),
-        subtext = Color3.fromRGB(165, 165, 180),
-        border = Color3.fromRGB(32, 32, 40)
+        accent = Color3.fromRGB(255, 110, 150)
     }
 })</code></pre>
 
-				<div class="admonition admonition-info">
-					<div class="admonition-title">info</div>
-					<p>only specify colors you want to change. unspecified colors use default theme. all 9 color options shown above.</p>
-				</div>
+				<h3>window methods</h3>
+				<pre><code>w:tab(name, icon)              -- create tab, returns tab object
+w:notify(title, text, duration) -- send notification
+w:accent(color)                -- change accent color live
+w:apply_theme(overrides)       -- change any theme colors live
+w:destroy()                    -- destroy the window</code></pre>
 
-				<h3>change accent color</h3>
-				<pre><code>window:accent(Color3.fromRGB(255, 100, 100))</code></pre>
-
-				<h3>mobile support</h3>
-				<p>KyriLib automatically detects mobile and adjusts UI. mobile users get a toggle button in bottom right, PC users press K to toggle.</p>
+				<h3>toggle visibility</h3>
+				<p>press <code>RightControl</code> to show/hide the window.</p>
 			</section>
 
 			<section id="tabs">
 				<h2>tabs</h2>
 
-				<h3>creating a tab</h3>
-				<pre><code>window:tab(name, icon)</code></pre>
+				<pre><code>w:tab(name, icon)</code></pre>
 
-				<h4>parameters</h4>
-				<table>
-					<thead>
-						<tr>
-							<th>parameter</th>
-							<th>type</th>
-							<th>description</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>name</td>
-							<td>string</td>
-							<td>tab name</td>
-						</tr>
-						<tr>
-							<td>icon</td>
-							<td>string (optional)</td>
-							<td>icon name</td>
-						</tr>
-					</tbody>
-				</table>
-
-				<h3>example with icons</h3>
-				<pre><code>local weapons = window:tab("Weapons", "sword")
-local settings = window:tab("Settings", "settings")</code></pre>
+				<p>icon can be a preset name or a raw asset id:</p>
+				<pre><code>w:tab("Main", "sword")                       -- preset name
+w:tab("Custom", "rbxassetid://7734053495")   -- raw asset id</code></pre>
 
 				<div class="admonition admonition-info">
-					<div class="admonition-title">icon names</div>
-					<p>available icons: sword, move, user, music, settings</p>
+					<div class="admonition-title">preset icon names</div>
+					<p>sword, move, user, music, settings</p>
 				</div>
 			</section>
 
@@ -714,256 +666,197 @@ local settings = window:tab("Settings", "settings")</code></pre>
 
 				<h3>button</h3>
 				<pre><code>tab:button(text, callback)</code></pre>
-				<p>creates a clickable button.</p>
 
 				<h3>toggle</h3>
-				<pre><code>tab:toggle(text, default, callback, flag)</code></pre>
-				<p>creates a toggle switch. if flag provided, state is saved to configs.</p>
+				<pre><code>tab:toggle(text, default, callback, flag)
+-- api: :set(state), :get(), :setcallback(fn)</code></pre>
 
 				<h3>slider</h3>
-				<pre><code>tab:slider(text, min, max, default, callback, flag)</code></pre>
-				<p>creates a slider for number values. on mobile, shows +/- buttons instead of draggable slider.</p>
+				<pre><code>tab:slider(text, min, max, default, callback, flag, step)
+-- step is optional. e.g. 0.1 for one decimal place, 0.25 for quarter steps
+-- drag the track, or click the value label on the right to type a number directly
+-- api: :set(val), :get(), :setcallback(fn)</code></pre>
+
+				<pre><code>main:slider("walkspeed", 0, 500, 16, function(val)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = val
+end, "ws")
+
+main:slider("fov", 70, 120, 70, function(val)
+    -- decimal slider, step 0.1
+end, "fov", 0.1)</code></pre>
 
 				<h3>input</h3>
-				<pre><code>tab:input(text, placeholder, callback, flag)</code></pre>
-				<p>creates a text input box.</p>
+				<pre><code>tab:input(text, placeholder, callback, flag)
+-- api: .input (the TextBox instance)</code></pre>
 
 				<h3>dropdown</h3>
-				<pre><code>tab:dropdown(text, options, default, callback)</code></pre>
-				<p>creates a dropdown menu with selectable options.</p>
-
-				<div class="admonition admonition-warning">
-					<div class="admonition-title">warning</div>
-					<p>dropdowns don't save to configs automatically.</p>
-				</div>
+				<pre><code>tab:dropdown(text, options, default, callback, flag)
+-- searchable: type in the box to filter options
+-- api: :set(val)</code></pre>
 
 				<h3>multiselect</h3>
-				<pre><code>tab:multiselect(text, options, default, callback, flag)</code></pre>
-				<p>creates a multiselect dropdown where multiple options can be selected. if flag provided, selections are saved to configs.</p>
+				<pre><code>tab:multiselect(text, options, default, callback, flag)
+-- callback receives a table of selected values
+-- api: :set(val)</code></pre>
 
-				<h3>colorpicker</h3>
-				<pre><code>tab:colorpicker(text, default, callback, flag)</code></pre>
-				<p>creates a color picker with HSV controls. if flag provided, color is saved to configs.</p>
+				<h3>color picker</h3>
+				<pre><code>tab:colorpicker(text, default, callback, flag)
+-- HSV picker, click the swatch to open
+-- api: :set(color), :get()</code></pre>
 
-				<h3>section</h3>
-				<pre><code>tab:section(text)</code></pre>
-				<p>creates a section divider with text for organizing UI elements.</p>
+				<h3>keybind</h3>
+				<pre><code>tab:keybind(text, default, hold_to_interact, callback, flag)
+-- click the box and press any key to rebind</code></pre>
 
-				<h3>paragraph</h3>
-				<pre><code>tab:paragraph(title, text)</code></pre>
-				<p>creates a paragraph with title and body text for displaying information.</p>
+				<h3>progress bar</h3>
+				<pre><code>local pb = tab:progressbar(text, max)
+pb:set(value, animated)   -- animated is optional boolean</code></pre>
 
-				<h3>label</h3>
-				<pre><code>tab:label(text)</code></pre>
-				<p>creates a text label for organizing sections.</p>
+				<h3>image</h3>
+				<pre><code>tab:image(asset_id, height)   -- height defaults to 120</code></pre>
 
-				<h3>example</h3>
-				<pre><code>local main = window:tab("Main")
-
-main:section("Player Options")
-
-main:paragraph("Information", "This section contains player-related settings.")
-
-main:label("basic settings")
-
-main:button("Reset", function()
-    print("reset")
-end)
-
-main:toggle("Fly", false, function(state)
-    print("fly:", state)
-end, "fly")
-
-main:slider("Speed", 16, 200, 16, function(value)
-    print("speed:", value)
-end, "speed")
-
-main:input("Username", "enter name", function(text)
-    print("name:", text)
-end, "username")
-
-main:dropdown("Location", {"Spawn", "Base", "Shop"}, "Spawn", function(value)
-    print("selected:", value)
-end)
-
-main:multiselect("Weapons", {"Sword", "Gun", "Shield"}, {}, function(list)
-    print("selected weapons:", table.concat(list, ", "))
-end, "weapons")
-
-main:colorpicker("Accent Color", Color3.fromRGB(138, 116, 249), function(color)
-    print("color:", color)
-end, "accent")</code></pre>
+				<h3>layout helpers</h3>
+				<pre><code>tab:section(text)              -- divider with label
+tab:label(text)                -- plain text line
+tab:paragraph(title, body)     -- titled text block
+tab:space(height)              -- empty gap, default 8px</code></pre>
 			</section>
 
 			<section id="keybinds">
 				<h2>keybinds</h2>
 
-				<h3>create keybind</h3>
-				<pre><code>tab:keybind(text, default, hold_to_interact, callback, flag)</code></pre>
-
-				<h4>parameters</h4>
-				<table>
-					<thead>
-						<tr>
-							<th>parameter</th>
-							<th>type</th>
-							<th>description</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>text</td>
-							<td>string</td>
-							<td>keybind label</td>
-						</tr>
-						<tr>
-							<td>default</td>
-							<td>string</td>
-							<td>default key (e.g. "Q", "LeftShift")</td>
-						</tr>
-						<tr>
-							<td>hold_to_interact</td>
-							<td>boolean</td>
-							<td>if true, callback gets true/false when holding</td>
-						</tr>
-						<tr>
-							<td>callback</td>
-							<td>function</td>
-							<td>function called when key pressed</td>
-						</tr>
-						<tr>
-							<td>flag</td>
-							<td>string</td>
-							<td>optional flag for config saving</td>
-						</tr>
-					</tbody>
-				</table>
-
-				<h3>examples</h3>
-
-				<h4>press to toggle</h4>
-				<pre><code>main:keybind("Fly Key", "Q", false, function()
-    print("fly toggled")
+				<h4>press to trigger</h4>
+				<pre><code>main:keybind("fly key", "Q", false, function()
+    -- fires once on press
 end, "fly_key")</code></pre>
 
 				<h4>hold to activate</h4>
-				<pre><code>main:keybind("Speed Boost", "LeftShift", true, function(holding)
+				<pre><code>main:keybind("speed boost", "LeftShift", true, function(holding)
     if holding then
-        print("boost active")
+        -- key held down
     else
-        print("boost inactive")
+        -- key released
     end
 end, "boost_key")</code></pre>
 
 				<div class="admonition admonition-info">
 					<div class="admonition-title">info</div>
-					<p>click the keybind box and press any key to rebind. new key is automatically saved if flag provided.</p>
+					<p>click the keybind element and press any key to rebind. saved to config automatically if flag is provided.</p>
 				</div>
 			</section>
 
 			<section id="notifications">
 				<h2>notifications</h2>
 
-				<h3>send notification</h3>
-				<pre><code>window:notify(title, text, duration)</code></pre>
+				<pre><code>w:notify(title, text, duration)</code></pre>
 
-				<h4>parameters</h4>
+				<p>notifications slide in from the right with a timer bar that drains over the duration. click a notification to dismiss it early.</p>
+
+				<pre><code>w:notify("done", "script loaded", 2)
+w:notify("error", "something went wrong", 5)</code></pre>
+			</section>
+
+			<section id="themes">
+				<h2>themes</h2>
+
+				<h3>preset themes</h3>
+				<p>5 built-in presets: <code>kyri</code>, <code>midnight</code>, <code>rose</code>, <code>forest</code>, <code>slate</code></p>
+				<pre><code>w:apply_theme(kyri.presets["midnight"])
+w:apply_theme(kyri.presets["rose"])</code></pre>
+
+				<h3>partial override</h3>
+				<p>pass any subset of theme keys — only those colors change:</p>
+				<pre><code>w:apply_theme({ accent = Color3.fromRGB(255, 80, 80) })
+w:apply_theme({ bg = Color3.fromRGB(5, 5, 8), accent = Color3.fromRGB(80, 220, 120) })</code></pre>
+
+				<h3>theme keys</h3>
 				<table>
 					<thead>
-						<tr>
-							<th>parameter</th>
-							<th>type</th>
-							<th>description</th>
-						</tr>
+						<tr><th>key</th><th>what it affects</th></tr>
 					</thead>
 					<tbody>
-						<tr>
-							<td>title</td>
-							<td>string</td>
-							<td>notification title</td>
-						</tr>
-						<tr>
-							<td>text</td>
-							<td>string</td>
-							<td>notification message</td>
-						</tr>
-						<tr>
-							<td>duration</td>
-							<td>number</td>
-							<td>duration in seconds (default: 3)</td>
-						</tr>
+						<tr><td>bg</td><td>main window background</td></tr>
+						<tr><td>container</td><td>header bar, sidebar</td></tr>
+						<tr><td>element</td><td>buttons, rows, inputs</td></tr>
+						<tr><td>hover</td><td>hover state color</td></tr>
+						<tr><td>active</td><td>active state color</td></tr>
+						<tr><td>accent</td><td>highlights, fill, indicators</td></tr>
+						<tr><td>text</td><td>primary text</td></tr>
+						<tr><td>subtext</td><td>secondary text, labels</td></tr>
+						<tr><td>border</td><td>UIStroke borders</td></tr>
 					</tbody>
 				</table>
 
-				<h3>example</h3>
-				<pre><code>window:notify("Success", "feature enabled", 2)
-window:notify("Error", "something went wrong", 5)</code></pre>
+				<div class="admonition admonition-info">
+					<div class="admonition-title">settings tab</div>
+					<p>the auto-generated Settings tab includes a preset dropdown and individual color pickers for every theme property.</p>
+				</div>
 			</section>
 
 			<section id="config">
 				<h2>config system</h2>
-				<p>KyriLib automatically saves and loads settings for elements with flags. a settings tab is automatically created with save/load functionality.</p>
 
-				<h3>accessing flags</h3>
-				<pre><code>-- get value
-local speed = window.flags.speed_flag
+				<p>elements with a <code>flag</code> string are saved/loaded automatically. a Settings tab is created with save/load UI built in.</p>
 
--- set value programmatically
-window.flags.fly_flag_set(true, true)</code></pre>
+				<pre><code>-- auto-load a config on startup
+local w = kyri.new("title", { GameName = "MyGame", AutoLoad = "default" })
+
+-- read a flag value
+local speed = w.flags.ws
+
+-- set a value and fire its callback
+w.flags.ws_set(100, true)</code></pre>
 
 				<div class="admonition admonition-info">
 					<div class="admonition-title">info</div>
-					<p>configs are saved per-game using the GameName option. users can save multiple configs with different names.</p>
+					<p>configs are stored per-game using GameName. Color3 values serialize correctly.</p>
 				</div>
 			</section>
 
 			<section id="complete-example">
-
 				<h2>complete example</h2>
-				<pre><code>local KyriLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
+				<pre><code>local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
 
-local window = KyriLib.new("prison life", {
-    GameName = "PrisonLife"
+local w = kyri.new("prison life", {
+    GameName = "PrisonLife",
+    AutoLoad = "default"
 })
 
-local main = window:tab("Main", "home")
-local combat = window:tab("Combat", "sword")
+local main = w:tab("Main", "sword")
+local misc = w:tab("Misc", "settings")
 
-main:section("Movement")
-
-main:paragraph("Movement Settings", "Configure your character's movement options below.")
+main:section("movement")
 
 main:toggle("fly", false, function(state)
-    if state then
-        window:notify("Movement", "fly enabled", 2)
-    else
-        window:notify("Movement", "fly disabled", 2)
-    end
-end, "fly_toggle")
+    w:notify("fly", state and "on" or "off", 2)
+end, "fly")
 
-main:slider("walkspeed", 16, 200, 16, function(value)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
-end, "walkspeed")
+main:slider("walkspeed", 16, 500, 16, function(val)
+    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = val
+end, "ws")
 
-main:dropdown("teleport to", {"spawn", "prison", "criminal base"}, "spawn", function(value)
-    window:notify("Teleport", "teleported to " .. value, 2)
+main:slider("jump power", 50, 500, 50, function(val)
+    game.Players.LocalPlayer.Character.Humanoid.JumpPower = val
+end, "jp")
+
+main:space()
+main:section("teleport")
+
+main:dropdown("location", {"spawn", "prison", "criminal base"}, "spawn", function(val)
+    w:notify("teleport", "going to " .. val, 2)
 end)
 
-main:colorpicker("UI Accent", Color3.fromRGB(138, 116, 249), function(color)
-    window:accent(color)
-end, "ui_accent")
+misc:section("visual")
 
-combat:section("Weapons")
+misc:colorpicker("accent color", kyri.theme.accent, function(c)
+    w:accent(c)
+end, "accent")
 
-combat:button("give all weapons", function()
-    window:notify("Weapons", "gave all weapons", 2)
-end)
-
-combat:multiselect("weapon mods", {"rapid fire", "one shot", "infinite ammo"}, {"rapid fire"}, function(list)
-    window:notify("Weapon Mods", "applied: " .. table.concat(list, ", "), 2)
-end, "weapon_mods")
-
-window:accent(Color3.fromRGB(138, 116, 249))</code></pre>
+misc:space()
+misc:section("theme presets")
+misc:button("midnight", function() w:apply_theme(kyri.presets["midnight"]) end)
+misc:button("rose", function() w:apply_theme(kyri.presets["rose"]) end)
+misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code></pre>
 		</section>
 		</main>
 	</div>
