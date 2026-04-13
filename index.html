@@ -3,8 +3,25 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<title>KyriLib - Roblox UI Library Documentation</title>
+	<meta name="description" content="KyriLib is a Roblox executor UI library with toggles, sliders, dropdowns, color pickers, keybinds, preset themes, and a built-in config system.">
+	<meta name="keywords" content="KyriLib, Roblox UI library, Roblox executor script, Roblox GUI library, Roblox script UI">
+	<meta name="robots" content="index, follow">
+	<link rel="canonical" href="https://justanewplayer19.github.io/KyriLib/">
+
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="https://justanewplayer19.github.io/KyriLib/">
+	<meta property="og:title" content="KyriLib - Roblox UI Library">
+	<meta property="og:description" content="A Roblox executor UI library with smooth animations, preset themes, color pickers, keybinds, and a built-in config system.">
+	<meta property="og:image" content="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/favicon.png">
+
+	<meta name="twitter:card" content="summary">
+	<meta name="twitter:title" content="KyriLib - Roblox UI Library">
+	<meta name="twitter:description" content="A Roblox executor UI library with smooth animations, preset themes, color pickers, keybinds, and a built-in config system.">
+	<meta name="twitter:image" content="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/favicon.png">
+
 	<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/favicon.png">
-	<title>KyriLib Documentation</title>
 	<style>
 		html, body {
 			margin: 0;
@@ -519,19 +536,16 @@
 			display: block;
 		}
 
-		/* prevent body scroll when sidebar is open on mobile */
 		body.sidebar-open {
 			overflow: hidden;
 		}
 
-		/* hide navbar text links on mobile — sidebar has them */
 		@media (max-width: 996px) {
 			.navbar-links a {
 				display: none;
 			}
 		}
 
-		/* mobile layout */
 		@media (max-width: 768px) {
 			h1 {
 				font-size: 26px;
@@ -557,7 +571,6 @@
 				padding: 16px;
 			}
 
-			/* make tables scroll horizontally instead of overflowing */
 			table {
 				display: block;
 				overflow-x: auto;
@@ -565,13 +578,11 @@
 				white-space: nowrap;
 			}
 
-			/* code blocks slightly smaller on mobile */
 			pre {
 				font-size: 12px;
 				padding: 12px;
 			}
 
-			/* stack intro buttons vertically */
 			.button {
 				display: block;
 				margin-right: 0;
@@ -579,12 +590,10 @@
 				text-align: center;
 			}
 
-			/* icon name list wraps cleanly */
 			.admonition p {
 				word-break: break-word;
 			}
 
-			/* copy button always visible on touch devices */
 			.copy-button {
 				opacity: 1;
 			}
@@ -732,7 +741,7 @@ w:tab("Web",      "https://example.com/icon.png") -- https url (see note below)<
 
 				<div class="admonition admonition-info">
 					<div class="admonition-title">lucideblox icon pack</div>
-					<p>1,000+ <a href="https://lucide.dev/icons" target="_blank">Lucide icons</a> are built in. Pass the icon name as a string exactly as it appears on lucide.dev — e.g. <code>"arrow-up-right"</code>, <code>"battery-charging"</code>, <code>"shield-check"</code>.</p>
+					<p>1,000+ <a href="https://lucide.dev/icons" target="_blank">Lucide icons</a> are built in. Pass the icon name as a string exactly as it appears on lucide.dev, e.g. <code>"arrow-up-right"</code>, <code>"battery-charging"</code>, <code>"shield-check"</code>.</p>
 					<p>Common names: <code>sword</code> &bull; <code>axe</code> &bull; <code>skull</code> &bull; <code>flame</code> &bull; <code>shield</code> &bull; <code>crosshair</code> &bull; <code>target</code> &bull; <code>eye</code> &bull; <code>ghost</code> &bull; <code>users</code> &bull; <code>user</code> &bull; <code>crown</code> &bull; <code>star</code> &bull; <code>heart</code> &bull; <code>settings</code> &bull; <code>settings-2</code> &bull; <code>sliders</code> &bull; <code>wrench</code> &bull; <code>key</code> &bull; <code>lock</code> &bull; <code>map-pin</code> &bull; <code>compass</code> &bull; <code>home</code> &bull; <code>search</code> &bull; <code>filter</code> &bull; <code>list</code> &bull; <code>grid</code> &bull; <code>music</code> &bull; <code>mic</code> &bull; <code>wifi</code> &bull; <code>monitor</code> &bull; <code>camera</code> &bull; <code>video</code> &bull; <code>file</code> &bull; <code>folder</code> &bull; <code>download</code> &bull; <code>upload</code> &bull; <code>save</code> &bull; <code>trash</code> &bull; <code>edit</code> &bull; <code>bell</code> &bull; <code>clock</code> &bull; <code>info</code> &bull; <code>alert-triangle</code> &bull; <code>check</code> &bull; <code>x</code> &bull; <code>plus</code> &bull; <code>terminal</code> &bull; <code>bot</code> &bull; <code>gamepad</code> &bull; <code>gamepad-2</code></p>
 				</div>
 
@@ -846,7 +855,7 @@ w:notify("error", "something went wrong", 5)</code></pre>
 w:apply_theme(kyri.presets["rose"])</code></pre>
 
 				<h3>partial override</h3>
-				<p>pass any subset of theme keys — only those colors change:</p>
+				<p>pass any subset of theme keys, only those colors change:</p>
 				<pre><code>w:apply_theme({ accent = Color3.fromRGB(255, 80, 80) })
 w:apply_theme({ bg = Color3.fromRGB(5, 5, 8), accent = Color3.fromRGB(80, 220, 120) })</code></pre>
 
