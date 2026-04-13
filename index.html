@@ -1044,25 +1044,26 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 			});
 		});
 
-		const sections = document.querySelectorAll('section');
 		const sidebarLinks = document.querySelectorAll('.sidebar-link');
 
-		window.addEventListener('scroll', () => {
-			let current = '';
-			sections.forEach(section => {
-				const sectionTop = section.offsetTop;
-				if (scrollY >= sectionTop - 100) {
-					current = section.getAttribute('id');
-				}
-			});
-
+		function setActive(id) {
 			sidebarLinks.forEach(link => {
-				link.classList.remove('active');
-				if (link.getAttribute('href') === '#' + current) {
-					link.classList.add('active');
+				link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+			});
+		}
+
+		const observer = new IntersectionObserver((entries) => {
+			entries.forEach(entry => {
+				if (entry.isIntersecting) {
+					setActive(entry.target.getAttribute('id'));
 				}
 			});
+		}, {
+			rootMargin: '-20% 0px -75% 0px',
+			threshold: 0
 		});
+
+		document.querySelectorAll('section').forEach(section => observer.observe(section));
 	</script>
 </body>
 </html
