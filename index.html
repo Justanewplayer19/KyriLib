@@ -24,14 +24,10 @@
 	<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/favicon.png">
 
 	<script>
-		(function() {
-			var stored = localStorage.getItem('theme');
-			var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			if (stored ? stored === 'dark' : prefersDark) {
-				document.documentElement.style.background = '#1b1b1d';
-				document.documentElement.style.colorScheme = 'dark';
-			}
-		})();
+		if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+			document.documentElement.style.background = '#1b1b1d';
+			document.documentElement.style.colorScheme = 'dark';
+		}
 	</script>
 
 	<script type="application/ld+json">
@@ -1019,32 +1015,21 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 		function toggleTheme() {
 			document.body.classList.toggle('dark');
 			const button = document.querySelector('.theme-toggle');
-			if (document.body.classList.contains('dark')) {
-				button.textContent = 'night night';
-				localStorage.setItem('theme', 'dark');
-			} else {
-				button.textContent = 'good morning';
-				localStorage.setItem('theme', 'light');
-			}
+			button.textContent = document.body.classList.contains('dark') ? 'night night' : 'good morning';
 		}
 
 		document.addEventListener('DOMContentLoaded', function() {
-			const stored = localStorage.getItem('theme');
-			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			const isDark = stored ? stored === 'dark' : prefersDark;
 			document.documentElement.style.background = '';
 			document.documentElement.style.colorScheme = '';
-			if (isDark) {
+			if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
 				document.body.classList.add('dark');
 				document.querySelector('.theme-toggle').textContent = 'night night';
 			}
 		});
 
 		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-			if (!localStorage.getItem('theme')) {
-				document.body.classList.toggle('dark', e.matches);
-				document.querySelector('.theme-toggle').textContent = e.matches ? 'night night' : 'good morning';
-			}
+			document.body.classList.toggle('dark', e.matches);
+			document.querySelector('.theme-toggle').textContent = e.matches ? 'night night' : 'good morning';
 		});
 
 		document.querySelectorAll('pre code').forEach((block) => {
