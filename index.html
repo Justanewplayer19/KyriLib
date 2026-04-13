@@ -518,6 +518,77 @@
 		.mobile-overlay.active {
 			display: block;
 		}
+
+		/* prevent body scroll when sidebar is open on mobile */
+		body.sidebar-open {
+			overflow: hidden;
+		}
+
+		/* hide navbar text links on mobile — sidebar has them */
+		@media (max-width: 996px) {
+			.navbar-links a {
+				display: none;
+			}
+		}
+
+		/* mobile layout */
+		@media (max-width: 768px) {
+			h1 {
+				font-size: 26px;
+				margin-bottom: 14px;
+			}
+
+			h2 {
+				font-size: 20px;
+				margin-top: 32px;
+				margin-bottom: 12px;
+			}
+
+			h3 {
+				font-size: 17px;
+				margin-top: 24px;
+			}
+
+			h4 {
+				font-size: 15px;
+			}
+
+			.content {
+				padding: 16px;
+			}
+
+			/* make tables scroll horizontally instead of overflowing */
+			table {
+				display: block;
+				overflow-x: auto;
+				-webkit-overflow-scrolling: touch;
+				white-space: nowrap;
+			}
+
+			/* code blocks slightly smaller on mobile */
+			pre {
+				font-size: 12px;
+				padding: 12px;
+			}
+
+			/* stack intro buttons vertically */
+			.button {
+				display: block;
+				margin-right: 0;
+				margin-bottom: 8px;
+				text-align: center;
+			}
+
+			/* icon name list wraps cleanly */
+			.admonition p {
+				word-break: break-word;
+			}
+
+			/* copy button always visible on touch devices */
+			.copy-button {
+				opacity: 1;
+			}
+		}
 	</style>
 </head>
 <body>
@@ -873,8 +944,11 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 
 	<script>
 		function toggleSidebar() {
-			document.querySelector('.sidebar').classList.toggle('active');
-			document.querySelector('.mobile-overlay').classList.toggle('active');
+			const sidebar = document.querySelector('.sidebar');
+			const overlay = document.querySelector('.mobile-overlay');
+			sidebar.classList.toggle('active');
+			overlay.classList.toggle('active');
+			document.body.classList.toggle('sidebar-open', sidebar.classList.contains('active'));
 		}
 
 		function toggleTheme() {
