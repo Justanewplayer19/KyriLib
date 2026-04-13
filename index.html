@@ -321,14 +321,18 @@
 			color: #ff79c6;
 		}
 
+		.pre-wrapper {
+			position: relative;
+			margin: 16px 0;
+		}
+
 		pre {
 			background: #f6f8fa;
 			padding: 16px;
 			border-radius: 6px;
 			overflow-x: auto;
-			margin: 16px 0;
+			margin: 0;
 			border: 1px solid #e3e3e3;
-			position: relative;
 		}
 
 		body.dark pre {
@@ -359,7 +363,7 @@
 			border: 1px solid #2d2d2f;
 		}
 
-		pre:hover .copy-button {
+		.pre-wrapper:hover .copy-button {
 			opacity: 1;
 		}
 
@@ -972,13 +976,30 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 			}
 		}
 
-		if (localStorage.getItem('theme') === 'dark') {
-			document.body.classList.add('dark');
-			document.querySelector('.theme-toggle').textContent = 'night night';
-		}
+		(function() {
+			const stored = localStorage.getItem('theme');
+			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			const isDark = stored ? stored === 'dark' : prefersDark;
+			if (isDark) {
+				document.body.classList.add('dark');
+				document.querySelector('.theme-toggle').textContent = 'night night';
+			}
+		})();
+
+		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+			if (!localStorage.getItem('theme')) {
+				document.body.classList.toggle('dark', e.matches);
+				document.querySelector('.theme-toggle').textContent = e.matches ? 'night night' : 'good morning';
+			}
+		});
 
 		document.querySelectorAll('pre code').forEach((block) => {
 			const pre = block.parentElement;
+			const wrapper = document.createElement('div');
+			wrapper.className = 'pre-wrapper';
+			pre.parentNode.insertBefore(wrapper, pre);
+			wrapper.appendChild(pre);
+
 			const button = document.createElement('button');
 			button.className = 'copy-button';
 			
@@ -1007,7 +1028,7 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 				}
 			});
 			
-			pre.appendChild(button);
+			wrapper.appendChild(button);
 		});
 
 		document.querySelectorAll('a[href^="#"]').forEach(anchor => {
