@@ -544,6 +544,10 @@
 			background: #2d2d2f;
 		}
 
+		section {
+			scroll-margin-top: 80px;
+		}
+
 		.mobile-overlay {
 			display: none;
 			position: fixed;
@@ -670,6 +674,10 @@
 
 				<a href="#installation" class="button">get started</a>
 				<a href="https://github.com/Justanewplayer19/KyriLib" class="button button-outline">github</a>
+
+				<h2>what is a Roblox UI library?</h2>
+				<p>a Roblox UI library is a tool that lets developers create graphical interfaces like menus, buttons, sliders, and dropdowns inside their scripts without building everything from scratch. instead of writing hundreds of lines of Roblox GUI code by hand, you load one script and call simple functions to build your interface.</p>
+				<p>KyriLib is built specifically for executor scripts. it handles all the rendering, theming, input handling, and config saving so you can focus on writing the actual features of your script.</p>
 
 				<h2>why KyriLib</h2>
 				<ul>
@@ -1064,9 +1072,11 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 		document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 			anchor.addEventListener('click', function (e) {
 				e.preventDefault();
-				const target = document.querySelector(this.getAttribute('href'));
+				const id = this.getAttribute('href').slice(1);
+				const target = document.getElementById(id);
 				if (target) {
 					target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+					setActive(id);
 					if (window.innerWidth <= 996) {
 						toggleSidebar();
 					}
