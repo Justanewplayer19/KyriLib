@@ -22,6 +22,25 @@
 	<meta name="twitter:image" content="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/favicon.png">
 
 	<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/favicon.png">
+
+	<script type="application/ld+json">
+	{
+		"@context": "https://schema.org",
+		"@type": "SoftwareSourceCode",
+		"name": "KyriLib",
+		"description": "A Roblox executor UI library with toggles, sliders, dropdowns, color pickers, keybinds, preset themes, and a built-in config system.",
+		"url": "https://justanewplayer19.github.io/KyriLib/",
+		"codeRepository": "https://github.com/Justanewplayer19/KyriLib",
+		"programmingLanguage": "Lua",
+		"runtimePlatform": "Roblox",
+		"license": "https://opensource.org/licenses/MIT",
+		"author": {
+			"@type": "Person",
+			"name": "Justanewplayer19"
+		}
+	}
+	</script>
+
 	<style>
 		html, body {
 			margin: 0;
@@ -645,11 +664,22 @@
 
 		<main class="content">
 			<section id="introduction">
-				<h1>introduction</h1>
-				<p>KyriLib is a UI library for Roblox executor scripts. dark theme, smooth animations, built-in config system, and a full theme editor.</p>
+				<h1>KyriLib - Roblox UI Library</h1>
+				<p>KyriLib is a lightweight Roblox UI library built for executor scripts. it gives you a fully featured window with tabs, elements, animations, and a built-in config system in a single loadstring.</p>
+				<p>most Roblox GUI libraries are bloated or painful to theme. KyriLib keeps it clean: dark base, 5 preset themes, per-property color pickers in the Settings tab, and a config save/load system that works out of the box with no extra setup.</p>
 
 				<a href="#installation" class="button">get started</a>
 				<a href="https://github.com/Justanewplayer19/KyriLib" class="button button-outline">github</a>
+
+				<h2>why KyriLib</h2>
+				<ul>
+					<li>one loadstring, everything included</li>
+					<li>built-in config system with auto-load on startup</li>
+					<li>5 preset themes plus a full per-property theme editor</li>
+					<li>works on mobile and desktop executors</li>
+					<li>1,000+ built-in icons via Lucide</li>
+					<li>no dependencies, no external UI frameworks</li>
+				</ul>
 
 				<h2>features</h2>
 				<ul>
@@ -661,7 +691,7 @@
 					<li>5 built-in preset themes, full per-property theme editor in Settings</li>
 					<li>built-in save/load config system with auto-load support</li>
 					<li>draggable and resizable window</li>
-					<li>keybind system with press or hold modes</li>
+					<li>keybind system with press or hold modes, supports mouse buttons</li>
 					<li>tab icons via 1,000+ lucideblox names, rbxassetid://, rbxthumb://, or https://</li>
 					<li>mobile support</li>
 				</ul>
