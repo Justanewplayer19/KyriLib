@@ -578,7 +578,7 @@
 					<li>built-in save/load config system with auto-load support</li>
 					<li>draggable and resizable window</li>
 					<li>keybind system with press or hold modes</li>
-					<li>tab icons via preset names or raw asset ids</li>
+					<li>tab icons via 1,000+ lucideblox names, rbxassetid://, rbxthumb://, or https://</li>
 					<li>mobile support</li>
 				</ul>
 			</section>
@@ -651,13 +651,23 @@ w:destroy()                    -- destroy the window</code></pre>
 
 				<pre><code>w:tab(name, icon)</code></pre>
 
-				<p>icon can be a preset name or a raw asset id:</p>
-				<pre><code>w:tab("Main", "sword")                       -- preset name
-w:tab("Custom", "rbxassetid://7734053495")   -- raw asset id</code></pre>
+				<p>icon accepts a <strong>LucideBlox name</strong>, a raw <code>rbxassetid://</code>, a <code>rbxthumb://</code>, or an <code>https://</code> URL:</p>
+				<pre><code>w:tab("Combat",   "crosshair")                  -- lucide icon name
+w:tab("Players",  "users")
+w:tab("Settings", "settings-2")
+w:tab("Custom",   "rbxassetid://7734053495")    -- raw roblox asset id
+w:tab("Thumb",    "rbxthumb://type=Asset&id=123&w=150&h=150")
+w:tab("Web",      "https://example.com/icon.png") -- https url (see note below)</code></pre>
 
 				<div class="admonition admonition-info">
-					<div class="admonition-title">preset icon names</div>
-					<p>sword, move, user, music, settings</p>
+					<div class="admonition-title">lucideblox icon pack</div>
+					<p>1,000+ <a href="https://lucide.dev/icons" target="_blank">Lucide icons</a> are built in. Pass the icon name as a string exactly as it appears on lucide.dev — e.g. <code>"arrow-up-right"</code>, <code>"battery-charging"</code>, <code>"shield-check"</code>.</p>
+					<p>Common names: <code>sword</code> &bull; <code>axe</code> &bull; <code>skull</code> &bull; <code>flame</code> &bull; <code>shield</code> &bull; <code>crosshair</code> &bull; <code>target</code> &bull; <code>eye</code> &bull; <code>ghost</code> &bull; <code>users</code> &bull; <code>user</code> &bull; <code>crown</code> &bull; <code>star</code> &bull; <code>heart</code> &bull; <code>settings</code> &bull; <code>settings-2</code> &bull; <code>sliders</code> &bull; <code>wrench</code> &bull; <code>key</code> &bull; <code>lock</code> &bull; <code>map-pin</code> &bull; <code>compass</code> &bull; <code>home</code> &bull; <code>search</code> &bull; <code>filter</code> &bull; <code>list</code> &bull; <code>grid</code> &bull; <code>music</code> &bull; <code>mic</code> &bull; <code>wifi</code> &bull; <code>monitor</code> &bull; <code>camera</code> &bull; <code>video</code> &bull; <code>file</code> &bull; <code>folder</code> &bull; <code>download</code> &bull; <code>upload</code> &bull; <code>save</code> &bull; <code>trash</code> &bull; <code>edit</code> &bull; <code>bell</code> &bull; <code>clock</code> &bull; <code>info</code> &bull; <code>alert-triangle</code> &bull; <code>check</code> &bull; <code>x</code> &bull; <code>plus</code> &bull; <code>terminal</code> &bull; <code>bot</code> &bull; <code>gamepad</code> &bull; <code>gamepad-2</code></p>
+				</div>
+
+				<div class="admonition admonition-info">
+					<div class="admonition-title">https:// urls</div>
+					<p>When you pass an <code>https://</code> URL, KyriLib downloads the image in the background using the executor's <code>request()</code> function, caches it to disk, and loads it via <code>getcustomasset()</code>. The icon appears once the download finishes. Requires an executor that supports <code>request()</code> and <code>getcustomasset()</code> (Synapse X, KRNL, Script-Ware, etc.).</p>
 				</div>
 			</section>
 
