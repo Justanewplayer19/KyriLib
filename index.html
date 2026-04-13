@@ -23,6 +23,17 @@
 
 	<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/favicon.png">
 
+	<script>
+		(function() {
+			var stored = localStorage.getItem('theme');
+			var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			if (stored ? stored === 'dark' : prefersDark) {
+				document.documentElement.style.background = '#1b1b1d';
+				document.documentElement.style.colorScheme = 'dark';
+			}
+		})();
+	</script>
+
 	<script type="application/ld+json">
 	{
 		"@context": "https://schema.org",
@@ -48,7 +59,7 @@
 			box-sizing: border-box;
 		}
 
-		body {
+body {
 			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 			background: #ffffff;
 			color: #1c1e21;
@@ -1014,15 +1025,17 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 			}
 		}
 
-		(function() {
+		document.addEventListener('DOMContentLoaded', function() {
 			const stored = localStorage.getItem('theme');
 			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 			const isDark = stored ? stored === 'dark' : prefersDark;
+			document.documentElement.style.background = '';
+			document.documentElement.style.colorScheme = '';
 			if (isDark) {
 				document.body.classList.add('dark');
 				document.querySelector('.theme-toggle').textContent = 'night night';
 			}
-		})();
+		});
 
 		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
 			if (!localStorage.getItem('theme')) {
