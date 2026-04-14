@@ -2752,7 +2752,7 @@ function kyri.new(title, options)
             return api
         end
 
-        w.tabs[name] = tab
+        table.insert(w.tabs, tab)
 
         if not w.active then
             task.wait()
