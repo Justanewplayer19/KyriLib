@@ -1494,7 +1494,7 @@ function kyri.new(title, options)
             return api
         end
 
-        function tab:button(text, callback)
+        function tab:button(text, callback, icon)
             local box = make("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
                 BackgroundColor3 = t.element,
@@ -1502,9 +1502,40 @@ function kyri.new(title, options)
             })
             make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = box})
 
+            if icon then
+                local icon_id = kyri.icons[icon]
+                    or (type(icon) == "string" and (icon:find("^rbxassetid://") or icon:find("^rbxthumb://")) and icon)
+                    or "rbxassetid://7743875962"
+                local icon_img = make("ImageLabel", {
+                    Size = UDim2.fromOffset(18, 18),
+                    Position = UDim2.new(0, 14, 0.5, -9),
+                    BackgroundTransparency = 1,
+                    Image = icon_id,
+                    ImageColor3 = t.subtext,
+                    Parent = box
+                })
+                if type(icon) == "string" and icon:find("^https://") then
+                    task.spawn(function()
+                        pcall(function()
+                            local http = request or http_request or syn and syn.request
+                            if not http or not getcustomasset then return end
+                            local res = http({Url = icon, Method = "GET"})
+                            if not res or res.StatusCode ~= 200 then return end
+                            if not isfolder("kyrilib_icons") then makefolder("kyrilib_icons") end
+                            local fname = "kyrilib_icons/" .. icon:gsub("[^%w]", "_"):sub(1, 64) .. ".png"
+                            writefile(fname, res.Body)
+                            icon_img.Image = getcustomasset(fname)
+                        end)
+                    end)
+                end
+            end
+
+            local text_x = icon and 40 or 16
+            local text_w = icon and -56 or -24
+
             local lbl = make("TextLabel", {
-                Size = UDim2.new(1, -24, 1, 0),
-                Position = UDim2.fromOffset(16, 0),
+                Size = UDim2.new(1, text_w, 1, 0),
+                Position = UDim2.fromOffset(text_x, 0),
                 BackgroundTransparency = 1,
                 Text = text,
                 TextColor3 = t.text,
@@ -2526,7 +2557,7 @@ function kyri.new(title, options)
             return api
         end
 
-        function tab:image(id, height)
+        function tab:image(id, height, scale_type)
             height = height or 120
             local box = make("Frame", {
                 Size = UDim2.new(1, 0, 0, height),
@@ -2540,7 +2571,7 @@ function kyri.new(title, options)
                 Position = UDim2.fromOffset(4, 4),
                 BackgroundTransparency = 1,
                 Image = id or "",
-                ScaleType = Enum.ScaleType.Fit,
+                ScaleType = scale_type or Enum.ScaleType.Fit,
                 Parent = box
             })
             make("UICorner", {CornerRadius = UDim.new(0, 6), Parent = img})
