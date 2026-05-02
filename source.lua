@@ -768,11 +768,11 @@ function kyri.new(title, options)
         local ks = options.KeySettings or {}
         local validKeys = ks.Key or {}
         local fileName = ks.FileName and (ks.FileName .. "_kyrikey.txt")
-        local saveKey = ks.SaveKey ~= false
         local th = kyri.theme
+        local mode = options.KeySystem == "Everytime" and "Everytime" or "Once"
 
         local savedKeyValid = false
-        if saveKey and fileName then
+        if mode == "Once" and fileName then
             pcall(function()
                 if isfile(fileName) then
                     local saved = readfile(fileName)
@@ -794,8 +794,8 @@ function kyri.new(title, options)
             })
 
             local dialog = make("Frame", {
-                Size = UDim2.fromOffset(420, 210),
-                Position = UDim2.new(0.5, -210, 0.5, -105),
+                Size = UDim2.fromOffset(480, 200),
+                Position = UDim2.new(0.5, -240, 0.5, -100),
                 BackgroundColor3 = th.bg,
                 Parent = keyGui
             })
@@ -939,7 +939,7 @@ function kyri.new(title, options)
             submitBtn.MouseButton1Click:Connect(function()
                 local ok, trimmed = tryKey(keyInput.Text)
                 if ok then
-                    if saveKey and fileName then
+                    if mode == "Once" and fileName then
                         pcall(function() writefile(fileName, trimmed) end)
                     end
                     keyAccepted = true
