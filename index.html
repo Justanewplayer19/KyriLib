@@ -1079,607 +1079,657 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 			<p>interactive preview of KyriLib running in the browser. try the elements, switch themes, send notifications.</p>
 
 			<style>
-				.kyri-demo-wrap {
-					display: flex;
-					justify-content: center;
-					margin: 24px 0;
-				}
-				.kyri-win {
-					--bg:        #08080a;
-					--container: #0e0e12;
-					--element:   #14141a;
-					--hover:     #1c1c24;
-					--active:    #20202a;
-					--accent:    #8a74f9;
-					--text:      #f5f5fa;
-					--subtext:   #a5a5b4;
-					--border:    #202028;
-					width: 520px;
-					height: 400px;
-					background: var(--bg);
-					border-radius: 12px;
-					overflow: hidden;
-					display: flex;
-					flex-direction: column;
-					box-shadow: 0 0 0 1px var(--border), 0 24px 60px rgba(0,0,0,0.6);
-					font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-					position: relative;
-					flex-shrink: 0;
-				}
-				@media (max-width: 600px) {
-					.kyri-win { width: 100%; height: auto; min-height: 360px; }
-				}
-				.kyri-topbar {
-					height: 52px;
-					background: var(--container);
-					display: flex;
-					align-items: center;
-					padding: 0 16px;
-					flex-shrink: 0;
-					position: relative;
-				}
-				.kyri-accent-bar {
-					width: 3px;
-					height: 24px;
-					background: var(--accent);
-					border-radius: 99px;
-					margin-right: 12px;
-					flex-shrink: 0;
-					transition: background 0.3s;
-				}
-				.kyri-title {
-					color: var(--text);
-					font-size: 15px;
-					font-weight: 700;
-					flex: 1;
-				}
-				.kyri-minimize {
-					width: 18px;
-					height: 18px;
-					opacity: 0.5;
-					cursor: pointer;
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					color: var(--subtext);
-					font-size: 18px;
-					line-height: 1;
-					user-select: none;
-				}
-				.kyri-body {
-					display: flex;
-					flex: 1;
-					overflow: hidden;
-				}
-				.kyri-sidebar {
-					width: 152px;
-					padding: 12px 12px;
-					display: flex;
-					flex-direction: column;
-					gap: 6px;
-					flex-shrink: 0;
-					overflow-y: auto;
-				}
-				.kyri-tab-btn {
-					height: 38px;
-					background: var(--element);
-					border-radius: 8px;
-					display: flex;
-					align-items: center;
-					padding: 0 12px;
-					cursor: pointer;
-					color: var(--subtext);
-					font-size: 13px;
-					font-weight: 500;
-					position: relative;
-					transition: background 0.15s, color 0.15s;
-					user-select: none;
-					gap: 8px;
-					overflow: hidden;
-				}
-				.kyri-tab-btn:hover { background: var(--hover); color: var(--text); }
-				.kyri-tab-btn.active { background: var(--hover); color: var(--text); }
-				.kyri-tab-indicator {
-					position: absolute;
-					right: 0;
-					top: 0;
-					width: 0;
-					height: 38px;
-					background: var(--accent);
-					border-radius: 8px;
-					transition: width 0.18s, background 0.3s;
-				}
-				.kyri-tab-btn.active .kyri-tab-indicator { width: 3px; }
-				.kyri-tab-icon {
-					width: 16px;
-					height: 16px;
-					opacity: 0.7;
-					flex-shrink: 0;
-				}
-				.kyri-tab-btn.active .kyri-tab-icon { opacity: 1; }
-				.kyri-content {
-					flex: 1;
-					overflow-y: auto;
-					padding: 8px 12px 12px 4px;
-					display: flex;
-					flex-direction: column;
-					gap: 8px;
-					scrollbar-width: thin;
-					scrollbar-color: var(--accent) transparent;
-				}
-				.kyri-content::-webkit-scrollbar { width: 3px; }
-				.kyri-content::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 99px; }
-				.kyri-page { display: none; flex-direction: column; gap: 8px; width: 100%; }
-				.kyri-page.active { display: flex; }
-				.kyri-section {
-					display: flex;
-					align-items: center;
-					height: 28px;
-					position: relative;
-				}
-				.kyri-section-line {
-					position: absolute;
-					left: 0; right: 0; top: 50%;
-					height: 1px;
-					background: var(--border);
-				}
-				.kyri-section-label {
-					position: relative;
-					background: var(--bg);
-					padding: 0 8px;
-					font-size: 11px;
-					font-weight: 600;
-					color: var(--subtext);
-					text-transform: none;
-					margin-left: 8px;
-					transition: background 0.3s;
-				}
-				.kyri-row {
-					height: 42px;
-					background: var(--element);
-					border-radius: 8px;
-					display: flex;
-					align-items: center;
-					padding: 0 16px;
-					flex-shrink: 0;
-					transition: background 0.15s;
-					cursor: default;
-				}
-				.kyri-row-label {
-					flex: 1;
-					font-size: 13px;
-					font-weight: 500;
-					color: var(--text);
-				}
-				/* toggle */
-				.kyri-toggle-track {
-					width: 46px;
-					height: 24px;
-					border-radius: 99px;
-					background: var(--container);
-					position: relative;
-					cursor: pointer;
-					transition: background 0.18s;
-					flex-shrink: 0;
-				}
-				.kyri-toggle-track.on { background: var(--accent); }
-				.kyri-toggle-knob {
-					width: 18px;
-					height: 18px;
-					background: #fff;
-					border-radius: 99px;
-					position: absolute;
-					top: 3px;
-					left: 3px;
-					transition: left 0.18s, right 0.18s;
-				}
-				.kyri-toggle-track.on .kyri-toggle-knob { left: 25px; }
-				/* slider */
-				.kyri-slider-wrap {
-					background: var(--element);
-					border-radius: 8px;
-					padding: 10px 16px 14px;
-					flex-shrink: 0;
-				}
-				.kyri-slider-top {
-					display: flex;
-					justify-content: space-between;
-					align-items: center;
-					margin-bottom: 10px;
-				}
-				.kyri-slider-name { font-size: 13px; font-weight: 500; color: var(--text); }
-				.kyri-slider-val { font-size: 13px; font-weight: 700; color: var(--accent); transition: color 0.3s; }
-				.kyri-track {
-					height: 8px;
-					background: var(--container);
-					border-radius: 99px;
-					position: relative;
-					cursor: pointer;
-				}
-				.kyri-fill {
-					height: 100%;
-					background: var(--accent);
-					border-radius: 99px;
-					transition: background 0.3s;
-					pointer-events: none;
-				}
-				.kyri-handle {
-					width: 18px;
-					height: 18px;
-					background: #fff;
-					border-radius: 99px;
-					position: absolute;
-					top: 50%;
-					transform: translate(-50%, -50%);
-					cursor: grab;
-					pointer-events: none;
-				}
-				/* button */
-				.kyri-btn-row {
-					height: 42px;
-					background: var(--element);
-					border-radius: 8px;
-					display: flex;
-					align-items: center;
-					padding: 0 16px;
-					cursor: pointer;
-					transition: background 0.15s;
-					flex-shrink: 0;
-				}
-				.kyri-btn-row:hover { background: var(--hover); }
-				.kyri-btn-label { font-size: 13px; font-weight: 500; color: var(--text); }
-				/* dropdown */
-				.kyri-dd-wrap {
-					background: var(--element);
-					border-radius: 8px;
-					position: relative;
-					flex-shrink: 0;
-					overflow: hidden;
-					transition: background 0.15s;
-				}
-				.kyri-dd-header {
-					height: 42px;
-					display: flex;
-					align-items: center;
-					padding: 0 16px;
-					cursor: pointer;
-					gap: 8px;
-				}
-				.kyri-dd-label { flex: 1; font-size: 13px; font-weight: 500; color: var(--text); }
-				.kyri-dd-selected {
-					font-size: 12px;
-					color: var(--subtext);
-					background: var(--container);
-					padding: 4px 10px;
-					border-radius: 6px;
-				}
-				.kyri-dd-arrow { font-size: 10px; color: var(--subtext); transition: transform 0.2s; }
-				.kyri-dd-wrap.open .kyri-dd-arrow { transform: rotate(180deg); }
-				.kyri-dd-list {
-					max-height: 0;
-					overflow: hidden;
-					transition: max-height 0.2s;
-					display: flex;
-					flex-direction: column;
-					gap: 2px;
-					padding: 0 8px;
-				}
-				.kyri-dd-wrap.open .kyri-dd-list { max-height: 160px; padding: 0 8px 8px; }
-				.kyri-dd-opt {
-					height: 30px;
-					border-radius: 6px;
-					background: var(--element);
-					display: flex;
-					align-items: center;
-					padding: 0 8px;
-					font-size: 12px;
-					color: var(--text);
-					cursor: pointer;
-					transition: background 0.12s;
-					flex-shrink: 0;
-				}
-				.kyri-dd-opt:hover { background: var(--hover); }
-				.kyri-dd-opt.selected { color: var(--accent); }
-				/* theme buttons */
-				.kyri-theme-btns {
-					display: flex;
-					flex-wrap: wrap;
-					gap: 6px;
-					padding: 4px 0;
-				}
-				.kyri-theme-btn {
-					padding: 6px 14px;
-					border-radius: 8px;
-					background: var(--element);
-					color: var(--text);
-					font-size: 12px;
-					font-weight: 500;
-					cursor: pointer;
-					border: 1px solid var(--border);
-					transition: background 0.15s, border-color 0.15s;
-				}
-				.kyri-theme-btn:hover { background: var(--hover); }
-				.kyri-theme-btn.active-theme { border-color: var(--accent); color: var(--accent); }
-				/* notifications */
-				.kyri-notifs {
-					position: absolute;
-					bottom: 12px;
-					right: 12px;
-					display: flex;
-					flex-direction: column;
-					gap: 8px;
-					pointer-events: none;
-					z-index: 10;
-					width: 220px;
-				}
-				.kyri-notif {
-					background: var(--bg);
-					border-radius: 10px;
-					overflow: hidden;
-					box-shadow: 0 0 0 1px var(--border);
-					pointer-events: all;
-					cursor: pointer;
-					transform: translateX(240px);
-					transition: transform 0.25s cubic-bezier(.22,.68,0,1.2), opacity 0.25s;
-					opacity: 0;
-				}
-				.kyri-notif.show { transform: translateX(0); opacity: 1; }
-				.kyri-notif-body { padding: 10px 12px 6px; display: flex; gap: 8px; }
-				.kyri-notif-bar {
-					width: 3px;
-					border-radius: 99px;
-					background: var(--accent);
-					flex-shrink: 0;
-					transition: background 0.3s;
-				}
-				.kyri-notif-text { flex: 1; }
-				.kyri-notif-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
-				.kyri-notif-msg { font-size: 11px; color: var(--subtext); }
-				.kyri-notif-prog {
-					height: 2px;
-					background: var(--accent);
-					transition: width linear, background 0.3s;
-					margin-top: 6px;
-				}
-				.kyri-paragraph {
-					background: var(--element);
-					border-radius: 8px;
-					padding: 12px 16px;
-					flex-shrink: 0;
-				}
-				.kyri-para-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-				.kyri-para-body { font-size: 12px; color: var(--subtext); line-height: 1.6; margin: 0; }
+			.kd-wrap {
+				display: flex;
+				justify-content: center;
+				align-items: flex-start;
+				margin: 28px 0;
+				user-select: none;
+			}
+			.kd {
+				--bg:        #08080a;
+				--con:       #0e0e12;
+				--el:        #14141a;
+				--hov:       #1c1c24;
+				--act:       #20202a;
+				--acc:       #8a74f9;
+				--txt:       #f5f5fa;
+				--sub:       #a5a5b4;
+				--bor:       #202028;
+				width: 520px;
+				height: 400px;
+				background: var(--bg);
+				border-radius: 12px;
+				display: flex;
+				flex-direction: column;
+				box-shadow: 0 0 0 1px var(--bor), 0 32px 80px rgba(0,0,0,.7);
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				position: relative;
+				overflow: hidden;
+				flex-shrink: 0;
+				transition: box-shadow .3s;
+			}
+			/* glow behind window */
+			.kd::before {
+				content: '';
+				position: absolute;
+				inset: -1px;
+				border-radius: 13px;
+				box-shadow: 0 0 60px 10px color-mix(in srgb, var(--acc) 18%, transparent);
+				pointer-events: none;
+				z-index: 0;
+				transition: box-shadow .3s;
+			}
+			/* topbar */
+			.kd-top {
+				height: 52px;
+				background: var(--con);
+				display: flex;
+				align-items: center;
+				padding: 0 14px 0 8px;
+				flex-shrink: 0;
+				position: relative;
+				z-index: 1;
+			}
+			.kd-acbar {
+				width: 3px;
+				height: 24px;
+				background: var(--acc);
+				border-radius: 99px;
+				margin: 14px 10px 14px 8px;
+				flex-shrink: 0;
+				transition: background .3s;
+			}
+			.kd-title {
+				flex: 1;
+				color: var(--txt);
+				font-size: 15px;
+				font-weight: 700;
+				letter-spacing: -.01em;
+				transition: color .3s;
+			}
+			.kd-min {
+				width: 18px;
+				height: 18px;
+				opacity: .45;
+				cursor: pointer;
+				transition: opacity .2s;
+				display: flex; align-items: center; justify-content: center;
+			}
+			.kd-min:hover { opacity: .8; }
+			.kd-min svg { width: 14px; height: 14px; stroke: var(--txt); stroke-width: 2; fill: none; }
+			/* body */
+			.kd-body {
+				display: flex;
+				flex: 1;
+				overflow: hidden;
+				position: relative;
+				z-index: 1;
+			}
+			/* sidebar */
+			.kd-sb {
+				width: 140px;
+				padding: 10px 12px;
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				flex-shrink: 0;
+				overflow-y: auto;
+			}
+			.kd-tb {
+				height: 38px;
+				background: var(--el);
+				border-radius: 8px;
+				display: flex;
+				align-items: center;
+				padding: 0 0 0 11px;
+				gap: 9px;
+				cursor: pointer;
+				color: var(--sub);
+				font-size: 13px;
+				font-weight: 500;
+				position: relative;
+				overflow: hidden;
+				transition: background .15s, color .15s;
+				flex-shrink: 0;
+			}
+			.kd-tb:hover { background: var(--hov); color: var(--txt); }
+			.kd-tb.on   { background: var(--hov); color: var(--txt); }
+			.kd-tb svg  { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; flex-shrink: 0; opacity: .7; transition: opacity .15s; }
+			.kd-tb.on svg { opacity: 1; }
+			.kd-ind {
+				position: absolute;
+				right: 0; top: 0;
+				width: 0; height: 38px;
+				background: var(--acc);
+				border-radius: 8px;
+				transition: width .18s, background .3s;
+			}
+			.kd-tb.on .kd-ind { width: 3px; }
+			/* content */
+			.kd-con {
+				flex: 1;
+				overflow-y: auto;
+				overflow-x: hidden;
+				padding: 6px 12px 12px 2px;
+				scrollbar-width: thin;
+				scrollbar-color: var(--acc) transparent;
+			}
+			.kd-con::-webkit-scrollbar { width: 3px; }
+			.kd-con::-webkit-scrollbar-thumb { background: var(--acc); border-radius: 99px; }
+			.kd-pg { display: none; flex-direction: column; gap: 7px; }
+			.kd-pg.on { display: flex; }
+			/* section divider */
+			.kd-sec {
+				height: 28px;
+				position: relative;
+				display: flex;
+				align-items: center;
+				flex-shrink: 0;
+			}
+			.kd-sec-line {
+				position: absolute;
+				left: 0; right: 0; top: 50%;
+				height: 1px;
+				background: var(--bor);
+				transition: background .3s;
+			}
+			.kd-sec-lbl {
+				position: relative;
+				font-size: 11px;
+				font-weight: 600;
+				color: var(--sub);
+				background: var(--bg);
+				padding: 0 8px 0 16px;
+				transition: color .3s, background .3s;
+				white-space: nowrap;
+			}
+			/* row (toggle / label row) */
+			.kd-row {
+				height: 42px;
+				background: var(--el);
+				border-radius: 8px;
+				display: flex;
+				align-items: center;
+				padding: 0 14px 0 16px;
+				flex-shrink: 0;
+				transition: background .15s;
+			}
+			.kd-row:hover { background: var(--hov); }
+			.kd-lbl {
+				flex: 1;
+				font-size: 13px;
+				font-weight: 500;
+				color: var(--txt);
+				transition: color .3s;
+			}
+			/* toggle */
+			.kd-tog {
+				width: 46px; height: 24px;
+				border-radius: 99px;
+				background: var(--con);
+				position: relative;
+				cursor: pointer;
+				flex-shrink: 0;
+				transition: background .18s;
+			}
+			.kd-tog.on { background: var(--acc); }
+			.kd-knob {
+				width: 18px; height: 18px;
+				background: #fff;
+				border-radius: 99px;
+				position: absolute;
+				top: 3px; left: 3px;
+				transition: left .18s, background .3s;
+				pointer-events: none;
+			}
+			.kd-tog.on .kd-knob { left: 25px; }
+			/* slider */
+			.kd-sl {
+				background: var(--el);
+				border-radius: 8px;
+				padding: 10px 16px 14px 16px;
+				flex-shrink: 0;
+				transition: background .15s;
+			}
+			.kd-sl-top {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 10px;
+			}
+			.kd-sl-name { font-size: 13px; font-weight: 500; color: var(--txt); transition: color .3s; }
+			.kd-sl-val  { font-size: 13px; font-weight: 700; color: var(--acc); transition: color .3s; }
+			.kd-trk {
+				height: 8px;
+				background: var(--con);
+				border-radius: 99px;
+				position: relative;
+				cursor: pointer;
+				transition: background .3s;
+			}
+			.kd-fill {
+				height: 100%;
+				background: var(--acc);
+				border-radius: 99px;
+				pointer-events: none;
+				transition: background .3s;
+			}
+			.kd-hdl {
+				width: 18px; height: 18px;
+				background: #fff;
+				border-radius: 99px;
+				position: absolute;
+				top: 50%; transform: translate(-50%,-50%);
+				pointer-events: none;
+				box-shadow: 0 1px 4px rgba(0,0,0,.4);
+			}
+			/* button row */
+			.kd-btn {
+				height: 42px;
+				background: var(--el);
+				border-radius: 8px;
+				display: flex;
+				align-items: center;
+				padding: 0 16px;
+				cursor: pointer;
+				flex-shrink: 0;
+				position: relative;
+				overflow: hidden;
+				transition: background .15s;
+			}
+			.kd-btn:hover { background: var(--hov); }
+			.kd-btn .kd-lbl { pointer-events: none; }
+			/* dropdown */
+			.kd-dd {
+				background: var(--el);
+				border-radius: 8px;
+				flex-shrink: 0;
+				overflow: hidden;
+				transition: background .15s;
+			}
+			.kd-dd-hdr {
+				height: 42px;
+				display: flex;
+				align-items: center;
+				padding: 0 14px 0 16px;
+				cursor: pointer;
+				gap: 8px;
+			}
+			.kd-dd-sel {
+				font-size: 12px;
+				color: var(--sub);
+				background: var(--con);
+				padding: 3px 10px;
+				border-radius: 6px;
+				white-space: nowrap;
+				transition: color .3s, background .3s;
+			}
+			.kd-dd-arr { font-size: 9px; color: var(--sub); transition: transform .2s, color .3s; flex-shrink: 0; }
+			.kd-dd.open .kd-dd-arr { transform: rotate(180deg); }
+			.kd-dd-list {
+				max-height: 0;
+				overflow: hidden;
+				transition: max-height .2s ease;
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				padding: 0 8px;
+			}
+			.kd-dd.open .kd-dd-list { max-height: 150px; padding: 0 8px 8px; }
+			.kd-dd-opt {
+				height: 30px;
+				border-radius: 6px;
+				background: var(--el);
+				display: flex;
+				align-items: center;
+				padding: 0 10px;
+				font-size: 12px;
+				color: var(--txt);
+				cursor: pointer;
+				flex-shrink: 0;
+				transition: background .12s, color .3s;
+			}
+			.kd-dd-opt:hover { background: var(--hov); }
+			.kd-dd-opt.sel { color: var(--acc); }
+			/* paragraph */
+			.kd-para {
+				background: var(--el);
+				border-radius: 8px;
+				padding: 12px 16px;
+				flex-shrink: 0;
+				transition: background .3s;
+			}
+			.kd-para-t { font-size: 13px; font-weight: 700; color: var(--txt); margin-bottom: 4px; transition: color .3s; }
+			.kd-para-b { font-size: 12px; color: var(--sub); line-height: 1.6; transition: color .3s; }
+			/* theme row */
+			.kd-th-grid {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+			}
+			.kd-th-btn {
+				padding: 5px 13px;
+				border-radius: 8px;
+				background: var(--el);
+				color: var(--sub);
+				font-size: 12px;
+				font-weight: 500;
+				cursor: pointer;
+				border: 1px solid var(--bor);
+				transition: background .15s, color .15s, border-color .15s;
+			}
+			.kd-th-btn:hover { background: var(--hov); color: var(--txt); }
+			.kd-th-btn.on { border-color: var(--acc); color: var(--acc); }
+			/* progress bar element */
+			.kd-pb {
+				background: var(--el);
+				border-radius: 8px;
+				padding: 10px 16px 14px;
+				flex-shrink: 0;
+				transition: background .3s;
+			}
+			.kd-pb-top { display: flex; justify-content: space-between; margin-bottom: 8px; }
+			.kd-pb-name { font-size: 13px; font-weight: 500; color: var(--txt); transition: color .3s; }
+			.kd-pb-pct  { font-size: 13px; font-weight: 700; color: var(--acc); transition: color .3s; }
+			.kd-pb-trk  { height: 5px; background: var(--con); border-radius: 99px; transition: background .3s; }
+			.kd-pb-fill { height: 100%; background: var(--acc); border-radius: 99px; width: 0%; transition: width .4s ease, background .3s; }
+			/* notifications */
+			.kd-nfs {
+				position: absolute;
+				bottom: 10px; right: 10px;
+				display: flex; flex-direction: column; gap: 6px;
+				pointer-events: none;
+				z-index: 20;
+				width: 210px;
+			}
+			.kd-nf {
+				background: var(--bg);
+				border-radius: 10px;
+				overflow: hidden;
+				outline: 1px solid var(--bor);
+				pointer-events: all;
+				cursor: pointer;
+				transform: translateX(230px);
+				opacity: 0;
+				transition: transform .28s cubic-bezier(.22,.68,0,1.15), opacity .2s;
+			}
+			.kd-nf.in { transform: translateX(0); opacity: 1; }
+			.kd-nf-body { display: flex; gap: 8px; padding: 9px 12px 5px; }
+			.kd-nf-bar  { width: 3px; border-radius: 99px; background: var(--acc); flex-shrink: 0; transition: background .3s; }
+			.kd-nf-t    { font-size: 12px; font-weight: 700; color: var(--txt); transition: color .3s; }
+			.kd-nf-m    { font-size: 11px; color: var(--sub); margin-top: 1px; transition: color .3s; }
+			.kd-nf-prog { height: 2px; background: var(--acc); transition: background .3s; margin-top: 4px; }
+			@media (max-width: 620px) {
+				.kd { width: 100%; height: 380px; }
+			}
 			</style>
 
-			<div class="kyri-demo-wrap">
-				<div class="kyri-win" id="kyriDemo">
-					<div class="kyri-topbar">
-						<div class="kyri-accent-bar" id="dAccentBar"></div>
-						<div class="kyri-title">demo script</div>
-						<div class="kyri-minimize">−</div>
+			<div class="kd-wrap">
+				<div class="kd" id="kd">
+					<!-- topbar -->
+					<div class="kd-top">
+						<div class="kd-acbar" id="kdAcbar"></div>
+						<div class="kd-title">demo script</div>
+						<div class="kd-min">
+							<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+						</div>
 					</div>
-					<div class="kyri-body">
-						<div class="kyri-sidebar">
-							<div class="kyri-tab-btn active" data-tab="main">
-								<svg class="kyri-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+					<!-- body -->
+					<div class="kd-body">
+						<!-- sidebar -->
+						<div class="kd-sb" id="kdSb">
+							<div class="kd-tb on" data-pg="main">
+								<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
 								Main
-								<div class="kyri-tab-indicator"></div>
+								<div class="kd-ind"></div>
 							</div>
-							<div class="kyri-tab-btn" data-tab="visual">
-								<svg class="kyri-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+							<div class="kd-tb" data-pg="visual">
+								<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
 								Themes
-								<div class="kyri-tab-indicator"></div>
+								<div class="kd-ind"></div>
 							</div>
-							<div class="kyri-tab-btn" data-tab="about">
-								<svg class="kyri-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-								About
-								<div class="kyri-tab-indicator"></div>
+							<div class="kd-tb" data-pg="misc">
+								<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+								Misc
+								<div class="kd-ind"></div>
 							</div>
 						</div>
-						<div class="kyri-content">
+						<!-- content -->
+						<div class="kd-con">
 							<!-- main page -->
-							<div class="kyri-page active" id="page-main">
-								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">movement</span></div>
-								<div class="kyri-row">
-									<span class="kyri-row-label">walkspeed</span>
-									<div class="kyri-toggle-track" id="tog1" onclick="demoToggle('tog1')">
-										<div class="kyri-toggle-knob"></div>
+							<div class="kd-pg on" id="kpg-main">
+								<div class="kd-sec"><div class="kd-sec-line"></div><span class="kd-sec-lbl">movement</span></div>
+								<div class="kd-row">
+									<span class="kd-lbl">walkspeed</span>
+									<div class="kd-tog on" id="kdTog1"><div class="kd-knob"></div></div>
+								</div>
+								<div class="kd-sl">
+									<div class="kd-sl-top">
+										<span class="kd-sl-name">speed</span>
+										<span class="kd-sl-val" id="kdSlVal">16</span>
+									</div>
+									<div class="kd-trk" id="kdTrk">
+										<div class="kd-fill" id="kdFill" style="width:3%"></div>
+										<div class="kd-hdl" id="kdHdl" style="left:3%"></div>
 									</div>
 								</div>
-								<div class="kyri-slider-wrap">
-									<div class="kyri-slider-top">
-										<span class="kyri-slider-name">speed</span>
-										<span class="kyri-slider-val" id="sliderVal">16</span>
-									</div>
-									<div class="kyri-track" id="demoTrack">
-										<div class="kyri-fill" id="demoFill" style="width:3%"></div>
-										<div class="kyri-handle" id="demoHandle" style="left:3%"></div>
-									</div>
+								<div class="kd-sec"><div class="kd-sec-line"></div><span class="kd-sec-lbl">combat</span></div>
+								<div class="kd-row">
+									<span class="kd-lbl">aimlock</span>
+									<div class="kd-tog" id="kdTog2"><div class="kd-knob"></div></div>
 								</div>
-								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">combat</span></div>
-								<div class="kyri-row">
-									<span class="kyri-row-label">aimlock</span>
-									<div class="kyri-toggle-track on" id="tog2" onclick="demoToggle('tog2')">
-										<div class="kyri-toggle-knob"></div>
+								<div class="kd-dd" id="kdDd">
+									<div class="kd-dd-hdr" onclick="kdDdToggle()">
+										<span class="kd-lbl">aim part</span>
+										<span class="kd-dd-sel" id="kdDdSel">Head</span>
+										<span class="kd-dd-arr">&#9660;</span>
 									</div>
+									<div class="kd-dd-list" id="kdDdList"></div>
 								</div>
-								<div class="kyri-dd-wrap" id="demoDd">
-									<div class="kyri-dd-header" onclick="demoDdToggle()">
-										<span class="kyri-dd-label">aim part</span>
-										<span class="kyri-dd-selected" id="ddSelected">Head</span>
-										<span class="kyri-dd-arrow">▼</span>
+								<div class="kd-sec"><div class="kd-sec-line"></div><span class="kd-sec-lbl">actions</span></div>
+								<div class="kd-btn" onclick="kdNotify('loaded','script is running',3)">
+									<span class="kd-lbl">send notification</span>
+								</div>
+								<div class="kd-pb">
+									<div class="kd-pb-top">
+										<span class="kd-pb-name">progress</span>
+										<span class="kd-pb-pct" id="kdPbPct">0%</span>
 									</div>
-									<div class="kyri-dd-list" id="ddList"></div>
-								</div>
-								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">actions</span></div>
-								<div class="kyri-btn-row" onclick="demoNotify('script', 'everything loaded fine', 3)">
-									<span class="kyri-btn-label">send notification</span>
-								</div>
-								<div class="kyri-btn-row" onclick="demoNotify('walkspeed', 'set to ' + document.getElementById('sliderVal').textContent, 2)">
-									<span class="kyri-btn-label">apply speed</span>
+									<div class="kd-pb-trk"><div class="kd-pb-fill" id="kdPbFill"></div></div>
 								</div>
 							</div>
 							<!-- themes page -->
-							<div class="kyri-page" id="page-visual">
-								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">preset themes</span></div>
-								<div class="kyri-theme-btns" id="themeBtns">
-									<div class="kyri-theme-btn active-theme" onclick="demoTheme('kyri',this)">kyri</div>
-									<div class="kyri-theme-btn" onclick="demoTheme('midnight',this)">midnight</div>
-									<div class="kyri-theme-btn" onclick="demoTheme('rose',this)">rose</div>
-									<div class="kyri-theme-btn" onclick="demoTheme('forest',this)">forest</div>
-									<div class="kyri-theme-btn" onclick="demoTheme('slate',this)">slate</div>
+							<div class="kd-pg" id="kpg-visual">
+								<div class="kd-sec"><div class="kd-sec-line"></div><span class="kd-sec-lbl">preset themes</span></div>
+								<div class="kd-th-grid" id="kdThGrid">
+									<div class="kd-th-btn on" onclick="kdTheme('kyri',this)">kyri</div>
+									<div class="kd-th-btn" onclick="kdTheme('midnight',this)">midnight</div>
+									<div class="kd-th-btn" onclick="kdTheme('rose',this)">rose</div>
+									<div class="kd-th-btn" onclick="kdTheme('forest',this)">forest</div>
+									<div class="kd-th-btn" onclick="kdTheme('slate',this)">slate</div>
 								</div>
-								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">accent color</span></div>
-								<div class="kyri-row">
-									<span class="kyri-row-label">pick accent</span>
-									<input type="color" id="accentPicker" value="#8a74f9"
-										style="width:44px;height:24px;border:none;border-radius:6px;cursor:pointer;padding:0;background:none;"
-										oninput="demoAccent(this.value)">
+								<div class="kd-sec"><div class="kd-sec-line"></div><span class="kd-sec-lbl">accent color</span></div>
+								<div class="kd-row" style="cursor:default">
+									<span class="kd-lbl">pick accent</span>
+									<input type="color" id="kdAcc" value="#8a74f9"
+										style="width:44px;height:22px;border:none;border-radius:5px;cursor:pointer;padding:2px;background:var(--con);"
+										oninput="kdAccent(this.value)">
 								</div>
 							</div>
-							<!-- about page -->
-							<div class="kyri-page" id="page-about">
-								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">kyrilib</span></div>
-								<div class="kyri-paragraph">
-									<div class="kyri-para-title">what you're looking at</div>
-									<p class="kyri-para-body">this is a live browser demo of the KyriLib window. the real library runs in Roblox executors and is loaded with a single loadstring. themes, toggles, sliders, dropdowns, notifications — all built in.</p>
+							<!-- misc page -->
+							<div class="kd-pg" id="kpg-misc">
+								<div class="kd-sec"><div class="kd-sec-line"></div><span class="kd-sec-lbl">about</span></div>
+								<div class="kd-para">
+									<div class="kd-para-t">KyriLib browser demo</div>
+									<div class="kd-para-b">this window is a faithful HTML replica of the real KyriLib running inside Roblox executors. one loadstring gives you this entire UI system.</div>
 								</div>
-								<div class="kyri-btn-row" onclick="window.open('https://github.com/Justanewplayer19/KyriLib','_blank')">
-									<span class="kyri-btn-label">view on github →</span>
+								<div class="kd-sec"><div class="kd-sec-line"></div><span class="kd-sec-lbl">links</span></div>
+								<div class="kd-btn" onclick="window.open('https://github.com/Justanewplayer19/KyriLib','_blank')">
+									<span class="kd-lbl">view on github</span>
+								</div>
+								<div class="kd-btn" onclick="kdNotify('KyriLib','thanks for checking it out',3)">
+									<span class="kd-lbl">send notification</span>
 								</div>
 							</div>
 						</div>
 					</div>
-					<div class="kyri-notifs" id="demoNotifs"></div>
+					<!-- notification container -->
+					<div class="kd-nfs" id="kdNfs"></div>
 				</div>
 			</div>
 
 			<script>
 			(function(){
+				const W = document.getElementById('kd');
 				const themes = {
-					kyri:     { bg:'#08080a', container:'#0e0e12', element:'#14141a', hover:'#1c1c24', accent:'#8a74f9', text:'#f5f5fa', subtext:'#a5a5b4', border:'#202028' },
-					midnight: { bg:'#06080e', container:'#0a0e16', element:'#101420', hover:'#161c2c', accent:'#50a0ff', text:'#f0f5ff', subtext:'#8ca0c8', border:'#182032' },
-					rose:     { bg:'#0c080a', container:'#120c10', element:'#1a1216', hover:'#24181e', accent:'#ff6e96', text:'#fff5f8', subtext:'#bea0aa', border:'#281a20' },
-					forest:   { bg:'#080c08', container:'#0c120c', element:'#121a12', hover:'#182218', accent:'#50dc78', text:'#f0faf0', subtext:'#96be9b', border:'#182618' },
-					slate:    { bg:'#0c0c0e', container:'#121216', element:'#1a1a20', hover:'#22222a', accent:'#a0a0b9', text:'#f0f0f5', subtext:'#a0a0af', border:'#24242c' }
+					kyri:     {bg:'#08080a',con:'#0e0e12',el:'#14141a',hov:'#1c1c24',act:'#20202a',acc:'#8a74f9',txt:'#f5f5fa',sub:'#a5a5b4',bor:'#202028'},
+					midnight: {bg:'#06080e',con:'#0a0e16',el:'#101420',hov:'#161c2c',act:'#1a2236',acc:'#50a0ff',txt:'#f0f5ff',sub:'#8ca0c8',bor:'#182032'},
+					rose:     {bg:'#0c080a',con:'#120c10',el:'#1a1216',hov:'#241820',act:'#2c1e26',acc:'#ff6e96',txt:'#fff5f8',sub:'#bea0aa',bor:'#281a20'},
+					forest:   {bg:'#080c08',con:'#0c120c',el:'#121a12',hov:'#182218',act:'#1e2a1e',acc:'#50dc78',txt:'#f0faf0',sub:'#96be9b',bor:'#182618'},
+					slate:    {bg:'#0c0c0e',con:'#121216',el:'#1a1a20',hov:'#222228',act:'#28282e',acc:'#a0a0b9',txt:'#f0f0f5',sub:'#a0a0af',bor:'#24242c'}
 				};
 
-				const win = document.getElementById('kyriDemo');
-
-				function applyTheme(t) {
-					const th = themes[t];
-					for (const [k,v] of Object.entries(th)) {
-						win.style.setProperty('--'+k, v);
-					}
-					document.querySelectorAll('.kyri-section-label').forEach(el => {
-						el.style.background = th.bg;
-					});
-					const picker = document.getElementById('accentPicker');
-					if (picker) picker.value = th.accent;
+				function applyTheme(name) {
+					const t = themes[name];
+					for (const [k,v] of Object.entries(t)) W.style.setProperty('--'+k, v);
+					W.querySelectorAll('.kd-sec-lbl').forEach(el => el.style.background = t.bg);
+					const acc = document.getElementById('kdAcc');
+					if (acc) acc.value = t.acc;
 				}
 
-				window.demoTheme = function(name, el) {
+				window.kdTheme = function(name, el) {
 					applyTheme(name);
-					document.querySelectorAll('.kyri-theme-btn').forEach(b => b.classList.remove('active-theme'));
-					el.classList.add('active-theme');
-					demoNotify('theme', name + ' applied', 2);
+					W.querySelectorAll('.kd-th-btn').forEach(b => b.classList.remove('on'));
+					el.classList.add('on');
+					kdNotify('theme', name + ' applied', 2);
 				};
 
-				window.demoAccent = function(hex) {
-					win.style.setProperty('--accent', hex);
-					document.querySelectorAll('.kyri-theme-btn').forEach(b => b.classList.remove('active-theme'));
+				window.kdAccent = function(hex) {
+					W.style.setProperty('--acc', hex);
+					W.querySelectorAll('.kd-th-btn').forEach(b => b.classList.remove('on'));
 				};
 
-				window.demoToggle = function(id) {
-					const t = document.getElementById(id);
-					t.classList.toggle('on');
-				};
+				// tabs
+				W.querySelectorAll('.kd-tb').forEach(btn => {
+					btn.addEventListener('click', () => {
+						W.querySelectorAll('.kd-tb').forEach(b => b.classList.remove('on'));
+						W.querySelectorAll('.kd-pg').forEach(p => p.classList.remove('on'));
+						btn.classList.add('on');
+						document.getElementById('kpg-'+btn.dataset.pg).classList.add('on');
+					});
+				});
+
+				// toggles
+				W.querySelectorAll('.kd-tog').forEach(tog => {
+					tog.addEventListener('click', () => tog.classList.toggle('on'));
+				});
 
 				// slider
-				const track = document.getElementById('demoTrack');
-				const fill  = document.getElementById('demoFill');
-				const handle = document.getElementById('demoHandle');
-				const valLbl = document.getElementById('sliderVal');
-				let dragging = false;
+				const trk = document.getElementById('kdTrk');
+				const fill = document.getElementById('kdFill');
+				const hdl = document.getElementById('kdHdl');
+				const slVal = document.getElementById('kdSlVal');
+				let drag = false;
 
 				function setSlider(pct) {
 					pct = Math.max(0, Math.min(1, pct));
-					const val = Math.round(16 + (500 - 16) * pct);
-					fill.style.width = (pct * 100) + '%';
-					handle.style.left = (pct * 100) + '%';
-					valLbl.textContent = val;
+					const v = Math.round(16 + (500-16)*pct);
+					fill.style.width = (pct*100)+'%';
+					hdl.style.left   = (pct*100)+'%';
+					slVal.textContent = v;
+					// also update progress bar for fun
+					const pb = document.getElementById('kdPbFill');
+					const pbPct = document.getElementById('kdPbPct');
+					if (pb) { pb.style.width=(pct*100)+'%'; pbPct.textContent=Math.round(pct*100)+'%'; }
 				}
 
-				function sliderFromEvent(e) {
-					const r = track.getBoundingClientRect();
-					const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
-					setSlider(x / r.width);
+				function sliderAt(e) {
+					const r = trk.getBoundingClientRect();
+					setSlider(((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width);
 				}
 
-				track.addEventListener('mousedown', e => { dragging = true; sliderFromEvent(e); });
-				track.addEventListener('touchstart', e => { dragging = true; sliderFromEvent(e); }, {passive:true});
-				document.addEventListener('mousemove', e => { if (dragging) sliderFromEvent(e); });
-				document.addEventListener('touchmove', e => { if (dragging) sliderFromEvent(e); }, {passive:true});
-				document.addEventListener('mouseup', () => dragging = false);
-				document.addEventListener('touchend', () => dragging = false);
+				trk.addEventListener('mousedown',  e => { drag=true; sliderAt(e); e.preventDefault(); });
+				trk.addEventListener('touchstart', e => { drag=true; sliderAt(e); },{passive:true});
+				document.addEventListener('mousemove',  e => { if(drag) sliderAt(e); });
+				document.addEventListener('touchmove',  e => { if(drag) sliderAt(e); },{passive:true});
+				document.addEventListener('mouseup',  () => drag=false);
+				document.addEventListener('touchend', () => drag=false);
 
 				// dropdown
 				const ddOpts = ['Head','HumanoidRootPart','Torso','Right Arm','Left Arm'];
+				const ddWrap = document.getElementById('kdDd');
+				const ddList = document.getElementById('kdDdList');
+				const ddSel  = document.getElementById('kdDdSel');
 				let ddOpen = false;
-				const ddList = document.getElementById('ddList');
-				const ddSel  = document.getElementById('ddSelected');
-				const ddWrap = document.getElementById('demoDd');
 
 				ddOpts.forEach(opt => {
 					const el = document.createElement('div');
-					el.className = 'kyri-dd-opt' + (opt === 'Head' ? ' selected' : '');
+					el.className = 'kd-dd-opt' + (opt==='Head'?' sel':'');
 					el.textContent = opt;
-					el.onclick = () => {
+					el.addEventListener('click', () => {
 						ddSel.textContent = opt;
-						ddList.querySelectorAll('.kyri-dd-opt').forEach(o => o.classList.remove('selected'));
-						el.classList.add('selected');
+						ddList.querySelectorAll('.kd-dd-opt').forEach(o => o.classList.remove('sel'));
+						el.classList.add('sel');
 						ddWrap.classList.remove('open');
 						ddOpen = false;
-					};
+					});
 					ddList.appendChild(el);
 				});
 
-				window.demoDdToggle = function() {
+				window.kdDdToggle = function() {
 					ddOpen = !ddOpen;
 					ddWrap.classList.toggle('open', ddOpen);
 				};
 
-				// tabs
-				document.querySelectorAll('.kyri-tab-btn').forEach(btn => {
-					btn.addEventListener('click', () => {
-						document.querySelectorAll('.kyri-tab-btn').forEach(b => b.classList.remove('active'));
-						document.querySelectorAll('.kyri-page').forEach(p => p.classList.remove('active'));
-						btn.classList.add('active');
-						document.getElementById('page-' + btn.dataset.tab).classList.add('active');
-					});
+				// close dropdown on outside click
+				document.addEventListener('mousedown', e => {
+					if (ddOpen && !ddWrap.contains(e.target)) {
+						ddOpen = false;
+						ddWrap.classList.remove('open');
+					}
 				});
 
 				// notifications
-				const notifContainer = document.getElementById('demoNotifs');
-				window.demoNotify = function(title, msg, duration) {
+				const nfs = document.getElementById('kdNfs');
+				window.kdNotify = function(title, msg, dur) {
 					const n = document.createElement('div');
-					n.className = 'kyri-notif';
-					n.innerHTML = `<div class="kyri-notif-body"><div class="kyri-notif-bar"></div><div class="kyri-notif-text"><div class="kyri-notif-title">${title}</div><div class="kyri-notif-msg">${msg}</div></div></div><div class="kyri-notif-prog" id="np_${Date.now()}" style="width:100%"></div>`;
-					notifContainer.appendChild(n);
-					const prog = n.querySelector('.kyri-notif-prog');
+					n.className = 'kd-nf';
+					n.innerHTML =
+						'<div class="kd-nf-body">' +
+							'<div class="kd-nf-bar"></div>' +
+							'<div><div class="kd-nf-t">'+title+'</div><div class="kd-nf-m">'+msg+'</div></div>' +
+						'</div>' +
+						'<div class="kd-nf-prog" style="width:100%"></div>';
+					nfs.appendChild(n);
+					const prog = n.querySelector('.kd-nf-prog');
 					requestAnimationFrame(() => {
-						n.classList.add('show');
-						prog.style.transition = `width ${duration}s linear`;
-						prog.style.width = '0%';
+						requestAnimationFrame(() => {
+							n.classList.add('in');
+							prog.style.transition = 'width '+dur+'s linear';
+							prog.style.width = '0%';
+						});
 					});
 					const dismiss = () => {
-						n.style.opacity = '0';
-						n.style.transform = 'translateX(240px)';
-						setTimeout(() => n.remove(), 280);
+						n.classList.remove('in');
+						setTimeout(() => n.remove(), 300);
 					};
-					n.onclick = dismiss;
-					setTimeout(dismiss, duration * 1000);
+					n.addEventListener('click', dismiss);
+					setTimeout(dismiss, dur*1000);
 				};
+
+				// animate progress bar on load
+				setTimeout(() => {
+					let v = 0;
+					const iv = setInterval(() => {
+						v = Math.min(v+2, 73);
+						const pb = document.getElementById('kdPbFill');
+						const pct = document.getElementById('kdPbPct');
+						if (pb) { pb.style.width=v+'%'; pct.textContent=v+'%'; }
+						if (v>=73) clearInterval(iv);
+					}, 30);
+				}, 600);
+
 			})();
 			</script>
 		</section>
