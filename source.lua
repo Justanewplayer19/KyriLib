@@ -895,6 +895,7 @@ function kyri.new(title, options)
                     TextSize = 12,
                     Font = Enum.Font.Gotham,
                     TextXAlignment = Enum.TextXAlignment.Left,
+                    TextYAlignment = Enum.TextYAlignment.Top,
                     TextWrapped = true,
                     Parent = dialog
                 })
@@ -969,60 +970,82 @@ function kyri.new(title, options)
             Parent = localPlayer.PlayerGui
         })
 
-        local splashBg = make("Frame", {
-            Size = UDim2.fromScale(1, 1),
-            BackgroundColor3 = Color3.fromRGB(10, 10, 12),
-            BackgroundTransparency = 0,
+        local card = make("Frame", {
+            Size = UDim2.fromOffset(280, 110),
+            Position = UDim2.new(0.5, -140, 0.5, -55),
+            BackgroundColor3 = kyri.theme.bg,
+            BackgroundTransparency = 1,
             Parent = splashGui
         })
+        make("UICorner", { CornerRadius = UDim.new(0, 14), Parent = card })
+        make("UIStroke", { Color = kyri.theme.border, Thickness = 1, Transparency = 1, Parent = card })
+
+        local accent_bar = make("Frame", {
+            Size = UDim2.fromOffset(3, 32),
+            Position = UDim2.fromOffset(18, 22),
+            BackgroundColor3 = kyri.theme.accent,
+            BackgroundTransparency = 1,
+            Parent = card
+        })
+        make("UICorner", { CornerRadius = UDim.new(1, 0), Parent = accent_bar })
 
         local splashTitle = make("TextLabel", {
-            Size = UDim2.new(1, -40, 0, 36),
-            Position = UDim2.new(0, 30, 0.44, 0),
+            Size = UDim2.new(1, -50, 0, 26),
+            Position = UDim2.fromOffset(30, 20),
             BackgroundTransparency = 1,
             Text = ks.Title or title or "Key System",
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            TextTransparency = 0,
-            TextSize = 22,
+            TextColor3 = kyri.theme.text,
+            TextTransparency = 1,
+            TextSize = 17,
             Font = Enum.Font.GothamBold,
             TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = splashBg
+            Parent = card
         })
 
         local splashSub = make("TextLabel", {
-            Size = UDim2.new(1, -40, 0, 22),
-            Position = UDim2.new(0, 30, 0.44, 40),
+            Size = UDim2.new(1, -50, 0, 20),
+            Position = UDim2.fromOffset(30, 46),
             BackgroundTransparency = 1,
             Text = "by " .. (ks.Creator or "you"),
-            TextColor3 = Color3.fromRGB(160, 160, 175),
-            TextTransparency = 0,
-            TextSize = 14,
+            TextColor3 = kyri.theme.subtext,
+            TextTransparency = 1,
+            TextSize = 13,
             Font = Enum.Font.Gotham,
             TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = splashBg
+            Parent = card
         })
 
         local splashBrand = make("TextLabel", {
-            Size = UDim2.new(1, -20, 0, 20),
-            Position = UDim2.new(0, 0, 1, -30),
+            Size = UDim2.new(1, -18, 0, 18),
+            Position = UDim2.new(0, 0, 1, -26),
             BackgroundTransparency = 1,
             Text = "Kyri UI",
-            TextColor3 = Color3.fromRGB(70, 70, 80),
-            TextTransparency = 0,
-            TextSize = 12,
+            TextColor3 = kyri.theme.subtext,
+            TextTransparency = 1,
+            TextSize = 11,
             Font = Enum.Font.Gotham,
             TextXAlignment = Enum.TextXAlignment.Right,
-            Parent = splashBg
+            Parent = card
         })
+
+        local fadeIn = TweenInfo.new(0.3, Enum.EasingStyle.Quad)
+        kyri.svc.tw:Create(card, fadeIn, { BackgroundTransparency = 0 }):Play()
+        kyri.svc.tw:Create(card:FindFirstChildOfClass("UIStroke"), fadeIn, { Transparency = 0 }):Play()
+        kyri.svc.tw:Create(accent_bar, fadeIn, { BackgroundTransparency = 0 }):Play()
+        kyri.svc.tw:Create(splashTitle, fadeIn, { TextTransparency = 0 }):Play()
+        kyri.svc.tw:Create(splashSub, fadeIn, { TextTransparency = 0 }):Play()
+        kyri.svc.tw:Create(splashBrand, fadeIn, { TextTransparency = 0 }):Play()
 
         task.wait(2)
 
-        local fadeInfo = TweenInfo.new(0.5)
-        kyri.svc.tw:Create(splashBg, fadeInfo, { BackgroundTransparency = 1 }):Play()
-        kyri.svc.tw:Create(splashTitle, fadeInfo, { TextTransparency = 1 }):Play()
-        kyri.svc.tw:Create(splashSub, fadeInfo, { TextTransparency = 1 }):Play()
-        kyri.svc.tw:Create(splashBrand, fadeInfo, { TextTransparency = 1 }):Play()
-        task.wait(0.6)
+        local fadeOut = TweenInfo.new(0.4)
+        kyri.svc.tw:Create(card, fadeOut, { BackgroundTransparency = 1 }):Play()
+        kyri.svc.tw:Create(card:FindFirstChildOfClass("UIStroke"), fadeOut, { Transparency = 1 }):Play()
+        kyri.svc.tw:Create(accent_bar, fadeOut, { BackgroundTransparency = 1 }):Play()
+        kyri.svc.tw:Create(splashTitle, fadeOut, { TextTransparency = 1 }):Play()
+        kyri.svc.tw:Create(splashSub, fadeOut, { TextTransparency = 1 }):Play()
+        kyri.svc.tw:Create(splashBrand, fadeOut, { TextTransparency = 1 }):Play()
+        task.wait(0.5)
         splashGui:Destroy()
     end
 
