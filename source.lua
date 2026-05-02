@@ -793,18 +793,10 @@ function kyri.new(title, options)
                 Parent = localPlayer.PlayerGui
             })
 
-            make("Frame", {
-                Size = UDim2.fromScale(1, 1),
-                BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-                BackgroundTransparency = 0.45,
-                Parent = keyGui
-            })
-
             local dialog = make("Frame", {
                 Size = UDim2.fromOffset(420, 210),
                 Position = UDim2.new(0.5, -210, 0.5, -105),
                 BackgroundColor3 = th.bg,
-                ClipsDescendants = true,
                 Parent = keyGui
             })
             make("UICorner", { CornerRadius = UDim.new(0, 12), Parent = dialog })
@@ -884,8 +876,8 @@ function kyri.new(title, options)
             -- right side: note
             if ks.Note then
                 make("TextLabel", {
-                    Size = UDim2.new(0.44, -10, 0, 16),
-                    Position = UDim2.new(0.55, 0, 0, 80),
+                    Size = UDim2.new(0.44, -22, 0, 16),
+                    Position = UDim2.new(0.55, 12, 0, 80),
                     BackgroundTransparency = 1,
                     Text = "Note",
                     TextColor3 = th.subtext,
@@ -895,8 +887,8 @@ function kyri.new(title, options)
                     Parent = dialog
                 })
                 make("TextLabel", {
-                    Size = UDim2.new(0.44, -10, 0, 70),
-                    Position = UDim2.new(0.55, 0, 0, 98),
+                    Size = UDim2.new(0.44, -22, 0, 70),
+                    Position = UDim2.new(0.55, 12, 0, 98),
                     BackgroundTransparency = 1,
                     Text = ks.Note,
                     TextColor3 = th.text,
