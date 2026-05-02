@@ -51,11 +51,11 @@ Full docs: [https://justanewplayer19.github.io/KyriLib](https://justanewplayer19
 ### Window methods
 
 ```lua
-w:tab(name, icon)         -- create a tab, returns tab object
-w:notify(title, text, duration)  -- send a notification (click to dismiss)
-w:accent(color)           -- change accent color live
-w:apply_theme(overrides)  -- change any theme colors live (partial or full)
-w:destroy()               -- destroy the window
+w:tab(name, icon)               -- create a tab, returns tab object
+w:notify(title, text, duration) -- send a notification (click to dismiss)
+w:accent(color)                 -- change accent color live
+w:apply_theme(overrides)        -- change any theme colors live (partial or full)
+w:destroy()                     -- destroy the window
 ```
 
 `kyri.presets` contains built-in themes: `kyri`, `midnight`, `rose`, `forest`, `slate`
@@ -67,7 +67,7 @@ w:apply_theme({ accent = Color3.fromRGB(255, 80, 80) })  -- partial override
 
 ### Tab icons
 
-Uses the [LucideBlox](https://github.com/frappedevs/lucideblox) icon pack — 1,000+ Lucide icons available by name, or pass a raw asset id:
+Uses the [LucideBlox](https://github.com/frappedevs/lucideblox) icon pack, 1,000+ Lucide icons available by name, or pass a raw asset id:
 
 ```lua
 w:tab("Main", "sword")                          -- lucide icon name
@@ -79,7 +79,7 @@ w:tab("Custom", "rbxassetid://7734053495")      -- raw asset id
 
 Some useful names: `sword`, `axe`, `skull`, `flame`, `shield`, `crosshair`, `target`, `eye`, `ghost`, `users`, `user`, `user-plus`, `crown`, `star`, `heart`, `bolt`, `zap`, `settings`, `settings-2`, `sliders`, `wrench`, `key`, `lock`, `unlock`, `map-pin`, `compass`, `navigation`, `home`, `search`, `filter`, `list`, `grid`, `layout-dashboard`, `music`, `volume-2`, `mic`, `wifi`, `bluetooth`, `monitor`, `smartphone`, `camera`, `video`, `image`, `file`, `folder`, `download`, `upload`, `save`, `trash`, `edit`, `copy`, `share`, `send`, `mail`, `bell`, `clock`, `calendar`, `info`, `alert-triangle`, `check`, `x`, `plus`, `minus`, `arrow-right`, `chevron-down`
 
-Full list: [lucide.dev/icons](https://lucide.dev/icons) — use the icon name as-is (e.g. `"arrow-up-right"`, `"battery-charging"`)
+Full list at [lucide.dev/icons](https://lucide.dev/icons). Use the icon name as-is (e.g. `"arrow-up-right"`, `"battery-charging"`).
 
 ### Elements
 
@@ -93,7 +93,7 @@ tab:button(text, callback)
 tab:toggle(text, default, callback, flag)
 ```
 
-**Slider** — drag the track, or click the value label to type a number directly
+**Slider**: drag the track, or click the value label to type a number directly
 ```lua
 tab:slider(text, min, max, default, callback, flag, step)
 -- step is optional (e.g. 0.1 for one decimal place)
@@ -104,7 +104,7 @@ tab:slider(text, min, max, default, callback, flag, step)
 tab:input(text, placeholder, callback, flag)
 ```
 
-**Dropdown** — searchable
+**Dropdown**: searchable
 ```lua
 tab:dropdown(text, options, default, callback, flag)
 ```
@@ -173,13 +173,13 @@ local w = kyri.new("my script", {
     }
 })
 
-if not window then return end  -- user closed dialog without a valid key
+if not w then return end  -- user closed dialog without a valid key
 ```
 
 **`KeySystem` modes:**
 | value | behaviour |
 |-------|-----------|
-| `"Once"` | saves the accepted key to disk — dialog skipped on future runs. if the owner changes the key list, the saved key is invalid and the dialog shows again automatically |
+| `"Once"` | saves the accepted key to disk. dialog is skipped on future runs. if the owner changes the key list, the saved key becomes invalid and the dialog shows again |
 | `"Everytime"` | always shows the dialog, never saves |
 
 **`KeySettings` fields:**
