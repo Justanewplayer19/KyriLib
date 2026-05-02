@@ -876,26 +876,15 @@ function kyri.new(title, options)
             -- right side: note
             if ks.Note then
                 make("TextLabel", {
-                    Size = UDim2.new(0.44, -22, 0, 16),
-                    Position = UDim2.new(0.55, 12, 0, 80),
-                    BackgroundTransparency = 1,
-                    Text = "Note",
-                    TextColor3 = th.subtext,
-                    TextSize = 11,
-                    Font = Enum.Font.Gotham,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    Parent = dialog
-                })
-                make("TextLabel", {
-                    Size = UDim2.new(0.44, -22, 0, 70),
-                    Position = UDim2.new(0.55, 12, 0, 98),
+                    Size = UDim2.new(0.44, -22, 1, -20),
+                    Position = UDim2.new(0.55, 12, 0, 10),
                     BackgroundTransparency = 1,
                     Text = ks.Note,
                     TextColor3 = th.text,
                     TextSize = 12,
                     Font = Enum.Font.Gotham,
                     TextXAlignment = Enum.TextXAlignment.Left,
-                    TextYAlignment = Enum.TextYAlignment.Top,
+                    TextYAlignment = Enum.TextYAlignment.Center,
                     TextWrapped = true,
                     Parent = dialog
                 })
