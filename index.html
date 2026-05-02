@@ -685,8 +685,14 @@ body {
 			</div>
 
 			<div class="sidebar-section">
+				<div class="sidebar-title">features</div>
+				<a href="#key-system" class="sidebar-link">key system</a>
+			</div>
+
+			<div class="sidebar-section">
 				<div class="sidebar-title">examples</div>
 				<a href="#complete-example" class="sidebar-link">complete example</a>
+				<a href="#demo" class="sidebar-link">live demo</a>
 			</div>
 		</aside>
 
@@ -770,6 +776,8 @@ end, "ws")</code></pre>
 						<tr><td>GameName</td><td>string</td><td>used for config file storage</td></tr>
 						<tr><td>AutoLoad</td><td>string</td><td>config name to load on startup</td></tr>
 						<tr><td>Theme</td><td>table</td><td>override theme colors at init (any subset)</td></tr>
+						<tr><td>KeySystem</td><td><code>"Once"</code> / <code>"Everytime"</code></td><td>enable key gate before window loads</td></tr>
+						<tr><td>KeySettings</td><td>table</td><td>key system config — see <a href="#key-system">key system</a></td></tr>
 					</tbody>
 				</table>
 
@@ -969,6 +977,57 @@ w.flags.ws_set(100, true)</code></pre>
 				</div>
 			</section>
 
+			<section id="key-system">
+				<h2>key system</h2>
+				<p>gate your script behind a key before the window loads. pass <code>KeySystem</code> and <code>KeySettings</code> to <code>kyri.new</code>. if the user closes the dialog without a valid key, <code>kyri.new</code> returns <code>nil</code> — always guard your code.</p>
+
+				<pre><code>local w = kyri.new("my script", {
+    GameName = "MyGame",
+    KeySystem = "Once",
+    KeySettings = {
+        Title    = "My Script",
+        Subtitle = "Enter your key to continue",
+        Note     = "Get a key from the discord",
+        Creator  = "yourname",
+        Key      = { "MY-KEY-ABC", "SECOND-KEY" },
+        FileName = "MyScript"
+    }
+})
+
+if not w then return end</code></pre>
+
+				<h3>modes</h3>
+				<table>
+					<thead>
+						<tr><th>value</th><th>behaviour</th></tr>
+					</thead>
+					<tbody>
+						<tr><td><code>"Once"</code></td><td>saves the accepted key to disk — dialog is skipped on future runs. if the owner updates the <code>Key</code> list, the saved key becomes invalid and the dialog shows again automatically</td></tr>
+						<tr><td><code>"Everytime"</code></td><td>always shows the dialog, never saves the key</td></tr>
+					</tbody>
+				</table>
+
+				<h3>KeySettings fields</h3>
+				<table>
+					<thead>
+						<tr><th>key</th><th>type</th><th>description</th></tr>
+					</thead>
+					<tbody>
+						<tr><td>Title</td><td>string</td><td>dialog title</td></tr>
+						<tr><td>Subtitle</td><td>string</td><td>dialog subtitle line</td></tr>
+						<tr><td>Note</td><td>string</td><td>text shown on the right side of the dialog</td></tr>
+						<tr><td>Creator</td><td>string</td><td>shown on success splash as "by Creator"</td></tr>
+						<tr><td>Key</td><td>table</td><td>list of valid key strings</td></tr>
+						<tr><td>FileName</td><td>string</td><td>filename used to save the key in <code>"Once"</code> mode</td></tr>
+					</tbody>
+				</table>
+
+				<div class="admonition admonition-info">
+					<div class="admonition-title">key expiry</div>
+					<p>in <code>"Once"</code> mode, the saved key is validated against your current <code>Key</code> list on every run. changing or removing a key in your script immediately invalidates any saved copies — users will see the dialog again on their next run.</p>
+				</div>
+			</section>
+
 			<section id="complete-example">
 				<h2>complete example</h2>
 				<pre><code>local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
@@ -1013,6 +1072,616 @@ misc:section("theme presets")
 misc:button("midnight", function() w:apply_theme(kyri.presets["midnight"]) end)
 misc:button("rose", function() w:apply_theme(kyri.presets["rose"]) end)
 misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code></pre>
+		</section>
+
+		<section id="demo">
+			<h2>live demo</h2>
+			<p>interactive preview of KyriLib running in the browser. try the elements, switch themes, send notifications.</p>
+
+			<style>
+				.kyri-demo-wrap {
+					display: flex;
+					justify-content: center;
+					margin: 24px 0;
+				}
+				.kyri-win {
+					--bg:        #08080a;
+					--container: #0e0e12;
+					--element:   #14141a;
+					--hover:     #1c1c24;
+					--active:    #20202a;
+					--accent:    #8a74f9;
+					--text:      #f5f5fa;
+					--subtext:   #a5a5b4;
+					--border:    #202028;
+					width: 520px;
+					height: 400px;
+					background: var(--bg);
+					border-radius: 12px;
+					overflow: hidden;
+					display: flex;
+					flex-direction: column;
+					box-shadow: 0 0 0 1px var(--border), 0 24px 60px rgba(0,0,0,0.6);
+					font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+					position: relative;
+					flex-shrink: 0;
+				}
+				@media (max-width: 600px) {
+					.kyri-win { width: 100%; height: auto; min-height: 360px; }
+				}
+				.kyri-topbar {
+					height: 52px;
+					background: var(--container);
+					display: flex;
+					align-items: center;
+					padding: 0 16px;
+					flex-shrink: 0;
+					position: relative;
+				}
+				.kyri-accent-bar {
+					width: 3px;
+					height: 24px;
+					background: var(--accent);
+					border-radius: 99px;
+					margin-right: 12px;
+					flex-shrink: 0;
+					transition: background 0.3s;
+				}
+				.kyri-title {
+					color: var(--text);
+					font-size: 15px;
+					font-weight: 700;
+					flex: 1;
+				}
+				.kyri-minimize {
+					width: 18px;
+					height: 18px;
+					opacity: 0.5;
+					cursor: pointer;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					color: var(--subtext);
+					font-size: 18px;
+					line-height: 1;
+					user-select: none;
+				}
+				.kyri-body {
+					display: flex;
+					flex: 1;
+					overflow: hidden;
+				}
+				.kyri-sidebar {
+					width: 152px;
+					padding: 12px 12px;
+					display: flex;
+					flex-direction: column;
+					gap: 6px;
+					flex-shrink: 0;
+					overflow-y: auto;
+				}
+				.kyri-tab-btn {
+					height: 38px;
+					background: var(--element);
+					border-radius: 8px;
+					display: flex;
+					align-items: center;
+					padding: 0 12px;
+					cursor: pointer;
+					color: var(--subtext);
+					font-size: 13px;
+					font-weight: 500;
+					position: relative;
+					transition: background 0.15s, color 0.15s;
+					user-select: none;
+					gap: 8px;
+					overflow: hidden;
+				}
+				.kyri-tab-btn:hover { background: var(--hover); color: var(--text); }
+				.kyri-tab-btn.active { background: var(--hover); color: var(--text); }
+				.kyri-tab-indicator {
+					position: absolute;
+					right: 0;
+					top: 0;
+					width: 0;
+					height: 38px;
+					background: var(--accent);
+					border-radius: 8px;
+					transition: width 0.18s, background 0.3s;
+				}
+				.kyri-tab-btn.active .kyri-tab-indicator { width: 3px; }
+				.kyri-tab-icon {
+					width: 16px;
+					height: 16px;
+					opacity: 0.7;
+					flex-shrink: 0;
+				}
+				.kyri-tab-btn.active .kyri-tab-icon { opacity: 1; }
+				.kyri-content {
+					flex: 1;
+					overflow-y: auto;
+					padding: 8px 12px 12px 4px;
+					display: flex;
+					flex-direction: column;
+					gap: 8px;
+					scrollbar-width: thin;
+					scrollbar-color: var(--accent) transparent;
+				}
+				.kyri-content::-webkit-scrollbar { width: 3px; }
+				.kyri-content::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 99px; }
+				.kyri-page { display: none; flex-direction: column; gap: 8px; width: 100%; }
+				.kyri-page.active { display: flex; }
+				.kyri-section {
+					display: flex;
+					align-items: center;
+					height: 28px;
+					position: relative;
+				}
+				.kyri-section-line {
+					position: absolute;
+					left: 0; right: 0; top: 50%;
+					height: 1px;
+					background: var(--border);
+				}
+				.kyri-section-label {
+					position: relative;
+					background: var(--bg);
+					padding: 0 8px;
+					font-size: 11px;
+					font-weight: 600;
+					color: var(--subtext);
+					text-transform: none;
+					margin-left: 8px;
+					transition: background 0.3s;
+				}
+				.kyri-row {
+					height: 42px;
+					background: var(--element);
+					border-radius: 8px;
+					display: flex;
+					align-items: center;
+					padding: 0 16px;
+					flex-shrink: 0;
+					transition: background 0.15s;
+					cursor: default;
+				}
+				.kyri-row-label {
+					flex: 1;
+					font-size: 13px;
+					font-weight: 500;
+					color: var(--text);
+				}
+				/* toggle */
+				.kyri-toggle-track {
+					width: 46px;
+					height: 24px;
+					border-radius: 99px;
+					background: var(--container);
+					position: relative;
+					cursor: pointer;
+					transition: background 0.18s;
+					flex-shrink: 0;
+				}
+				.kyri-toggle-track.on { background: var(--accent); }
+				.kyri-toggle-knob {
+					width: 18px;
+					height: 18px;
+					background: #fff;
+					border-radius: 99px;
+					position: absolute;
+					top: 3px;
+					left: 3px;
+					transition: left 0.18s, right 0.18s;
+				}
+				.kyri-toggle-track.on .kyri-toggle-knob { left: 25px; }
+				/* slider */
+				.kyri-slider-wrap {
+					background: var(--element);
+					border-radius: 8px;
+					padding: 10px 16px 14px;
+					flex-shrink: 0;
+				}
+				.kyri-slider-top {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					margin-bottom: 10px;
+				}
+				.kyri-slider-name { font-size: 13px; font-weight: 500; color: var(--text); }
+				.kyri-slider-val { font-size: 13px; font-weight: 700; color: var(--accent); transition: color 0.3s; }
+				.kyri-track {
+					height: 8px;
+					background: var(--container);
+					border-radius: 99px;
+					position: relative;
+					cursor: pointer;
+				}
+				.kyri-fill {
+					height: 100%;
+					background: var(--accent);
+					border-radius: 99px;
+					transition: background 0.3s;
+					pointer-events: none;
+				}
+				.kyri-handle {
+					width: 18px;
+					height: 18px;
+					background: #fff;
+					border-radius: 99px;
+					position: absolute;
+					top: 50%;
+					transform: translate(-50%, -50%);
+					cursor: grab;
+					pointer-events: none;
+				}
+				/* button */
+				.kyri-btn-row {
+					height: 42px;
+					background: var(--element);
+					border-radius: 8px;
+					display: flex;
+					align-items: center;
+					padding: 0 16px;
+					cursor: pointer;
+					transition: background 0.15s;
+					flex-shrink: 0;
+				}
+				.kyri-btn-row:hover { background: var(--hover); }
+				.kyri-btn-label { font-size: 13px; font-weight: 500; color: var(--text); }
+				/* dropdown */
+				.kyri-dd-wrap {
+					background: var(--element);
+					border-radius: 8px;
+					position: relative;
+					flex-shrink: 0;
+					overflow: hidden;
+					transition: background 0.15s;
+				}
+				.kyri-dd-header {
+					height: 42px;
+					display: flex;
+					align-items: center;
+					padding: 0 16px;
+					cursor: pointer;
+					gap: 8px;
+				}
+				.kyri-dd-label { flex: 1; font-size: 13px; font-weight: 500; color: var(--text); }
+				.kyri-dd-selected {
+					font-size: 12px;
+					color: var(--subtext);
+					background: var(--container);
+					padding: 4px 10px;
+					border-radius: 6px;
+				}
+				.kyri-dd-arrow { font-size: 10px; color: var(--subtext); transition: transform 0.2s; }
+				.kyri-dd-wrap.open .kyri-dd-arrow { transform: rotate(180deg); }
+				.kyri-dd-list {
+					max-height: 0;
+					overflow: hidden;
+					transition: max-height 0.2s;
+					display: flex;
+					flex-direction: column;
+					gap: 2px;
+					padding: 0 8px;
+				}
+				.kyri-dd-wrap.open .kyri-dd-list { max-height: 160px; padding: 0 8px 8px; }
+				.kyri-dd-opt {
+					height: 30px;
+					border-radius: 6px;
+					background: var(--element);
+					display: flex;
+					align-items: center;
+					padding: 0 8px;
+					font-size: 12px;
+					color: var(--text);
+					cursor: pointer;
+					transition: background 0.12s;
+					flex-shrink: 0;
+				}
+				.kyri-dd-opt:hover { background: var(--hover); }
+				.kyri-dd-opt.selected { color: var(--accent); }
+				/* theme buttons */
+				.kyri-theme-btns {
+					display: flex;
+					flex-wrap: wrap;
+					gap: 6px;
+					padding: 4px 0;
+				}
+				.kyri-theme-btn {
+					padding: 6px 14px;
+					border-radius: 8px;
+					background: var(--element);
+					color: var(--text);
+					font-size: 12px;
+					font-weight: 500;
+					cursor: pointer;
+					border: 1px solid var(--border);
+					transition: background 0.15s, border-color 0.15s;
+				}
+				.kyri-theme-btn:hover { background: var(--hover); }
+				.kyri-theme-btn.active-theme { border-color: var(--accent); color: var(--accent); }
+				/* notifications */
+				.kyri-notifs {
+					position: absolute;
+					bottom: 12px;
+					right: 12px;
+					display: flex;
+					flex-direction: column;
+					gap: 8px;
+					pointer-events: none;
+					z-index: 10;
+					width: 220px;
+				}
+				.kyri-notif {
+					background: var(--bg);
+					border-radius: 10px;
+					overflow: hidden;
+					box-shadow: 0 0 0 1px var(--border);
+					pointer-events: all;
+					cursor: pointer;
+					transform: translateX(240px);
+					transition: transform 0.25s cubic-bezier(.22,.68,0,1.2), opacity 0.25s;
+					opacity: 0;
+				}
+				.kyri-notif.show { transform: translateX(0); opacity: 1; }
+				.kyri-notif-body { padding: 10px 12px 6px; display: flex; gap: 8px; }
+				.kyri-notif-bar {
+					width: 3px;
+					border-radius: 99px;
+					background: var(--accent);
+					flex-shrink: 0;
+					transition: background 0.3s;
+				}
+				.kyri-notif-text { flex: 1; }
+				.kyri-notif-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+				.kyri-notif-msg { font-size: 11px; color: var(--subtext); }
+				.kyri-notif-prog {
+					height: 2px;
+					background: var(--accent);
+					transition: width linear, background 0.3s;
+					margin-top: 6px;
+				}
+				.kyri-paragraph {
+					background: var(--element);
+					border-radius: 8px;
+					padding: 12px 16px;
+					flex-shrink: 0;
+				}
+				.kyri-para-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+				.kyri-para-body { font-size: 12px; color: var(--subtext); line-height: 1.6; margin: 0; }
+			</style>
+
+			<div class="kyri-demo-wrap">
+				<div class="kyri-win" id="kyriDemo">
+					<div class="kyri-topbar">
+						<div class="kyri-accent-bar" id="dAccentBar"></div>
+						<div class="kyri-title">demo script</div>
+						<div class="kyri-minimize">−</div>
+					</div>
+					<div class="kyri-body">
+						<div class="kyri-sidebar">
+							<div class="kyri-tab-btn active" data-tab="main">
+								<svg class="kyri-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+								Main
+								<div class="kyri-tab-indicator"></div>
+							</div>
+							<div class="kyri-tab-btn" data-tab="visual">
+								<svg class="kyri-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+								Themes
+								<div class="kyri-tab-indicator"></div>
+							</div>
+							<div class="kyri-tab-btn" data-tab="about">
+								<svg class="kyri-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+								About
+								<div class="kyri-tab-indicator"></div>
+							</div>
+						</div>
+						<div class="kyri-content">
+							<!-- main page -->
+							<div class="kyri-page active" id="page-main">
+								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">movement</span></div>
+								<div class="kyri-row">
+									<span class="kyri-row-label">walkspeed</span>
+									<div class="kyri-toggle-track" id="tog1" onclick="demoToggle('tog1')">
+										<div class="kyri-toggle-knob"></div>
+									</div>
+								</div>
+								<div class="kyri-slider-wrap">
+									<div class="kyri-slider-top">
+										<span class="kyri-slider-name">speed</span>
+										<span class="kyri-slider-val" id="sliderVal">16</span>
+									</div>
+									<div class="kyri-track" id="demoTrack">
+										<div class="kyri-fill" id="demoFill" style="width:3%"></div>
+										<div class="kyri-handle" id="demoHandle" style="left:3%"></div>
+									</div>
+								</div>
+								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">combat</span></div>
+								<div class="kyri-row">
+									<span class="kyri-row-label">aimlock</span>
+									<div class="kyri-toggle-track on" id="tog2" onclick="demoToggle('tog2')">
+										<div class="kyri-toggle-knob"></div>
+									</div>
+								</div>
+								<div class="kyri-dd-wrap" id="demoDd">
+									<div class="kyri-dd-header" onclick="demoDdToggle()">
+										<span class="kyri-dd-label">aim part</span>
+										<span class="kyri-dd-selected" id="ddSelected">Head</span>
+										<span class="kyri-dd-arrow">▼</span>
+									</div>
+									<div class="kyri-dd-list" id="ddList"></div>
+								</div>
+								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">actions</span></div>
+								<div class="kyri-btn-row" onclick="demoNotify('script', 'everything loaded fine', 3)">
+									<span class="kyri-btn-label">send notification</span>
+								</div>
+								<div class="kyri-btn-row" onclick="demoNotify('walkspeed', 'set to ' + document.getElementById('sliderVal').textContent, 2)">
+									<span class="kyri-btn-label">apply speed</span>
+								</div>
+							</div>
+							<!-- themes page -->
+							<div class="kyri-page" id="page-visual">
+								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">preset themes</span></div>
+								<div class="kyri-theme-btns" id="themeBtns">
+									<div class="kyri-theme-btn active-theme" onclick="demoTheme('kyri',this)">kyri</div>
+									<div class="kyri-theme-btn" onclick="demoTheme('midnight',this)">midnight</div>
+									<div class="kyri-theme-btn" onclick="demoTheme('rose',this)">rose</div>
+									<div class="kyri-theme-btn" onclick="demoTheme('forest',this)">forest</div>
+									<div class="kyri-theme-btn" onclick="demoTheme('slate',this)">slate</div>
+								</div>
+								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">accent color</span></div>
+								<div class="kyri-row">
+									<span class="kyri-row-label">pick accent</span>
+									<input type="color" id="accentPicker" value="#8a74f9"
+										style="width:44px;height:24px;border:none;border-radius:6px;cursor:pointer;padding:0;background:none;"
+										oninput="demoAccent(this.value)">
+								</div>
+							</div>
+							<!-- about page -->
+							<div class="kyri-page" id="page-about">
+								<div class="kyri-section"><div class="kyri-section-line"></div><span class="kyri-section-label">kyrilib</span></div>
+								<div class="kyri-paragraph">
+									<div class="kyri-para-title">what you're looking at</div>
+									<p class="kyri-para-body">this is a live browser demo of the KyriLib window. the real library runs in Roblox executors and is loaded with a single loadstring. themes, toggles, sliders, dropdowns, notifications — all built in.</p>
+								</div>
+								<div class="kyri-btn-row" onclick="window.open('https://github.com/Justanewplayer19/KyriLib','_blank')">
+									<span class="kyri-btn-label">view on github →</span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="kyri-notifs" id="demoNotifs"></div>
+				</div>
+			</div>
+
+			<script>
+			(function(){
+				const themes = {
+					kyri:     { bg:'#08080a', container:'#0e0e12', element:'#14141a', hover:'#1c1c24', accent:'#8a74f9', text:'#f5f5fa', subtext:'#a5a5b4', border:'#202028' },
+					midnight: { bg:'#06080e', container:'#0a0e16', element:'#101420', hover:'#161c2c', accent:'#50a0ff', text:'#f0f5ff', subtext:'#8ca0c8', border:'#182032' },
+					rose:     { bg:'#0c080a', container:'#120c10', element:'#1a1216', hover:'#24181e', accent:'#ff6e96', text:'#fff5f8', subtext:'#bea0aa', border:'#281a20' },
+					forest:   { bg:'#080c08', container:'#0c120c', element:'#121a12', hover:'#182218', accent:'#50dc78', text:'#f0faf0', subtext:'#96be9b', border:'#182618' },
+					slate:    { bg:'#0c0c0e', container:'#121216', element:'#1a1a20', hover:'#22222a', accent:'#a0a0b9', text:'#f0f0f5', subtext:'#a0a0af', border:'#24242c' }
+				};
+
+				const win = document.getElementById('kyriDemo');
+
+				function applyTheme(t) {
+					const th = themes[t];
+					for (const [k,v] of Object.entries(th)) {
+						win.style.setProperty('--'+k, v);
+					}
+					document.querySelectorAll('.kyri-section-label').forEach(el => {
+						el.style.background = th.bg;
+					});
+					const picker = document.getElementById('accentPicker');
+					if (picker) picker.value = th.accent;
+				}
+
+				window.demoTheme = function(name, el) {
+					applyTheme(name);
+					document.querySelectorAll('.kyri-theme-btn').forEach(b => b.classList.remove('active-theme'));
+					el.classList.add('active-theme');
+					demoNotify('theme', name + ' applied', 2);
+				};
+
+				window.demoAccent = function(hex) {
+					win.style.setProperty('--accent', hex);
+					document.querySelectorAll('.kyri-theme-btn').forEach(b => b.classList.remove('active-theme'));
+				};
+
+				window.demoToggle = function(id) {
+					const t = document.getElementById(id);
+					t.classList.toggle('on');
+				};
+
+				// slider
+				const track = document.getElementById('demoTrack');
+				const fill  = document.getElementById('demoFill');
+				const handle = document.getElementById('demoHandle');
+				const valLbl = document.getElementById('sliderVal');
+				let dragging = false;
+
+				function setSlider(pct) {
+					pct = Math.max(0, Math.min(1, pct));
+					const val = Math.round(16 + (500 - 16) * pct);
+					fill.style.width = (pct * 100) + '%';
+					handle.style.left = (pct * 100) + '%';
+					valLbl.textContent = val;
+				}
+
+				function sliderFromEvent(e) {
+					const r = track.getBoundingClientRect();
+					const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+					setSlider(x / r.width);
+				}
+
+				track.addEventListener('mousedown', e => { dragging = true; sliderFromEvent(e); });
+				track.addEventListener('touchstart', e => { dragging = true; sliderFromEvent(e); }, {passive:true});
+				document.addEventListener('mousemove', e => { if (dragging) sliderFromEvent(e); });
+				document.addEventListener('touchmove', e => { if (dragging) sliderFromEvent(e); }, {passive:true});
+				document.addEventListener('mouseup', () => dragging = false);
+				document.addEventListener('touchend', () => dragging = false);
+
+				// dropdown
+				const ddOpts = ['Head','HumanoidRootPart','Torso','Right Arm','Left Arm'];
+				let ddOpen = false;
+				const ddList = document.getElementById('ddList');
+				const ddSel  = document.getElementById('ddSelected');
+				const ddWrap = document.getElementById('demoDd');
+
+				ddOpts.forEach(opt => {
+					const el = document.createElement('div');
+					el.className = 'kyri-dd-opt' + (opt === 'Head' ? ' selected' : '');
+					el.textContent = opt;
+					el.onclick = () => {
+						ddSel.textContent = opt;
+						ddList.querySelectorAll('.kyri-dd-opt').forEach(o => o.classList.remove('selected'));
+						el.classList.add('selected');
+						ddWrap.classList.remove('open');
+						ddOpen = false;
+					};
+					ddList.appendChild(el);
+				});
+
+				window.demoDdToggle = function() {
+					ddOpen = !ddOpen;
+					ddWrap.classList.toggle('open', ddOpen);
+				};
+
+				// tabs
+				document.querySelectorAll('.kyri-tab-btn').forEach(btn => {
+					btn.addEventListener('click', () => {
+						document.querySelectorAll('.kyri-tab-btn').forEach(b => b.classList.remove('active'));
+						document.querySelectorAll('.kyri-page').forEach(p => p.classList.remove('active'));
+						btn.classList.add('active');
+						document.getElementById('page-' + btn.dataset.tab).classList.add('active');
+					});
+				});
+
+				// notifications
+				const notifContainer = document.getElementById('demoNotifs');
+				window.demoNotify = function(title, msg, duration) {
+					const n = document.createElement('div');
+					n.className = 'kyri-notif';
+					n.innerHTML = `<div class="kyri-notif-body"><div class="kyri-notif-bar"></div><div class="kyri-notif-text"><div class="kyri-notif-title">${title}</div><div class="kyri-notif-msg">${msg}</div></div></div><div class="kyri-notif-prog" id="np_${Date.now()}" style="width:100%"></div>`;
+					notifContainer.appendChild(n);
+					const prog = n.querySelector('.kyri-notif-prog');
+					requestAnimationFrame(() => {
+						n.classList.add('show');
+						prog.style.transition = `width ${duration}s linear`;
+						prog.style.width = '0%';
+					});
+					const dismiss = () => {
+						n.style.opacity = '0';
+						n.style.transform = 'translateX(240px)';
+						setTimeout(() => n.remove(), 280);
+					};
+					n.onclick = dismiss;
+					setTimeout(dismiss, duration * 1000);
+				};
+			})();
+			</script>
 		</section>
 		</main>
 	</div>
