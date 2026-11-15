@@ -354,8 +354,10 @@ function kyri.island(opts)
         Parent = art
     })
 
+    local show_chev = opts.body_height ~= nil
+
     local ctitle = make("TextLabel", {
-        Size = UDim2.new(1, show_bars and -74 or -48, 1, 0),
+        Size = UDim2.new(1, (show_bars or show_chev) and -74 or -48, 1, 0),
         Position = UDim2.fromOffset(39, 0),
         BackgroundTransparency = 1,
         Text = opts.title or "kyri",
@@ -366,6 +368,18 @@ function kyri.island(opts)
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = cv
     })
+
+    if show_chev then
+        make("ImageLabel", {
+            Size = UDim2.fromOffset(14, 14),
+            Position = UDim2.new(1, -26, 0.5, -7),
+            BackgroundTransparency = 1,
+            Image = ico("chevron-down") or "",
+            ImageColor3 = t.subtext,
+            ImageTransparency = 0.35,
+            Parent = cv
+        })
+    end
 
     local bar_objs = {}
     if show_bars then
@@ -589,6 +603,7 @@ function kyri.island(opts)
     local trow = make("Frame", {
         Size = UDim2.new(1, 0, 0, 36),
         BackgroundTransparency = 1,
+        Visible = false,
         LayoutOrder = 3,
         Parent = ev
     })
@@ -659,7 +674,7 @@ function kyri.island(opts)
     local function exp_h()
         local h, n = 0, 0
         for i,c in pairs(ev:GetChildren()) do
-            if c:IsA("GuiObject") then
+            if c:IsA("GuiObject") and c.Visible then
                 h = h + c.Size.Y.Offset
                 n = n + 1
             end
@@ -778,6 +793,8 @@ function kyri.island(opts)
             ImageColor3 = t.text,
             Parent = b
         })
+
+        trow.Visible = true
 
         b.MouseButton1Click:Connect(function()
             if cb then pcall(cb) end
