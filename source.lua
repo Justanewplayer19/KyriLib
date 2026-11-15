@@ -149,6 +149,104 @@ end
 
 local CONFIG_FOLDER = "KyriLib"
 
+function kyri.copybox(text, title)
+    local lp = kyri.svc.plr.LocalPlayer
+    local gui = make("ScreenGui", {
+        Name = rnd(),
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false,
+        IgnoreGuiInset = true,
+        DisplayOrder = 999999999,
+        Parent = lp:FindFirstChildOfClass("PlayerGui")
+    })
+    gui:SetAttribute("kyri", true)
+
+    local t = kyri.theme
+
+    local box = make("Frame", {
+        Size = UDim2.fromOffset(440, 150),
+        Position = UDim2.fromScale(0.5, 0.5),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = t.bg,
+        Parent = gui
+    })
+    make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = box})
+    make("UIStroke", {Color = t.border, Thickness = 1, Transparency = 0.3, Parent = box})
+
+    make("TextLabel", {
+        Size = UDim2.new(1, -28, 0, 20),
+        Position = UDim2.fromOffset(16, 14),
+        BackgroundTransparency = 1,
+        Text = title or "copy this",
+        TextColor3 = t.text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 15,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = box
+    })
+
+    make("TextLabel", {
+        Size = UDim2.new(1, -28, 0, 16),
+        Position = UDim2.fromOffset(16, 34),
+        BackgroundTransparency = 1,
+        Text = "select the text and copy it with ctrl+c",
+        TextColor3 = t.subtext,
+        Font = Enum.Font.Gotham,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = box
+    })
+
+    local field = make("TextBox", {
+        Size = UDim2.new(1, -32, 0, 52),
+        Position = UDim2.fromOffset(16, 58),
+        BackgroundColor3 = t.element,
+        Text = text or "",
+        TextColor3 = t.text,
+        Font = Enum.Font.Code,
+        TextSize = 12,
+        TextWrapped = true,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Top,
+        ClearTextOnFocus = false,
+        TextEditable = true,
+        Parent = box
+    })
+    make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = field})
+    make("UIPadding", {
+        PaddingLeft = UDim.new(0, 10),
+        PaddingRight = UDim.new(0, 10),
+        PaddingTop = UDim.new(0, 8),
+        Parent = field
+    })
+
+    local close = make("TextButton", {
+        Size = UDim2.fromOffset(72, 26),
+        Position = UDim2.new(1, -16, 1, -14),
+        AnchorPoint = Vector2.new(1, 1),
+        BackgroundColor3 = t.element,
+        Text = "done",
+        TextColor3 = t.text,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 13,
+        AutoButtonColor = false,
+        Parent = box
+    })
+    make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = close})
+    close.MouseButton1Click:Connect(function() gui:Destroy() end)
+
+    task.spawn(function()
+        task.wait(0.1)
+        pcall(function()
+            field:CaptureFocus()
+            field.CursorPosition = #field.Text + 1
+            field.SelectionStart = 1
+        end)
+    end)
+
+    return gui
+end
+
 local function encode_val(v)
     if typeof(v) == "Color3" then
         return {__type = "Color3", r = v.R, g = v.G, b = v.B}
@@ -947,6 +1045,7 @@ function kyri.island(opts)
 
     return isl
 end
+--[[kyri:spotify-begin]]
 local sha_k = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -1509,8 +1608,7 @@ function kyri.spotify(opts)
         local st_lbl
         at:button("copy auth url", function()
             if not setclipboard then
-                w:notify("spotify", "no clipboard here, the url is printed to the console", 4)
-                print(sp:authurl())
+                kyri.copybox(sp:authurl(), "spotify auth url")
                 return
             end
             setclipboard(sp:authurl())
@@ -1644,6 +1742,7 @@ function kyri.spotify(opts)
     if getgenv then getgenv().__kyri_spotify = sp end
     return sp
 end
+--[[kyri:spotify-end]]
 
 function kyri.new(title, options)
     options = options or {}
@@ -4806,6 +4905,7 @@ function kyri.new(title, options)
         return w.isl
     end
 
+    --[[kyri:wspotify-begin]]
     function w:spotify(opts)
         opts = opts or {}
         opts.window = w
@@ -4853,6 +4953,7 @@ function kyri.new(title, options)
         w.sp = kyri.spotify(opts)
         return w.sp
     end
+    --[[kyri:wspotify-end]]
 
     function w:destroy()
         for _, c in ipairs(conns) do

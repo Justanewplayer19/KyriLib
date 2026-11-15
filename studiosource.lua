@@ -8,21 +8,46 @@
 -- loadstring does not work in Studio LocalScripts, so there is no HttpGet
 -- one-liner here. The ModuleScript is the way in.
 --
--- What is different from the executor build:
---   configs and saved positions live in memory and die with the playtest
---   tab icons need HttpService, which only answers on the server
---   spotify needs request(), which no Studio script has, so it stays idle
+-- Saving: nothing persists until you name a DataStore.
+--   kyri.persist("MyHubSaves")
+-- On the server that writes straight to the DataStore. On a client it needs the
+-- bridge from tools/KyriStoreServer.lua in ServerScriptService, because
+-- DataStoreService refuses to answer anything but the server. Without either it
+-- stays in memory and dies with the playtest. kyri.persist returns false and a
+-- reason when it cannot save, so you can check.
+--
+-- Spotify is not in this build. It needs request(), which no Studio script has.
 
 KYRI_STUDIO = true
 
 do
+    local RunService = game:GetService("RunService")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
     local files, folders = {}, {}
+    local store_name, ds, remote
+    local dirty, flushing = false, false
+
+    -- the icon cache is 24KB of asset ids that refetch fine, so it stays local
+    local function persisted(p)
+        return p:sub(-5) == ".json" and p ~= "KyriLib/icons.json"
+    end
+
+    local function mark_folders(p)
+        local dir = p:match("^(.*)/[^/]+$")
+        while dir do
+            folders[dir] = true
+            dir = dir:match("^(.*)/[^/]+$")
+        end
+    end
 
     if not isfile then
         isfile = function(p) return files[p] ~= nil end
         readfile = function(p) return files[p] end
-        writefile = function(p, d) files[p] = d end
-        delfile = function(p) files[p] = nil end
+        delfile = function(p)
+            files[p] = nil
+            if persisted(p) then dirty = true end
+        end
         isfolder = function(p) return folders[p] == true end
         makefolder = function(p) folders[p] = true end
         listfiles = function(p)
@@ -32,10 +57,98 @@ do
             end
             return out
         end
+        writefile = function(p, d)
+            files[p] = d
+            mark_folders(p)
+            if persisted(p) then dirty = true end
+        end
     end
 
     if not getgenv then
         getgenv = function() return shared end
+    end
+
+    local function snapshot()
+        local out = {}
+        for k, v in pairs(files) do
+            if persisted(k) then out[k] = v end
+        end
+        return out
+    end
+
+    local function push()
+        local snap = snapshot()
+        if ds then
+            return pcall(function() ds:SetAsync("kyrilib", snap) end)
+        elseif remote then
+            return pcall(function() return remote:InvokeServer("set", store_name, snap) end)
+        end
+        return false
+    end
+
+    local function pull()
+        local data
+        if ds then
+            local ok, got = pcall(function() return ds:GetAsync("kyrilib") end)
+            if ok then data = got end
+        elseif remote then
+            local ok, got = pcall(function() return remote:InvokeServer("get", store_name) end)
+            if ok then data = got end
+        end
+        if type(data) ~= "table" then return end
+        for k,v in pairs(data) do
+            if type(k) == "string" and type(v) == "string" then
+                files[k] = v
+                mark_folders(k)
+            end
+        end
+    end
+
+    KYRI_SET_STORE = function(name)
+        store_name = name or "KyriLib"
+        ds, remote = nil, nil
+
+        if RunService:IsServer() then
+            local ok, got = pcall(function()
+                return game:GetService("DataStoreService"):GetDataStore(store_name)
+            end)
+            if not ok then
+                return false, "datastores are off, tick Studio Access to API Services in Game Settings"
+            end
+            ds = got
+        else
+            remote = ReplicatedStorage:FindFirstChild("KyriStore")
+            if not remote then
+                return false, "no KyriStore RemoteFunction, add tools/KyriStoreServer.lua to ServerScriptService"
+            end
+        end
+
+        pull()
+
+        if not flushing then
+            flushing = true
+            task.spawn(function()
+                while task.wait(7) do
+                    if dirty then
+                        dirty = false
+                        push()
+                    end
+                end
+            end)
+            if RunService:IsServer() then
+                game:BindToClose(function()
+                    if dirty then push() end
+                end)
+            end
+        end
+
+        return true
+    end
+
+    KYRI_FLUSH_STORE = function()
+        if not (ds or remote) then return false, "call kyri.persist(name) first" end
+        dirty = false
+        return push()
     end
 end
 
@@ -189,6 +302,104 @@ local function make(c, p)
 end
 
 local CONFIG_FOLDER = "KyriLib"
+
+function kyri.copybox(text, title)
+    local lp = kyri.svc.plr.LocalPlayer
+    local gui = make("ScreenGui", {
+        Name = rnd(),
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false,
+        IgnoreGuiInset = true,
+        DisplayOrder = 999999999,
+        Parent = lp:FindFirstChildOfClass("PlayerGui")
+    })
+    gui:SetAttribute("kyri", true)
+
+    local t = kyri.theme
+
+    local box = make("Frame", {
+        Size = UDim2.fromOffset(440, 150),
+        Position = UDim2.fromScale(0.5, 0.5),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = t.bg,
+        Parent = gui
+    })
+    make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = box})
+    make("UIStroke", {Color = t.border, Thickness = 1, Transparency = 0.3, Parent = box})
+
+    make("TextLabel", {
+        Size = UDim2.new(1, -28, 0, 20),
+        Position = UDim2.fromOffset(16, 14),
+        BackgroundTransparency = 1,
+        Text = title or "copy this",
+        TextColor3 = t.text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 15,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = box
+    })
+
+    make("TextLabel", {
+        Size = UDim2.new(1, -28, 0, 16),
+        Position = UDim2.fromOffset(16, 34),
+        BackgroundTransparency = 1,
+        Text = "select the text and copy it with ctrl+c",
+        TextColor3 = t.subtext,
+        Font = Enum.Font.Gotham,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = box
+    })
+
+    local field = make("TextBox", {
+        Size = UDim2.new(1, -32, 0, 52),
+        Position = UDim2.fromOffset(16, 58),
+        BackgroundColor3 = t.element,
+        Text = text or "",
+        TextColor3 = t.text,
+        Font = Enum.Font.Code,
+        TextSize = 12,
+        TextWrapped = true,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Top,
+        ClearTextOnFocus = false,
+        TextEditable = true,
+        Parent = box
+    })
+    make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = field})
+    make("UIPadding", {
+        PaddingLeft = UDim.new(0, 10),
+        PaddingRight = UDim.new(0, 10),
+        PaddingTop = UDim.new(0, 8),
+        Parent = field
+    })
+
+    local close = make("TextButton", {
+        Size = UDim2.fromOffset(72, 26),
+        Position = UDim2.new(1, -16, 1, -14),
+        AnchorPoint = Vector2.new(1, 1),
+        BackgroundColor3 = t.element,
+        Text = "done",
+        TextColor3 = t.text,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 13,
+        AutoButtonColor = false,
+        Parent = box
+    })
+    make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = close})
+    close.MouseButton1Click:Connect(function() gui:Destroy() end)
+
+    task.spawn(function()
+        task.wait(0.1)
+        pcall(function()
+            field:CaptureFocus()
+            field.CursorPosition = #field.Text + 1
+            field.SelectionStart = 1
+        end)
+    end)
+
+    return gui
+end
 
 local function encode_val(v)
     if typeof(v) == "Color3" then
@@ -988,702 +1199,10 @@ function kyri.island(opts)
 
     return isl
 end
-local sha_k = {
-    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-}
-
-local function sha256(msg)
-    local h = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19}
-    local len = #msg
-    local bits = len * 8
-    local tail = ""
-    for i = 7, 0, -1 do
-        tail = tail .. string.char(math.floor(bits / 2 ^ (8 * i)) % 256)
-    end
-    msg = msg .. "\128" .. string.rep("\0", (55 - len) % 64) .. tail
-
-    for i = 1, #msg, 64 do
-        local w = {}
-        for j = 0, 15 do
-            local a, b, c, d = msg:byte(i + j * 4, i + j * 4 + 3)
-            w[j + 1] = a * 16777216 + b * 65536 + c * 256 + d
-        end
-        for j = 17, 64 do
-            local v, v2 = w[j - 15], w[j - 2]
-            local s0 = bit32.bxor(bit32.rrotate(v, 7), bit32.rrotate(v, 18), bit32.rshift(v, 3))
-            local s1 = bit32.bxor(bit32.rrotate(v2, 17), bit32.rrotate(v2, 19), bit32.rshift(v2, 10))
-            w[j] = (w[j - 16] + s0 + w[j - 7] + s1) % 4294967296
-        end
-
-        local a, b, c, d, e, f, g, hh = h[1], h[2], h[3], h[4], h[5], h[6], h[7], h[8]
-        for j = 1, 64 do
-            local S1 = bit32.bxor(bit32.rrotate(e, 6), bit32.rrotate(e, 11), bit32.rrotate(e, 25))
-            local ch = bit32.bxor(bit32.band(e, f), bit32.band(bit32.bnot(e), g))
-            local t1 = (hh + S1 + ch + sha_k[j] + w[j]) % 4294967296
-            local S0 = bit32.bxor(bit32.rrotate(a, 2), bit32.rrotate(a, 13), bit32.rrotate(a, 22))
-            local mj = bit32.bxor(bit32.band(a, b), bit32.band(a, c), bit32.band(b, c))
-            local t2 = (S0 + mj) % 4294967296
-            hh, g, f, e = g, f, e, (d + t1) % 4294967296
-            d, c, b, a = c, b, a, (t1 + t2) % 4294967296
-        end
-
-        h[1] = (h[1] + a) % 4294967296
-        h[2] = (h[2] + b) % 4294967296
-        h[3] = (h[3] + c) % 4294967296
-        h[4] = (h[4] + d) % 4294967296
-        h[5] = (h[5] + e) % 4294967296
-        h[6] = (h[6] + f) % 4294967296
-        h[7] = (h[7] + g) % 4294967296
-        h[8] = (h[8] + hh) % 4294967296
-    end
-
-    local out = ""
-    for i = 1, 8 do
-        local v = h[i]
-        out = out .. string.char(bit32.extract(v, 24, 8), bit32.extract(v, 16, 8), bit32.extract(v, 8, 8), bit32.extract(v, 0, 8))
-    end
-    return out
-end
-
-local b64c = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-
-local function b64url(data)
-    local out = {}
-    for i = 1, #data, 3 do
-        local a, b, c = data:byte(i, i + 2)
-        local n = a * 65536 + (b or 0) * 256 + (c or 0)
-        local idx = {bit32.extract(n, 18, 6), bit32.extract(n, 12, 6), bit32.extract(n, 6, 6), bit32.extract(n, 0, 6)}
-        local cnt = b and (c and 4 or 3) or 2
-        for j = 1, cnt do
-            out[#out + 1] = b64c:sub(idx[j] + 1, idx[j] + 1)
-        end
-    end
-    return table.concat(out)
-end
-
-local vchars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
-
-local function verifier()
-    local rng = Random.new(math.floor(tick() * 1e6) % 2147483647)
-    local out = {}
-    for i = 1, 64 do
-        local p = rng:NextInteger(1, #vchars)
-        out[i] = vchars:sub(p, p)
-    end
-    return table.concat(out)
-end
-
-local function fmt_time(s)
-    return string.format("%d:%02d", math.floor(s / 60), math.floor(s % 60))
-end
-
-function kyri.spotify(opts)
-    opts = opts or {}
-    local hs = kyri.svc.http
-    local req = request or http_request or (http and http.request) or (syn and syn.request)
-
-    local sp = {}
-    sp.ready = false
-    sp.playing = false
-    sp.pos, sp.dur, sp.vol = 0, 0, 100
-    sp.shuffle = false
-    sp.loop = "off"
-    sp.track = nil
-    sp.results = {}
-
-    local CID = opts.client_id or "035b9c837a6f46ffaffce6ada163a6ad"
-    local REDIR = opts.redirect or "http://127.0.0.1:8888/callback"
-    local SCOPES = opts.scopes or "user-read-playback-state user-modify-playback-state user-read-currently-playing user-read-recently-played user-library-modify user-library-read"
-    local DIR = "KyriLib/spotify"
-    local TOK = DIR .. "/tokens.json"
-    local PK = DIR .. "/pkce.txt"
-    local ART = DIR .. "/art"
-
-    local token, refresh, alive = "", "", true
-    local cur_id, seeking, last_seek = "", false, 0
-
-    local function dirs()
-        if not isfolder("KyriLib") then makefolder("KyriLib") end
-        if not isfolder(DIR) then makefolder(DIR) end
-        if not isfolder(ART) then makefolder(ART) end
-    end
-
-    local function save_tokens(a, r)
-        dirs()
-        if a then token = a end
-        if r then refresh = r end
-        writefile(TOK, hs:JSONEncode({access_token = token, refresh_token = refresh}))
-    end
-
-    local function load_tokens()
-        if not isfile(TOK) then return false end
-        local ok, d = pcall(function() return hs:JSONDecode(readfile(TOK)) end)
-        if not ok or type(d) ~= "table" then return false end
-        token = d.access_token or ""
-        refresh = d.refresh_token or ""
-        return refresh ~= ""
-    end
-
-    local function form(tbl)
-        local parts = {}
-        for k,v in pairs(tbl) do
-            parts[#parts + 1] = k .. "=" .. hs:UrlEncode(v)
-        end
-        return table.concat(parts, "&")
-    end
-
-    local function new_token()
-        if refresh == "" or not req then return false end
-        local res = req({
-            Url = "https://accounts.spotify.com/api/token",
-            Method = "POST",
-            Headers = {["Content-Type"] = "application/x-www-form-urlencoded"},
-            Body = form({grant_type = "refresh_token", refresh_token = refresh, client_id = CID})
-        })
-        if res and res.StatusCode == 200 then
-            local d = hs:JSONDecode(res.Body)
-            save_tokens(d.access_token, d.refresh_token)
-            sp.ready = true
-            return true
-        end
-        return false
-    end
-
-    function sp:authurl()
-        local v = verifier()
-        dirs()
-        writefile(PK, v)
-        return "https://accounts.spotify.com/authorize?"
-            .. form({
-                client_id = CID,
-                response_type = "code",
-                redirect_uri = REDIR,
-                scope = SCOPES,
-                code_challenge_method = "S256",
-                code_challenge = b64url(sha256(v))
-            })
-    end
-
-    function sp:submit(code)
-        if not code or code == "" then return false, "no code" end
-        if not isfile(PK) then return false, "no verifier, copy the auth url again" end
-        code = code:gsub("%s", "")
-        code = code:match("[?&]code=([^&]+)") or code
-        local res = req({
-            Url = "https://accounts.spotify.com/api/token",
-            Method = "POST",
-            Headers = {["Content-Type"] = "application/x-www-form-urlencoded"},
-            Body = form({
-                grant_type = "authorization_code",
-                code = code,
-                redirect_uri = REDIR,
-                client_id = CID,
-                code_verifier = readfile(PK)
-            })
-        })
-        if res and res.StatusCode == 200 then
-            local d = hs:JSONDecode(res.Body)
-            save_tokens(d.access_token, d.refresh_token)
-            pcall(function() delfile(PK) end)
-            sp.ready = true
-            return true
-        end
-        return false, res and res.Body or "no response"
-    end
-
-    local function api(method, ep, body)
-        if not sp.ready and not new_token() then return nil end
-        local headers = {
-            ["Authorization"] = "Bearer " .. token,
-            ["Content-Type"] = "application/json",
-            ["Content-Length"] = "0"
-        }
-        local rd = {Url = "https://api.spotify.com/v1" .. ep, Method = method, Headers = headers}
-        if body then
-            local bs = hs:JSONEncode(body)
-            rd.Body = bs
-            headers["Content-Length"] = tostring(#bs)
-        end
-        local ok, res = pcall(req, rd)
-        if not ok then return nil end
-        if res and res.StatusCode == 401 and new_token() then
-            headers["Authorization"] = "Bearer " .. token
-            rd.Headers = headers
-            local ok2, res2 = pcall(req, rd)
-            if ok2 then res = res2 end
-        end
-        return res
-    end
-
-    local function good(r)
-        return r and (r.StatusCode == 200 or r.StatusCode == 202 or r.StatusCode == 204)
-    end
-
-    sp.request = api
-
-    function sp:authed() return sp.ready end
-
-    function sp:play()
-        local r = api("PUT", "/me/player/play")
-        if good(r) then sp.playing = true end
-        return good(r)
-    end
-
-    function sp:pause()
-        local r = api("PUT", "/me/player/pause")
-        if good(r) then sp.playing = false end
-        return good(r)
-    end
-
-    function sp:toggle()
-        if sp.playing then return sp:pause() end
-        return sp:play()
-    end
-
-    function sp:next()
-        local r = api("POST", "/me/player/next")
-        cur_id = ""
-        task.delay(0.4, function() sp:sync() end)
-        return good(r)
-    end
-
-    function sp:prev()
-        local r = api("POST", "/me/player/previous")
-        cur_id = ""
-        task.delay(0.4, function() sp:sync() end)
-        return good(r)
-    end
-
-    function sp:seek(pct)
-        if sp.dur <= 0 then return false end
-        local now = tick()
-        if now - last_seek < 0.35 then return false end
-        last_seek = now
-        seeking = true
-        local r = api("PUT", "/me/player/seek?position_ms=" .. math.floor(math.clamp(pct, 0, 1) * sp.dur * 1000))
-        if good(r) then sp.pos = math.floor(pct * sp.dur) end
-        task.delay(0.6, function() seeking = false end)
-        return good(r)
-    end
-
-    function sp:volume(v)
-        v = math.clamp(math.floor(v), 0, 100)
-        local r = api("PUT", "/me/player/volume?volume_percent=" .. v)
-        if good(r) then sp.vol = v end
-        return good(r)
-    end
-
-    function sp:setshuffle(state)
-        local r = api("PUT", "/me/player/shuffle?state=" .. (state and "true" or "false"))
-        if good(r) then sp.shuffle = state end
-        return good(r)
-    end
-
-    function sp:setloop(mode)
-        if mode == nil then
-            mode = sp.loop == "off" and "context" or (sp.loop == "context" and "track" or "off")
-        end
-        local r = api("PUT", "/me/player/repeat?state=" .. mode)
-        if good(r) then sp.loop = mode end
-        return good(r), sp.loop
-    end
-
-    function sp:like()
-        if not sp.track or not sp.track.id then return false end
-        return good(api("PUT", "/me/tracks?ids=" .. sp.track.id))
-    end
-
-    function sp:search(q, limit)
-        if not q or q == "" then return {} end
-        local r = api("GET", "/search?q=" .. hs:UrlEncode(q) .. "&type=track&limit=" .. (limit or 8))
-        if not r or r.StatusCode ~= 200 then return {} end
-        local d = hs:JSONDecode(r.Body)
-        sp.results = (d.tracks and d.tracks.items) or {}
-        return sp.results
-    end
-
-    function sp:playuri(uri)
-        local r = api("PUT", "/me/player/play", {uris = {uri}})
-        cur_id = ""
-        task.delay(0.4, function() sp:sync() end)
-        return good(r)
-    end
-
-    function sp:queue(uri)
-        return good(api("POST", "/me/player/queue?uri=" .. hs:UrlEncode(uri)))
-    end
-
-    function sp:devices()
-        local r = api("GET", "/me/player/devices")
-        if not r or r.StatusCode ~= 200 then return {} end
-        return hs:JSONDecode(r.Body).devices or {}
-    end
-
-    function sp:artists()
-        if not sp.track or not sp.track.artists then return "" end
-        local a = {}
-        for i,v in pairs(sp.track.artists) do a[#a + 1] = v.name end
-        return table.concat(a, ", ")
-    end
-
-    local art_cache = {}
-
-    local function load_art(url, id, cb)
-        if not url or url == "" or not getcustomasset then return end
-        if art_cache[id] then
-            cb(art_cache[id])
-            return
-        end
-        task.spawn(function()
-            pcall(function()
-                dirs()
-                local f = ART .. "/" .. id .. ".jpg"
-                if not isfile(f) then
-                    local res = req({Url = url, Method = "GET"})
-                    if not res or res.StatusCode ~= 200 then return end
-                    writefile(f, res.Body)
-                end
-                local asset = getcustomasset(f)
-                art_cache[id] = asset
-                cb(asset)
-            end)
-        end)
-    end
-
-    local isl, ui
-    local own_island = true
-    sp.on_track = opts.on_track
-
-    local function push(d)
-        if isl then isl:set(d) end
-        if ui then ui(d) end
-    end
-
-    function sp:sync()
-        local r = api("GET", "/me/player/currently-playing")
-        if not r or r.StatusCode ~= 200 then
-            if r and r.StatusCode == 204 then
-                push({title = "nothing playing", subtitle = "", playing = false, progress = 0})
-                sp.playing = false
-            end
-            return
-        end
-        local ok, d = pcall(function() return hs:JSONDecode(r.Body) end)
-        if not ok or not d or not d.item then return end
-
-        sp.playing = d.is_playing and true or false
-        sp.pos = math.floor((d.progress_ms or 0) / 1000)
-        sp.dur = math.floor((d.item.duration_ms or 0) / 1000)
-        if d.device and d.device.volume_percent then sp.vol = d.device.volume_percent end
-        if d.shuffle_state ~= nil then sp.shuffle = d.shuffle_state end
-        if d.repeat_state then sp.loop = d.repeat_state end
-
-        local changed = d.item.id ~= cur_id
-        sp.track = d.item
-
-        if changed then
-            cur_id = d.item.id
-            push({title = d.item.name, subtitle = sp:artists(), image = "", playing = sp.playing})
-            if d.item.album and d.item.album.images and #d.item.album.images > 0 then
-                load_art(d.item.album.images[1].url, d.item.id, function(asset)
-                    if cur_id == d.item.id then push({image = asset}) end
-                end)
-            end
-            if sp.on_track then pcall(sp.on_track, d.item) end
-        end
-
-        push({
-            playing = sp.playing,
-            volume = sp.vol,
-            progress = sp.dur > 0 and (sp.pos / sp.dur) or 0,
-            left = fmt_time(sp.pos),
-            right = fmt_time(sp.dur)
-        })
-    end
-
-    function sp:destroy()
-        alive = false
-        if isl and own_island then pcall(function() isl:destroy() end) end
-    end
-
-    dirs()
-    if load_tokens() then
-        sp.ready = true
-        task.spawn(new_token)
-    end
-
-    -- an island-mode window already owns a pill, so share it rather than drop a
-    -- second one on top. opts.island = true forces a separate island anyway
-    own_island = opts.island ~= false
-    if opts.island ~= true and opts.window and opts.window.isl then
-        isl = opts.window.isl
-        own_island = false
-    end
-
-    if own_island then
-        isl = kyri.island({
-            id = "spotify",
-            title = sp.ready and "spotify" or "spotify · not connected",
-            subtitle = "",
-            icon = "music",
-            width = opts.island_width or 240,
-            expanded_width = 340,
-            on_seek = function(p) sp:seek(p) end,
-            on_volume = function(v) sp:volume(v) end,
-            y = opts.island_y,
-            position = opts.island_position,
-            hover = opts.island_hover
-        })
-    end
-
-    if isl then
-        sp.island = isl
-
-        isl:button("shuffle", function()
-            sp:setshuffle(not sp.shuffle)
-            isl:notify(sp.shuffle and "shuffle on" or "shuffle off", 1.5)
-        end, "shuffle")
-
-        isl:button("skip-back", function() sp:prev() end, "prev")
-
-        local pb
-        pb = isl:button("play", function()
-            sp:toggle()
-            pb:icon(sp.playing and "pause" or "play")
-        end, "toggle")
-
-        isl:button("skip-forward", function() sp:next() end, "next")
-
-        local lb
-        lb = isl:button("repeat", function()
-            local _, m = sp:setloop()
-            lb:tint(m == "off" and kyri.theme.subtext or kyri.theme.accent)
-            isl:notify("repeat: " .. m, 1.5)
-        end, "loop")
-        lb:tint(kyri.theme.subtext)
-
-        isl:button("heart", function()
-            if sp:like() then isl:notify("added to liked", 1.5) end
-        end, "like")
-
-        local base_push = push
-        push = function(d)
-            base_push(d)
-            if d.playing ~= nil then pb:icon(d.playing and "pause" or "play") end
-        end
-    end
-
-    local w = opts.window
-    if not w and opts.tabs ~= false then
-        w = kyri.new(opts.title or "spotify", {GameName = "Spotify"})
-    end
-    sp.window = w
-
-    if w and opts.tabs ~= false then
-        local np = w:tab("Now Playing", "music")
-        local art_api = np:image("", 240, Enum.ScaleType.Crop)
-        local t_lbl = np:label("not playing")
-        local a_lbl = np:label("")
-        local time_lbl = np:label("0:00 / 0:00")
-
-        np:section("seek")
-        local seek_api = np:slider("position", 0, 100, 0, function(pct)
-            sp:seek(pct / 100)
-        end, nil, 0.1)
-
-        np:section("controls")
-        local play_api = np:button("play / pause", function() sp:toggle() end, "play")
-        np:button("previous", function() sp:prev() end, "skip-back")
-        np:button("next", function() sp:next() end, "skip-forward")
-
-        np:section("playback")
-        local vol_api = np:slider("volume", 0, 100, 100, function(v) sp:volume(v) end, "sp_vol", 1)
-        np:toggle("shuffle", false, function(s) sp:setshuffle(s) end)
-        local loop_api
-        loop_api = np:button("repeat: off", function()
-            local _, m = sp:setloop()
-            loop_api:set("repeat: " .. m)
-        end, "repeat")
-        np:button("like current track", function()
-            if sp:like() then w:notify("spotify", "added to liked songs", 2) end
-        end, "heart")
-
-        local srch = w:tab("Search", "search")
-        srch:label("type a song name and press enter")
-        srch:space()
-        srch:input("search", "song name...", function(q)
-            for i,c in pairs(srch.page:GetChildren()) do
-                if c.Name == "SpotifyResult" then c:Destroy() end
-            end
-            local items = sp:search(q)
-            if #items == 0 then
-                w:notify("search", "no results for: " .. q, 2)
-                return
-            end
-            for i,tr in pairs(items) do
-                if tr and tr.name and tr.uri then
-                    local a = {}
-                    for j,v in pairs(tr.artists or {}) do a[#a + 1] = v.name end
-                    local rb = srch:button(i .. ".  " .. tr.name .. "  -  " .. table.concat(a, ", "), function()
-                        if sp:playuri(tr.uri) then
-                            w:notify("playing", tr.name, 3)
-                            if isl then isl:notify(tr.name, 2.5) end
-                        end
-                    end)
-                    rb.box.Name = "SpotifyResult"
-                end
-            end
-        end)
-
-        local at = w:tab("Auth", "key")
-        at:section("connect spotify")
-        at:paragraph("how to authenticate",
-            "1. click 'copy auth url'\n2. open it in your browser and approve\n3. the page will fail to load - that is normal\n4. copy the whole url from the address bar\n5. paste it below and submit")
-
-        local st_lbl
-        at:button("copy auth url", function()
-            if not setclipboard then
-                w:notify("spotify", "no clipboard here, the url is printed to the console", 4)
-                print(sp:authurl())
-                return
-            end
-            setclipboard(sp:authurl())
-            w:notify("copied", "auth url copied, open it in your browser", 3)
-        end, "link")
-
-        at:space()
-        st_lbl = at:label(sp.ready and "status: connected" or "status: not connected")
-        local code_in = at:input("callback url or code", "paste here", function() end)
-
-        at:button("submit", function()
-            local raw = code_in.input.Text
-            if raw == "" then
-                w:notify("spotify", "paste the code first", 2)
-                return
-            end
-            st_lbl:set("status: connecting...")
-            task.spawn(function()
-                local ok, err = sp:submit(raw)
-                if ok then
-                    st_lbl:set("status: connected")
-                    w:notify("spotify", "connected", 3)
-                    if isl then isl:set({title = "spotify"}) end
-                    sp:sync()
-                else
-                    st_lbl:set("status: failed, try again")
-                    w:notify("spotify", tostring(err):sub(1, 90), 4)
-                end
-            end)
-        end, "check")
-
-        at:space()
-        at:button("sign out", function()
-            pcall(function() delfile(TOK) end)
-            token, refresh, sp.ready = "", "", false
-            st_lbl:set("status: not connected")
-            w:notify("spotify", "signed out", 2)
-        end, "log-out")
-
-        ui = function(d)
-            if d.title then t_lbl:set(d.title) end
-            if d.subtitle ~= nil and d.subtitle ~= "" then a_lbl:set(d.subtitle) end
-            if d.image ~= nil then art_api:set(d.image) end
-            if d.left and d.right then time_lbl:set(d.left .. "  /  " .. d.right) end
-            if d.progress and not seeking then seek_api:set(math.clamp(d.progress * 100, 0, 100)) end
-            if d.volume then vol_api:set(d.volume) end
-        end
-    end
-
-    if not req then
-        if w then w:notify("spotify", "this executor has no http support", 5) end
-        return sp
-    end
-
-    task.spawn(function()
-        local n = 0
-        while alive and task.wait(1) do
-            if sp.ready then
-                if sp.playing and not seeking then
-                    sp.pos = math.min(sp.pos + 1, sp.dur)
-                    push({
-                        progress = sp.dur > 0 and (sp.pos / sp.dur) or 0,
-                        left = fmt_time(sp.pos),
-                        right = fmt_time(sp.dur)
-                    })
-                end
-                n = n + 1
-                if n % 5 == 0 then
-                    task.spawn(function() sp:sync() end)
-                end
-            end
-        end
-    end)
-
-    if sp.ready then task.spawn(function() sp:sync() end) end
-
-    if opts.commands then
-        local function say(m)
-            pcall(function()
-                kyri.svc.txt.TextChannels.RBXGeneral:SendAsync(m)
-            end)
-        end
-        local cmds = {
-            play = function() sp:play() say("resumed") end,
-            pause = function() sp:pause() say("paused") end,
-            skip = function() sp:next() say("skipped") end,
-            back = function() sp:prev() say("back") end,
-            like = function() say(sp:like() and "liked" or "failed") end,
-            current = function()
-                if sp.track then
-                    say((sp.playing and "playing" or "paused") .. ": " .. sp.track.name .. " by " .. sp:artists())
-                else
-                    say("nothing playing")
-                end
-            end,
-            volume = function(a) if sp:volume(tonumber(a[1]) or 50) then say("volume " .. sp.vol) end end,
-            shuffle = function(a)
-                sp:setshuffle(a[1] == "on")
-                say("shuffle " .. (a[1] or "off"))
-            end,
-            loop = function(a) local _, m = sp:setloop(a[1]) say("repeat " .. m) end,
-            search = function(a)
-                local items = sp:search(table.concat(a, " "), 5)
-                for i,tr in pairs(items) do say(i .. ". " .. tr.name) end
-            end,
-            pick = function(a)
-                local tr = sp.results[tonumber(a[1]) or 0]
-                if tr then
-                    sp:playuri(tr.uri)
-                    say("playing " .. tr.name)
-                end
-            end,
-            help = function()
-                say("!sp play/pause/skip/back/current/like | search [q] pick [n] | volume [0-100] | loop [mode] | shuffle [on/off]")
-            end
-        }
-        local me = kyri.svc.plr.LocalPlayer
-        kyri.svc.txt.MessageReceived:Connect(function(msg)
-            if not msg.TextSource or msg.TextSource.UserId ~= me.UserId then return end
-            local args = {}
-            for word in msg.Text:gmatch("%S+") do args[#args + 1] = word end
-            if args[1] ~= "!sp" or not args[2] then return end
-            local fn = cmds[args[2]:lower()]
-            if not fn then return end
-            local rest = {}
-            for i = 3, #args do rest[#rest + 1] = args[i] end
-            task.spawn(function() pcall(fn, rest) end)
-        end)
-    end
-
-    if getgenv then getgenv().__kyri_spotify = sp end
-    return sp
+-- spotify is executor only, it needs request(). every call is a no-op here.
+function kyri.spotify()
+    local sp = {ready = false, playing = false, studio = true}
+    return setmetatable(sp, {__index = function() return function() return false end end})
 end
 
 function kyri.new(title, options)
@@ -4847,52 +4366,9 @@ function kyri.new(title, options)
         return w.isl
     end
 
-    function w:spotify(opts)
-        opts = opts or {}
-        opts.window = w
-
-        -- the hub island has no seek or volume rows, so swap in one that does
-        -- and carry the tab panel across. spotify then shares the single pill
-        if w.mode == "island" and w.isl and opts.island ~= true then
-            local old = w.isl
-            local kept = {}
-
-            -- park them outside the island first: kyri.island is a singleton and
-            -- destroys the old ScreenGui, which would take these with it
-            for i,c in pairs(old.body:GetChildren()) do
-                if c:IsA("GuiObject") then
-                    c.Visible = false
-                    c.Parent = w.gui
-                    kept[#kept + 1] = c
-                end
-            end
-
-            local fresh = kyri.island({
-                title = w.title,
-                id = "hub",
-                expanded_width = w.pan_w,
-                body_height = w.pan_h,
-                -- the transport, seek and volume rows eat ~200px, so the panel
-                -- grows rather than squeezing the tab pages down to a sliver
-                total_height = math.min(w.pan_h + 170, math.max(math.floor(vp.Y * 0.82), w.pan_h)),
-                on_close = function() w:destroy() end
-            })
-            for i,c in pairs(kept) do
-                c.Parent = fresh.body
-                c.Visible = true
-            end
-
-            -- the old pill is still up while this one is built, so the stacking
-            -- offset would push the replacement down a row
-            fresh.root.AnchorPoint = old.root.AnchorPoint
-            fresh.root.Position = old.root.Position
-
-            old:destroy()
-            if rebind then rebind(fresh) end
-        end
-
-        w.sp = kyri.spotify(opts)
-        return w.sp
+    function w:spotify()
+        w:notify("spotify", "spotify needs an executor, it is not in the studio build", 4)
+        return kyri.spotify()
     end
 
     function w:destroy()
@@ -4911,5 +4387,8 @@ function kyri.new(title, options)
     if getgenv then getgenv().__kyri_inst = w end
     return w
 end
+
+kyri.persist = KYRI_SET_STORE
+kyri.flush = KYRI_FLUSH_STORE
 
 return kyri
