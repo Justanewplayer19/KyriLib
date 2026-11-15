@@ -29,7 +29,12 @@ f.OnServerInvoke = function(plr, action, name, data)
     local s = store(name)
     if not s then return nil end
 
-    if action == "get" then
+    if action == "ping" then
+        -- GetDataStore works with api access off, a real call is the only proof
+        local ok = pcall(function() return s:GetAsync(KEY) end)
+        return ok
+
+    elseif action == "get" then
         local ok, got = pcall(function() return s:GetAsync(KEY) end)
         if ok then return got end
         return nil

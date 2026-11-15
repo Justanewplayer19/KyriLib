@@ -115,11 +115,22 @@ do
             if not ok then
                 return false, "datastores are off, tick Studio Access to API Services in Game Settings"
             end
+            -- GetDataStore hands back a store object even when api access is off,
+            -- it only fails on a real call, so probe before claiming it saves
+            local okp = pcall(function() return got:GetAsync("kyrilib") end)
+            if not okp then
+                return false, "datastores are off, tick Studio Access to API Services in Game Settings"
+            end
             ds = got
         else
             remote = ReplicatedStorage:FindFirstChild("KyriStore")
             if not remote then
                 return false, "no KyriStore RemoteFunction, add tools/KyriStoreServer.lua to ServerScriptService"
+            end
+            local okp, alive = pcall(function() return remote:InvokeServer("ping", store_name) end)
+            if not okp or alive ~= true then
+                remote = nil
+                return false, "the KyriStore bridge cannot reach datastores, tick Studio Access to API Services in Game Settings"
             end
         end
 
