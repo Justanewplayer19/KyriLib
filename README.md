@@ -426,6 +426,10 @@ Failures are reported rather than swallowed. A missing device, an expired sessio
 account or a rate limit each produce a readable notification, deduplicated so a stuck control
 cannot spam you. The last one is on `sp.last_error`.
 
+[`examples/spotify_test.lua`](examples/spotify_test.lua) exercises the whole surface: status,
+transport, search with artwork, devices and transfer, the island, and a deliberate bad request to
+check the error path. `run all` does a pass and prints the results into the tab and the console.
+
 Control real Spotify playback. One call wires up the island, the tabs, the auth flow and the polling
 loop - you do not write any of it:
 

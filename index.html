@@ -1263,6 +1263,7 @@ w.flags.ws_set(100, true)</code></pre>
 
 				<p>the three tabs it builds cover the lot. <strong>now playing</strong> has artwork, seek, transport, volume, shuffle, repeat, like and a device list, where <code>find devices</code> lists everything your account has open and clicking one moves playback to it. <strong>search</strong> returns tracks with their album art as the row icon, and a <code>queue instead of play</code> toggle switches what clicking a result does. <strong>auth</strong> is the PKCE flow.</p>
 				<p>failures are reported rather than swallowed. a missing device, an expired session, a non-premium account or a rate limit each produce a readable notification, deduplicated so a stuck control cannot spam you. the last one is on <code>sp.last_error</code>.</p>
+				<p><a href="https://github.com/Justanewplayer19/KyriLib/blob/main/examples/spotify_test.lua" target="_blank" rel="noopener">examples/spotify_test.lua</a> exercises the whole surface: status, transport, search with artwork, devices and transfer, the island, and a deliberate bad request to check the error path. <code>run all</code> does a pass and prints the results into the tab and the console.</p>
 				<p>control real Spotify playback from in-game. one call wires up the island, the tabs, the auth flow and the polling loop - you do not write any of it:</p>
 
 				<pre><code>local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
