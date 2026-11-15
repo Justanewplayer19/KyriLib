@@ -718,6 +718,16 @@ function kyri.island(opts)
     local ch = opts.height or 38
     local ew = opts.expanded_width or 330
     local gap = 11
+    local f_med = opts.font or Enum.Font.GothamMedium
+    local f_bold = opts.font_bold or Enum.Font.GothamBold
+
+    local function setfont(obj, f)
+        if typeof(f) == "Font" then
+            obj.FontFace = f
+        elseif typeof(f) == "EnumItem" then
+            obj.Font = f
+        end
+    end
     local show_bars = opts.bars ~= false
     local show_seek = opts.seek ~= false
     local show_vol = opts.volume ~= false
@@ -825,12 +835,12 @@ function kyri.island(opts)
         BackgroundTransparency = 1,
         Text = opts.title or "kyri",
         TextColor3 = t.text,
-        Font = Enum.Font.GothamMedium,
         TextSize = 13,
         TextTruncate = Enum.TextTruncate.AtEnd,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = cv
     })
+    setfont(ctitle, f_med)
 
     if show_chev then
         make("ImageLabel", {
@@ -935,12 +945,12 @@ function kyri.island(opts)
         BackgroundTransparency = 1,
         Text = opts.title or "kyri",
         TextColor3 = t.text,
-        Font = Enum.Font.GothamBold,
         TextSize = 15,
         TextTruncate = Enum.TextTruncate.AtEnd,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = head
     })
+    setfont(etitle, f_bold)
 
     local esub = make("TextLabel", {
         Size = UDim2.new(1, -96, 0, 16),
@@ -1517,6 +1527,10 @@ function kyri.island(opts)
         local prev = line(0, 14, 11, t.subtext, 0.55)
         local cur = line(16, 20, 14, t.text, 0)
         local nxt = line(38, 14, 11, t.subtext, 0.55)
+
+        setfont(prev, f_med)
+        setfont(cur, f_bold)
+        setfont(nxt, f_med)
 
         local api = {box = box}
         function api:set(a, b, c)

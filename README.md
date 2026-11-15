@@ -441,6 +441,20 @@ The island is a full client on its own, not just transport buttons.
   lyrics are returned by `sp:lyrics()` but not displayed, since there is nothing to sync to.
   Pass `lyrics = false` to turn it off.
 - `island_results` sets how many rows a search shows, default 5.
+- `font` and `font_bold` set the face used for the track name and the lyric lines. Either an
+  `Enum.Font` or a `Font` object from `Font.fromName`.
+
+On the typeface: Roblox has no Circular, and Spotify Mix is licensed so it cannot be shipped.
+The closest thing Roblox has is Montserrat, which is what the island already draws. `Enum.Font.Gotham*`
+resolves to `GothamSSm.json` but renders with Montserrat's exact metrics, identical to the pixel at
+14, 24 and 48. The only genuinely different sans worth trying is BuilderSans, which is narrower:
+
+```lua
+kyri.spotify({
+    font = Font.fromName("BuilderSans", Enum.FontWeight.Medium),
+    font_bold = Font.fromName("BuilderSans", Enum.FontWeight.Bold)
+})
+```
 
 ### Island only
 
