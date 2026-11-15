@@ -1983,6 +1983,9 @@ function kyri.new(title, options)
             pos = UDim2.fromOffset(x, y)
         end
 
+        local pill_r = math.floor(pill_h / 2)
+        local pan_r = 14
+
         main = make("Frame", {
             Name = rnd(),
             Size = UDim2.fromOffset(pill_w, pill_h),
@@ -1991,18 +1994,19 @@ function kyri.new(title, options)
             ClipsDescendants = true,
             Parent = w.gui
         })
-        make("UICorner", {CornerRadius = UDim.new(0, 14), Parent = main})
+        local mrc = make("UICorner", {CornerRadius = UDim.new(0, pill_r), Parent = main})
+        make("UIStroke", {Color = t.border, Thickness = 1, Transparency = 0.3, Parent = main})
 
         top = make("Frame", {
             Size = UDim2.new(1, 0, 0, pill_h),
             BackgroundColor3 = t.container,
             Parent = main
         })
-        make("UICorner", {CornerRadius = UDim.new(0, 14), Parent = top})
+        local trc = make("UICorner", {CornerRadius = UDim.new(0, pill_r), Parent = top})
 
         local top_fill = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 14),
-            Position = UDim2.new(0, 0, 1, -14),
+            Size = UDim2.new(1, 0, 0, pill_r),
+            Position = UDim2.new(0, 0, 1, -pill_r),
             BackgroundColor3 = t.container,
             BorderSizePixel = 0,
             Visible = false,
@@ -2010,14 +2014,12 @@ function kyri.new(title, options)
         })
 
         local badge = make("Frame", {
-            Size = UDim2.fromOffset(22, 22),
-            Position = UDim2.fromOffset(10, 9),
-            BackgroundColor3 = t.accent,
-            BackgroundTransparency = 0.84,
+            Size = UDim2.fromOffset(24, 24),
+            Position = UDim2.new(0, 7, 0.5, -12),
+            BackgroundColor3 = t.element,
             Parent = top
         })
         make("UICorner", {CornerRadius = UDim.new(0, 7), Parent = badge})
-        table.insert(w.accents, {obj = badge, prop = "BackgroundColor3"})
 
         local badge_txt = make("TextLabel", {
             Size = UDim2.fromScale(1, 1),
@@ -2025,14 +2027,14 @@ function kyri.new(title, options)
             Text = (w.title or "k"):sub(1, 1):upper(),
             TextColor3 = t.accent,
             Font = Enum.Font.GothamBold,
-            TextSize = 12,
+            TextSize = 13,
             Parent = badge
         })
         table.insert(w.accents, {obj = badge_txt, prop = "TextColor3"})
 
         local title_lbl = make("TextLabel", {
-            Size = UDim2.new(1, -108, 1, 0),
-            Position = UDim2.fromOffset(40, 0),
+            Size = UDim2.new(1, -107, 1, 0),
+            Position = UDim2.fromOffset(39, 0),
             BackgroundTransparency = 1,
             Text = w.title,
             TextColor3 = t.text,
@@ -2122,6 +2124,9 @@ function kyri.new(title, options)
 
             local p = main.Position
             local d = dx
+
+            kyri.svc.tw:Create(mrc, ti, {CornerRadius = UDim.new(0, open and pan_r or pill_r)}):Play()
+            kyri.svc.tw:Create(trc, ti, {CornerRadius = UDim.new(0, open and pan_r or pill_r)}):Play()
 
             if open then
                 top_fill.Visible = true
