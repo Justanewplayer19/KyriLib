@@ -50,7 +50,7 @@ Full docs: [https://justanewplayer19.github.io/KyriLib](https://justanewplayer19
 | `KeySettings` | table | key system config (see below) |
 | `Mode` | `"window"` / `"island"` | layout. defaults to `island` on touch devices, `window` otherwise |
 | `Remember` | bool | `true`. persist position (and window size) to `KyriLib/window.json` |
-| `Shadow` | bool | `true`. set `false` for no drop shadow at all |
+| `Shadow` | bool | `false`. set `true` for a drop shadow under the frame |
 
 ### Window methods
 

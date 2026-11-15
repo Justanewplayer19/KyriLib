@@ -2417,8 +2417,9 @@ function kyri.new(title, options)
         })
     end
 
-    -- drop shadow sits outside main, so it is a sibling: main clips its children
-    local want_shadow = options.Shadow ~= false
+    -- drop shadow sits outside main, so it is a sibling: main clips its children.
+    -- off by default, any soft edge around the frame just looks like a smudge
+    local want_shadow = options.Shadow == true
 
     local shadow = make("ImageLabel", {
         BackgroundTransparency = 1,
