@@ -2418,22 +2418,27 @@ function kyri.new(title, options)
     end
 
     -- drop shadow sits outside main, so it is a sibling: main clips its children
+    local want_shadow = options.Shadow ~= false
+
     local shadow = make("ImageLabel", {
         BackgroundTransparency = 1,
         Image = "rbxassetid://5028857084",
         ImageColor3 = Color3.new(0, 0, 0),
-        ImageTransparency = 0.5,
+        ImageTransparency = 0.62,
         ScaleType = Enum.ScaleType.Slice,
         SliceCenter = Rect.new(24, 24, 276, 276),
+        Visible = want_shadow,
         ZIndex = 0,
         Parent = w.gui
     })
 
+    -- pads down and to the sides, barely at the top. spread evenly it haloes the
+    -- frame and reads as a transparent outline instead of a shadow
     local function sync_shadow()
         local p, s = main.Position, main.Size
-        shadow.Position = UDim2.new(p.X.Scale, p.X.Offset - 18, p.Y.Scale, p.Y.Offset - 18)
-        shadow.Size = UDim2.new(s.X.Scale, s.X.Offset + 36, s.Y.Scale, s.Y.Offset + 36)
-        shadow.Visible = main.Visible
+        shadow.Position = UDim2.new(p.X.Scale, p.X.Offset - 13, p.Y.Scale, p.Y.Offset - 2)
+        shadow.Size = UDim2.new(s.X.Scale, s.X.Offset + 26, s.Y.Scale, s.Y.Offset + 22)
+        shadow.Visible = main.Visible and want_shadow
     end
 
     main:GetPropertyChangedSignal("Position"):Connect(sync_shadow)
