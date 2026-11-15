@@ -4756,7 +4756,9 @@ function kyri.new(title, options)
                 title = w.title,
                 expanded_width = w.pan_w,
                 body_height = w.pan_h,
-                total_height = w.pan_h,
+                -- the transport, seek and volume rows eat ~200px, so the panel
+                -- grows rather than squeezing the tab pages down to a sliver
+                total_height = math.min(w.pan_h + 170, math.max(math.floor(vp.Y * 0.82), w.pan_h)),
                 on_close = function() w:destroy() end
             })
             for i,c in pairs(kept) do
