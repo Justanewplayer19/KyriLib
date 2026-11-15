@@ -212,6 +212,24 @@ body {
 			margin-left: 6px;
 		}
 		.rx-c.opt { color: #8a8a93; }
+		a.rx-row {
+			color: inherit;
+			text-decoration: none;
+			cursor: pointer;
+		}
+		a.rx-row:hover { background: rgba(138,116,249,.18); }
+		a.rx-row:hover .rx-go { opacity: 1; }
+		.rx-go {
+			margin-left: auto;
+			font-size: 11px;
+			color: #8a74f9;
+			opacity: 0;
+			transition: opacity .15s;
+			padding-left: 10px;
+		}
+		@media (hover: none) {
+			.rx-go { opacity: .8; }
+		}
 		.rx-credit { font-size: 12px; opacity: .55; margin-top: -8px; }
 		@media (max-width: 620px) {
 			.rx { font-size: 12.5px; }
@@ -807,14 +825,14 @@ w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")</code></pre>
 
 				<div class="rx">
 					<div class="rx-row rx-0"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/folder_type_ReplicatedStorage-light_opened.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/folder_type_ReplicatedStorage-dark_opened.png"><span class="rx-n">ReplicatedStorage</span></div>
-					<div class="rx-row rx-1 hit"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_ModuleScript-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_ModuleScript-dark.png"><span class="rx-n">KyriLib</span><span class="rx-t">ModuleScript</span><span class="rx-c">paste studiosource.lua in here</span></div>
+					<a class="rx-row rx-1 hit" href="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/main/studiosource.lua" target="_blank" rel="noopener"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_ModuleScript-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_ModuleScript-dark.png"><span class="rx-n">KyriLib</span><span class="rx-t">ModuleScript</span><span class="rx-c">click to open studiosource.lua</span><span class="rx-go">open</span></a>
 
 					<div class="rx-row rx-0"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/folder_type_ServerScriptService-light_opened.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/folder_type_ServerScriptService-dark_opened.png"><span class="rx-n">ServerScriptService</span></div>
-					<div class="rx-row rx-1 hit"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_Script-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_Script-dark.png"><span class="rx-n">KyriStoreServer</span><span class="rx-t">Script</span><span class="rx-c opt">only for saving, see below</span></div>
+					<a class="rx-row rx-1 hit" href="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/main/tools/KyriStoreServer.lua" target="_blank" rel="noopener"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_Script-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_Script-dark.png"><span class="rx-n">KyriStoreServer</span><span class="rx-t">Script</span><span class="rx-c opt">only for saving, see below</span><span class="rx-go">open</span></a>
 
 					<div class="rx-row rx-0"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/folder_type_StarterPlayer-light_opened.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/folder_type_StarterPlayer-dark_opened.png"><span class="rx-n">StarterPlayer</span></div>
 					<div class="rx-row rx-1"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/folder_type_StarterPlayerScripts-light_opened.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/folder_type_StarterPlayerScripts-dark_opened.png"><span class="rx-n">StarterPlayerScripts</span></div>
-					<div class="rx-row rx-2 hit"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_LocalScript-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_LocalScript-dark.png"><span class="rx-n">MyHub</span><span class="rx-t">LocalScript</span><span class="rx-c">your code goes here</span></div>
+					<a class="rx-row rx-2 hit" href="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/main/examples/studio_demo.lua" target="_blank" rel="noopener"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_LocalScript-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_LocalScript-dark.png"><span class="rx-n">MyHub</span><span class="rx-t">LocalScript</span><span class="rx-c">click to open the demo script</span><span class="rx-go">open</span></a>
 				</div>
 				<p class="rx-credit">explorer icons from <a href="https://github.com/charleskimbac/roblox-vscode-icons" target="_blank" rel="noopener">charleskimbac/roblox-vscode-icons</a>, owned by Roblox Corporation.</p>
 
@@ -830,7 +848,7 @@ w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")</code></pre>
 
 				<div class="rx">
 					<div class="rx-row rx-0"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/folder_type_ServerScriptService-light_opened.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/folder_type_ServerScriptService-dark_opened.png"><span class="rx-n">ServerScriptService</span></div>
-					<div class="rx-row rx-1 hit"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_Script-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_Script-dark.png"><span class="rx-n">KyriStoreServer</span><span class="rx-t">Script</span><span class="rx-c">not a LocalScript, not a ModuleScript</span></div>
+					<a class="rx-row rx-1 hit" href="https://raw.githubusercontent.com/Justanewplayer19/KyriLib/main/tools/KyriStoreServer.lua" target="_blank" rel="noopener"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_Script-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_Script-dark.png"><span class="rx-n">KyriStoreServer</span><span class="rx-t">Script</span><span class="rx-c">not a LocalScript, not a ModuleScript</span><span class="rx-go">open</span></a>
 				</div>
 
 				<p>it makes a <code>KyriStore</code> RemoteFunction in ReplicatedStorage and does the reads and writes server side. it checks what the client sends it, since any client can reach a RemoteFunction: strings only, 64 keys, 200KB a value.</p>
