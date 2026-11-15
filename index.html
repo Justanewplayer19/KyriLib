@@ -782,6 +782,8 @@ end, "ws")</code></pre>
 						<tr><td>Theme</td><td>table</td><td>override theme colors at init (any subset)</td></tr>
 						<tr><td>KeySystem</td><td><code>"Once"</code> / <code>"Everytime"</code></td><td>enable key gate before window loads</td></tr>
 						<tr><td>KeySettings</td><td>table</td><td>key system config — see <a href="#key-system">key system</a></td></tr>
+						<tr><td>Mode</td><td><code>"window"</code> / <code>"island"</code></td><td>layout. defaults to island on touch, window otherwise</td></tr>
+						<tr><td>Remember</td><td>bool</td><td><code>true</code>. persists position and size to <code>KyriLib/window.json</code></td></tr>
 					</tbody>
 				</table>
 
@@ -800,7 +802,17 @@ w:accent(color)                -- change accent color live
 w:apply_theme(overrides)       -- change any theme colors live
 w:island(opts)                 -- attach an island, inherits the window title
 w:spotify(opts)                -- attach spotify, builds tabs on this window
+w:resetpos()                   -- forget the saved position and size
 w:destroy()                    -- destroy the window, island and spotify loop</code></pre>
+				<p>in island mode you also get <code>w.expand()</code>, <code>w.collapse()</code> and <code>w.expanded()</code>.</p>
+
+				<h3>layout modes</h3>
+				<pre><code>local w = kyri.new("my hub", { Mode = "island" })
+local main = w:tab("Main", "sword")
+main:toggle("fly", false, function(s) end, "fly")</code></pre>
+				<p><code>window</code> is the classic layout — a 520x400 frame with a tab sidebar, resizable from the bottom-right corner. <code>island</code> collapses to a pill at the top of the screen that expands into a 370x430 panel when you click it, with the tabs as a horizontal strip instead of a sidebar.</p>
+				<p>every <code>w:tab</code> and element call is identical in both, so nothing in your script changes but the one option. touch devices default to the island because the sidebar leaves only ~190px of usable width on a phone — pass <code>Mode = "window"</code> to opt back out.</p>
+				<p>position is remembered between runs, as is the window's size. both layouts have a close button in the topbar that calls <code>w:destroy()</code>.</p>
 
 				<h3>randomised names</h3>
 				<p>every ScreenGui the library creates is given a random name per run, as is the mobile toggle action. stale instances from a previous execute are found by a <code>kyri</code> attribute rather than a fixed name, so nothing needs to look for <code>"Kyri"</code> in PlayerGui.</p>
@@ -902,7 +914,9 @@ pb:set(value, animated)   -- animated is optional boolean</code></pre>
 				<pre><code>tab:section(text)              -- divider with label
 tab:label(text)                -- plain text line
 tab:paragraph(title, body)     -- titled text block
-tab:space(height)              -- empty gap, default 8px</code></pre>
+tab:space(height)              -- empty gap, default 8px
+tab:search(placeholder)        -- filter box, hides non-matching elements</code></pre>
+				<p><code>tab:search</code> matches against any text inside an element, so it works with everything on the page without each element having to register a label.</p>
 			</section>
 
 			<section id="island">

@@ -48,6 +48,8 @@ Full docs: [https://justanewplayer19.github.io/KyriLib](https://justanewplayer19
 | `Theme` | table | override any theme colors at init |
 | `KeySystem` | `"Once"` / `"Everytime"` | enable key gate before window loads |
 | `KeySettings` | table | key system config (see below) |
+| `Mode` | `"window"` / `"island"` | layout. defaults to `island` on touch devices, `window` otherwise |
+| `Remember` | bool | `true`. persist position (and window size) to `KyriLib/window.json` |
 
 ### Window methods
 
@@ -56,8 +58,31 @@ w:tab(name, icon)               -- create a tab, returns tab object
 w:notify(title, text, duration) -- send a notification (click to dismiss)
 w:accent(color)                 -- change accent color live
 w:apply_theme(overrides)        -- change any theme colors live (partial or full)
+w:resetpos()                    -- forget the saved position/size
 w:destroy()                     -- destroy the window
 ```
+
+In island mode you also get `w.expand()`, `w.collapse()` and `w.expanded()`.
+
+### Layout modes
+
+```lua
+local w = kyri.new("my hub", { Mode = "island" })
+local main = w:tab("Main", "sword")
+main:toggle("fly", false, function(s) end, "fly")
+```
+
+`window` is the classic layout: a 520x400 frame with a tab sidebar, resizable from the
+bottom-right corner. `island` collapses to a pill at the top of the screen that expands into
+a 370x430 panel when you click it, with the tabs as a horizontal strip instead of a sidebar.
+
+Every `w:tab` and element call is identical in both — nothing in your script changes but the
+one option. Touch devices default to the island because the sidebar leaves only ~190px of
+usable width on a phone; pass `Mode = "window"` to opt back out.
+
+Position is remembered between runs, as is the window's size. `w:resetpos()` clears it.
+
+Both layouts have a close button in the topbar, which calls `w:destroy()`.
 
 `kyri.presets` contains built-in themes: `kyri`, `midnight`, `rose`, `forest`, `slate`
 
@@ -156,6 +181,7 @@ tab:section(text)
 tab:label(text)
 tab:paragraph(title, body)
 tab:space(height)   -- height defaults to 8
+tab:search(placeholder) -- filter box, hides elements on this tab that don't match
 ```
 
 ### Island
