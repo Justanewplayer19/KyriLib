@@ -1912,9 +1912,24 @@ function kyri.new(title, options)
 
         local function try(img)
             if not img or img == "" then return false end
-            logo.Image = img
-            pcall(function() kyri.svc.cp:PreloadAsync({logo}) end)
-            return logo.IsLoaded
+
+            local probe = make("ImageLabel", {
+                Size = UDim2.fromOffset(1, 1),
+                BackgroundTransparency = 1,
+                Image = img,
+                Parent = load_gui
+            })
+
+            pcall(function() kyri.svc.cp:PreloadAsync({probe}) end)
+            local t0 = os.clock()
+            while not probe.IsLoaded and os.clock() - t0 < 1.5 do
+                task.wait(0.05)
+            end
+
+            local got = probe.IsLoaded
+            probe:Destroy()
+            if got then logo.Image = img end
+            return got
         end
 
         if options.Logo then

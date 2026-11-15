@@ -97,8 +97,12 @@ It tries four things in order and uses the first that actually renders:
 3. `rbxassetid://88259917092947`, the logo uploaded to Roblox, which works anywhere
 4. the KyriLib wordmark drawn as text in Merriweather
 
-Each step loads the image and checks `IsLoaded` rather than assuming, so a pending, moderated or
-deleted asset falls through instead of leaving a blank frame on screen.
+Each step checks the image really loaded rather than assuming, so a pending, moderated or deleted
+asset falls through instead of leaving a blank frame on screen.
+
+The check uses a 1x1 probe rather than the logo itself, because Roblox does not fetch an image
+that is fully transparent, and the logo starts at `ImageTransparency = 1` so it can fade in. Read
+`IsLoaded` on the logo directly and it is always `false`, no matter how long you wait.
 
 ### What else differs
 

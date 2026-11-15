@@ -826,7 +826,8 @@ w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")</code></pre>
 					<li><code>rbxassetid://88259917092947</code>, the logo uploaded to roblox, which works anywhere</li>
 					<li>the KyriLib wordmark drawn as text in Merriweather</li>
 				</ol>
-				<p>each step loads the image and checks <code>IsLoaded</code> rather than assuming, so a pending, moderated or deleted asset falls through instead of leaving a blank frame on screen.</p>
+				<p>each step checks the image really loaded rather than assuming, so a pending, moderated or deleted asset falls through instead of leaving a blank frame on screen.</p>
+				<p>the check uses a 1x1 probe rather than the logo itself, because roblox does not fetch an image that is fully transparent, and the logo starts at <code>ImageTransparency = 1</code> so it can fade in. read <code>IsLoaded</code> on the logo directly and it is always <code>false</code>, no matter how long you wait.</p>
 				<p><a href="https://github.com/Justanewplayer19/KyriLib/blob/main/examples/studio_demo.lua" target="_blank" rel="noopener">examples/studio_demo.lua</a> is a working demo you can drop into a LocalScript: real fly, walkspeed and jump, plus one of every element. teleport destinations are placeholders, since an empty baseplate has nowhere to go.</p>
 
 				<h3>where everything goes</h3>
