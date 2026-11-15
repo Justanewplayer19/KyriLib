@@ -14,7 +14,8 @@ kyri.svc = {
     http = svc("HttpService"),
     cas = svc("ContextActionService"),
     txt = svc("TextChatService"),
-    cp = svc("ContentProvider")
+    cp = svc("ContentProvider"),
+    ts = svc("TextService")
 }
 
 kyri.studio = KYRI_STUDIO == true or (kyri.svc.run:IsStudio() and not (identifyexecutor or getgenv or gethui))
@@ -480,6 +481,7 @@ function kyri.island(opts)
     local gap = 11
     local f_med = opts.font or Enum.Font.GothamMedium
     local f_bold = opts.font_bold or Enum.Font.GothamBold
+    local f_measure = typeof(f_bold) == "EnumItem" and f_bold or Enum.Font.GothamBold
 
     local function setfont(obj, f)
         if typeof(f) == "Font" then
@@ -1264,7 +1266,7 @@ function kyri.island(opts)
 
     function isl:lyrics()
         local box = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 26),
+            Size = UDim2.new(1, 0, 0, 38),
             BackgroundTransparency = 1,
             ClipsDescendants = true,
             Visible = false,
@@ -1273,7 +1275,7 @@ function kyri.island(opts)
         })
 
         local roll = make("Frame", {
-            Size = UDim2.fromScale(1, 1),
+            Size = UDim2.new(1, 0, 0, 22),
             BackgroundTransparency = 1,
             Parent = box
         })
@@ -1287,7 +1289,7 @@ function kyri.island(opts)
                 TextTransparency = tr,
                 TextSize = 14,
                 TextWrapped = false,
-                TextTruncate = Enum.TextTruncate.None,
+                TextTruncate = Enum.TextTruncate.AtEnd,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = roll
             })
@@ -1301,65 +1303,142 @@ function kyri.island(opts)
 
         local grad = make("UIGradient", {Parent = hl})
 
-        local function wipe(p)
-            p = math.clamp(p, 0.0005, 0.9995)
+        local cred = make("TextButton", {
+            Size = UDim2.new(1, 0, 0, 13),
+            Position = UDim2.fromOffset(0, 24),
+            BackgroundTransparency = 1,
+            AutoButtonColor = false,
+            Text = "",
+            TextColor3 = t.subtext,
+            TextTransparency = 0.45,
+            TextSize = 10,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Visible = false,
+            Parent = box
+        })
+
+        setfont(cred, f_med)
+
+        local full_credit = nil
+        cred.MouseButton1Click:Connect(function()
+            if full_credit and kyri.copybox then kyri.copybox(full_credit, "lyrics credit") end
+        end)
+
+        local function wipe(v)
+            v = math.clamp(v, 0.0005, 0.9995)
             grad.Transparency = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 0),
-                NumberSequenceKeypoint.new(p, 0),
-                NumberSequenceKeypoint.new(math.min(p + 0.0004, 1), 1),
+                NumberSequenceKeypoint.new(v, 0),
+                NumberSequenceKeypoint.new(math.min(v + 0.0004, 1), 1),
                 NumberSequenceKeypoint.new(1, 1)
             })
         end
 
         wipe(0)
 
-        local shown = ""
-        local fitting = 0
-        local api = {box = box}
+        local inf = Vector2.new(9999, 100)
+        local function width(str, sz)
+            if str == "" then return 0 end
+            local ok, v = pcall(function()
+                return kyri.svc.ts:GetTextSize(str, sz, f_measure, inf).X
+            end)
+            return ok and v or 0
+        end
 
-        function api:set(text, pct)
-            text = text or ""
+        local key = nil
+        local span = {}
+        local total = 0
 
-            if text ~= shown then
-                shown = text
-                base.Text = text
-                hl.Text = text
-                base.TextSize = 14
-                hl.TextSize = 14
-                wipe(0)
+        local function layout(text, syl)
+            local room = box.AbsoluteSize.X
+            if room <= 4 then room = ew - 28 end
 
-                roll.Position = UDim2.fromOffset(0, 15)
-                base.TextTransparency = 1
-                hl.TextTransparency = 1
-                kyri.svc.tw:Create(roll, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                    Position = UDim2.fromOffset(0, 0)
-                }):Play()
-                kyri.svc.tw:Create(base, TweenInfo.new(0.26), {TextTransparency = 0.5}):Play()
-                kyri.svc.tw:Create(hl, TweenInfo.new(0.26), {TextTransparency = 0}):Play()
-
-                fitting = fitting + 1
-                local mine = fitting
-                task.spawn(function()
-                    task.wait()
-                    if mine ~= fitting or base.Text ~= text then return end
-                    local room = box.AbsoluteSize.X
-                    local wide = base.TextBounds.X
-                    if room > 0 and wide > room then
-                        local sz = math.max(8, math.floor(14 * room / wide))
-                        base.TextSize = sz
-                        hl.TextSize = sz
-                        local cut = (wide * sz / 14) > room
-                        base.TextTruncate = cut and Enum.TextTruncate.AtEnd or Enum.TextTruncate.None
-                        hl.TextTruncate = base.TextTruncate
-                    end
-                end)
+            local sz = 14
+            local wide = width(text, sz)
+            while wide > room and sz > 8 do
+                sz = sz - 1
+                wide = width(text, sz)
             end
 
+            base.TextSize = sz
+            hl.TextSize = sz
+            total = wide
+
+            span = {}
+            if syl then
+                for n,w in pairs(syl) do
+                    span[n] = {a = width(text:sub(1, w.at), sz), b = width(text:sub(1, w.to), sz)}
+                end
+            end
+        end
+
+        local function sweep(syl, now)
+            if total <= 0 or not syl then return 0 end
+
+            local k = 0
+            for n,w in pairs(syl) do
+                if w.t and w.t <= now then k = n else break end
+            end
+            if k == 0 then return 0 end
+
+            local m = span[k]
+            if not m then return 0 end
+
+            local w = syl[k]
+            local dur = math.max((w.e or w.t) - w.t, 0.06)
+            local f = math.clamp((now - w.t) / dur, 0, 1)
+            return (m.a + (m.b - m.a) * f) / total
+        end
+
+        local api = {box = box}
+
+        local function swap(text)
+            base.Text = text
+            hl.Text = text
+            roll.Position = UDim2.fromOffset(0, 15)
+            base.TextTransparency = 1
+            hl.TextTransparency = 1
+            kyri.svc.tw:Create(roll, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                Position = UDim2.fromOffset(0, 0)
+            }):Play()
+            kyri.svc.tw:Create(base, TweenInfo.new(0.26), {TextTransparency = 0.5}):Play()
+            kyri.svc.tw:Create(hl, TweenInfo.new(0.26), {TextTransparency = 0}):Play()
+        end
+
+        function api:line(text, syl, now, id)
+            text = text or ""
+            if id ~= key then
+                key = id
+                layout(text, syl)
+                wipe(0)
+                swap(text)
+            end
+            wipe(sweep(syl, now))
+        end
+
+        function api:set(text, pct, id)
+            text = text or ""
+            if id ~= key then
+                key = id
+                layout(text, nil)
+                wipe(0)
+                swap(text)
+            end
             wipe(pct or 0)
         end
 
+        function api:credit(short, long)
+            full_credit = long
+            cred.Text = short or ""
+            cred.Visible = (short or "") ~= ""
+            cred.Active = long ~= nil
+        end
+
         function api:clear()
-            shown = ""
+            key = nil
+            span = {}
+            total = 0
             base.Text = ""
             hl.Text = ""
             wipe(0)
@@ -1601,6 +1680,8 @@ function kyri.spotify(opts)
     sp.device_id = nil
     sp.autoplay = true
     sp.lyric_rev = 0
+    sp.agent = "KyriLib/1.0 (+https://github.com/Justanewplayer19/KyriLib)"
+    if opts.contact then sp.agent = sp.agent:sub(1, -2) .. "; " .. opts.contact .. ")" end
 
     local CID = opts.client_id or "035b9c837a6f46ffaffce6ada163a6ad"
     local REDIR = opts.redirect or "http://127.0.0.1:8888/callback"
@@ -1937,7 +2018,225 @@ function kyri.spotify(opts)
         return out
     end
 
+    local function tsec(v)
+        if not v then return nil end
+        local h, m, sec = v:match("^(%d+):(%d+):([%d%.]+)$")
+        if h then return tonumber(h) * 3600 + tonumber(m) * 60 + tonumber(sec) end
+        local m2, s2 = v:match("^(%d+):([%d%.]+)$")
+        if m2 then return tonumber(m2) * 60 + tonumber(s2) end
+        return tonumber(v)
+    end
+
+    local function strip(x)
+        return (x:gsub("<[^>]*>", ""):gsub("&amp;", "&"):gsub("&lt;", "<"):gsub("&gt;", ">")
+            :gsub("&quot;", '"'):gsub("&#39;", "'"):gsub("&apos;", "'"))
+    end
+
+    local function parse_ttml(xml)
+        local out = {}
+        for attrs, inner in xml:gmatch("<p([^>]*)>(.-)</p>") do
+            local b = tsec(attrs:match('begin="([^"]+)"'))
+            local e = tsec(attrs:match('end="([^"]+)"'))
+            if b then
+                local text, words, pos = "", {}, 1
+                while true do
+                    local s1, e1, sattr, stext = inner:find("<span([^>]*)>(.-)</span>", pos)
+                    if not s1 then break end
+                    if not sattr:find("x%-bg") then
+                        text = text .. strip(inner:sub(pos, s1 - 1))
+                        local w = {
+                            t = tsec(sattr:match('begin="([^"]+)"')),
+                            e = tsec(sattr:match('end="([^"]+)"')),
+                            at = #text
+                        }
+                        text = text .. strip(stext)
+                        w.to = #text
+                        if w.t then words[#words + 1] = w end
+                    end
+                    pos = e1 + 1
+                end
+                text = text .. strip(inner:sub(pos))
+                text = text:gsub("^%s+", ""):gsub("%s+$", "")
+                if text ~= "" then
+                    out[#out + 1] = {t = b, e = e, text = text, words = #words > 0 and words or nil}
+                end
+            end
+        end
+        table.sort(out, function(a, b) return a.t < b.t end)
+        return out
+    end
+
     local lyric_cache = {}
+
+    local function spicy_key()
+        if opts.spicy_key then return opts.spicy_key end
+        local g = getgenv and getgenv()
+        return g and (g.KYRI_SPICY_KEY or g.SPICY_LYRICS_KEY) or nil
+    end
+
+    local function spicy_credit(b)
+        if b.source ~= "spicy_lyrics" then
+            if b.source == "apple_music" then return "lyrics from Apple Music", nil end
+            if b.source == "spotify" then return "lyrics from Spotify", nil end
+            return "lyrics from Spicy Lyrics", nil
+        end
+
+        local a = b.UploadAttribution
+        local up = a and a.Uploader
+        local mk = a and a.Maker
+        local line = "lyrics from Spicy Lyrics"
+        local long = {"Lyrics from Spicy Lyrics", "https://spicylyrics.org"}
+
+        if up and up.username then
+            line = line .. "  -  uploaded by " .. up.username
+            long[#long + 1] = "uploaded by " .. up.username .. "   " .. (up.url or "")
+        end
+        if mk and mk.username then
+            line = line .. ", made by " .. mk.username
+            long[#long + 1] = "made by " .. mk.username .. "   " .. (mk.url or "")
+        end
+
+        return line, table.concat(long, "\n")
+    end
+
+    local function spicy_lines(b)
+        local out = {}
+
+        if b.Type == "Syllable" and type(b.Content) == "table" then
+            for i,ln in pairs(b.Content) do
+                local lead = ln.Lead
+                if type(lead) == "table" and type(lead.Syllables) == "table" then
+                    local text, syl = "", {}
+                    local n = #lead.Syllables
+                    for j,sy in pairs(lead.Syllables) do
+                        local w = {t = sy.StartTime, e = sy.EndTime, at = #text}
+                        text = text .. (sy.Text or "")
+                        w.to = #text
+                        if w.t then syl[#syl + 1] = w end
+                        if not sy.IsPartOfWord and j < n then text = text .. " " end
+                    end
+                    text = text:gsub("^%s+", ""):gsub("%s+$", "")
+                    if text ~= "" then
+                        out[#out + 1] = {
+                            t = lead.StartTime or ln.StartTime or 0,
+                            e = lead.EndTime or ln.EndTime,
+                            text = text,
+                            words = #syl > 0 and syl or nil
+                        }
+                    end
+                end
+            end
+
+        elseif b.Type == "Line" and type(b.Content) == "table" then
+            for i,ln in pairs(b.Content) do
+                if type(ln.Text) == "string" and ln.Text ~= "" then
+                    out[#out + 1] = {t = ln.StartTime or 0, e = ln.EndTime, text = ln.Text}
+                end
+            end
+        end
+
+        table.sort(out, function(x, y) return x.t < y.t end)
+        return out
+    end
+
+    local function from_spicy()
+        local key = spicy_key()
+        if not key or not sp.track or not sp.track.id then return nil end
+
+        local ok, res = pcall(req, {
+            Url = "https://api.spicylyrics.org/v1/lyrics/" .. sp.track.id,
+            Method = "GET",
+            Headers = {
+                ["Authorization"] = "Bearer " .. key,
+                ["User-Agent"] = sp.agent
+            }
+        })
+        if not ok or not res then return nil end
+
+        if res.StatusCode == 401 or res.StatusCode == 403 then
+            sp.last_error = "spicy lyrics key rejected"
+            return nil
+        end
+        if res.StatusCode ~= 200 or not res.Body then return nil end
+
+        local okd, d = pcall(function() return hs:JSONDecode(res.Body) end)
+        if not okd or type(d) ~= "table" or type(d.Body) ~= "table" then return nil end
+
+        local b = d.Body
+
+        if b.Type == "Static" then
+            local bits = {}
+            for i,ln in pairs(type(b.Lines) == "table" and b.Lines or {}) do
+                if type(ln.Text) == "string" then bits[#bits + 1] = ln.Text end
+            end
+            if #bits == 0 then return nil end
+            local credit, full = spicy_credit(b)
+            return {plain = table.concat(bits, "\n"), provider = "spicy", credit = credit, credit_full = full}
+        end
+
+        local lines = spicy_lines(b)
+        if #lines == 0 then return nil end
+
+        local credit, full = spicy_credit(b)
+        return {
+            synced = lines,
+            provider = "spicy",
+            source = b.source,
+            credit = credit,
+            credit_full = full,
+            page = "https://spicylyrics.org",
+            words = b.Type == "Syllable",
+            writers = b.SongWriters
+        }
+    end
+
+    local function red_get(url)
+        local ok, res = pcall(req, {
+            Url = url,
+            Method = "GET",
+            Headers = {["User-Agent"] = sp.agent}
+        })
+        if not ok or not res or res.StatusCode ~= 200 or not res.Body then return nil end
+        return res.Body
+    end
+
+    local function from_red()
+        local q = sp.track.name .. " " .. sp:artists()
+        local body = red_get("https://lrc.red/search.json?q=" .. hs:UrlEncode(q))
+        if not body then return nil end
+
+        local ok, d = pcall(function() return hs:JSONDecode(body) end)
+        if not ok or type(d) ~= "table" or type(d.hits) ~= "table" then return nil end
+
+        local best, gap = nil, math.huge
+        for i,h in pairs(d.hits) do
+            local off = math.abs((tonumber(h.duration) or 0) - (sp.dur or 0))
+            if off < gap then best, gap = h, off end
+        end
+        if not best or gap > 7 then return nil end
+
+        local meta = red_get("https://lrc.red/s/" .. best.isrc .. ".json")
+        if not meta then return nil end
+        local okm, m = pcall(function() return hs:JSONDecode(meta) end)
+        if not okm or type(m) ~= "table" then return nil end
+        if m.sync ~= "word" and m.sync ~= "line" then return nil end
+
+        local xml = red_get("https://lrc.red/s/" .. best.isrc .. ".ttml")
+        if not xml then return nil end
+
+        local lines = parse_ttml(xml)
+        if #lines == 0 then return nil end
+
+        return {
+            synced = lines,
+            provider = "lrc.red",
+            page = m.page or ("https://lrc.red/s/" .. best.isrc),
+            credit = "lyrics by lrc.red",
+            words = m.sync == "word",
+            duration = tonumber(m.duration),
+            drift = math.abs((tonumber(m.duration) or 0) - (sp.dur or 0))
+        }
+    end
 
     function sp:lyrics()
         if not sp.track or not sp.track.name then return nil end
@@ -1957,6 +2256,22 @@ function kyri.spotify(opts)
 
         if lyric_cache[id] ~= nil then return lyric_cache[id] or nil end
         if not req then return nil end
+
+        if sp.lyric_source ~= "lrclib" and sp.lyric_source ~= "lrc.red" then
+            local hot = from_spicy()
+            if hot then
+                lyric_cache[id] = hot
+                return hot
+            end
+        end
+
+        if sp.lyric_source ~= "lrclib" then
+            local red = from_red()
+            if red then
+                lyric_cache[id] = red
+                return red
+            end
+        end
 
         local alb = (sp.track.album and sp.track.album.name) or ""
         local url = "https://lrclib.net/api/get"
@@ -2001,6 +2316,8 @@ function kyri.spotify(opts)
             plain = d.plainLyrics,
             synced = nil,
             instrumental = d.instrumental and true or false,
+            provider = "lrclib",
+            credit = "lyrics by lrclib.net",
             duration = tonumber(d.duration),
             drift = d.duration and math.abs((tonumber(d.duration) or 0) - (sp.dur or 0)) or nil
         }
@@ -2372,10 +2689,12 @@ function kyri.spotify(opts)
                             for_rev = sp.lyric_rev
                             cued = nil
                             words:show(false)
+                            words:credit(nil)
                             task.spawn(function()
                                 local got = sp:lyrics()
                                 if sp.track and (sp.track.id or sp.track.name) == for_id then
                                     cued = got and got.synced or nil
+                                    if cued then words:credit(got.credit, got.credit_full) end
                                 end
                             end)
                         end
@@ -2391,12 +2710,17 @@ function kyri.spotify(opts)
                             end
 
                             if k > 0 then
-                                local a = cued[k].t
-                                local b = cued[k + 1] and cued[k + 1].t or (a + 4)
-                                local span = math.max(b - a, 0.25)
-                                words:set(cued[k].text, (now - a) / span)
+                                local ln = cued[k]
+                                if ln.words then
+                                    words:line(ln.text, ln.words, now, for_id .. "#" .. k)
+                                else
+                                    local a = ln.t
+                                    local b = cued[k + 1] and cued[k + 1].t or ln.e or (a + 4)
+                                    local run = math.max(b - a, 0.25)
+                                    words:set(ln.text, (now - a) / run, for_id .. "#" .. k)
+                                end
                             else
-                                words:set(cued[1] and cued[1].text or "", 0)
+                                words:set(cued[1] and cued[1].text or "", 0, for_id .. "#0")
                             end
                             words:show(true)
                         else

@@ -254,7 +254,8 @@ kyri.svc = {
     http = svc("HttpService"),
     cas = svc("ContextActionService"),
     txt = svc("TextChatService"),
-    cp = svc("ContentProvider")
+    cp = svc("ContentProvider"),
+    ts = svc("TextService")
 }
 
 kyri.studio = KYRI_STUDIO == true or (kyri.svc.run:IsStudio() and not (identifyexecutor or getgenv or gethui))
@@ -720,6 +721,7 @@ function kyri.island(opts)
     local gap = 11
     local f_med = opts.font or Enum.Font.GothamMedium
     local f_bold = opts.font_bold or Enum.Font.GothamBold
+    local f_measure = typeof(f_bold) == "EnumItem" and f_bold or Enum.Font.GothamBold
 
     local function setfont(obj, f)
         if typeof(f) == "Font" then
@@ -1504,7 +1506,7 @@ function kyri.island(opts)
 
     function isl:lyrics()
         local box = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 26),
+            Size = UDim2.new(1, 0, 0, 38),
             BackgroundTransparency = 1,
             ClipsDescendants = true,
             Visible = false,
@@ -1513,7 +1515,7 @@ function kyri.island(opts)
         })
 
         local roll = make("Frame", {
-            Size = UDim2.fromScale(1, 1),
+            Size = UDim2.new(1, 0, 0, 22),
             BackgroundTransparency = 1,
             Parent = box
         })
@@ -1527,7 +1529,7 @@ function kyri.island(opts)
                 TextTransparency = tr,
                 TextSize = 14,
                 TextWrapped = false,
-                TextTruncate = Enum.TextTruncate.None,
+                TextTruncate = Enum.TextTruncate.AtEnd,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = roll
             })
@@ -1541,65 +1543,142 @@ function kyri.island(opts)
 
         local grad = make("UIGradient", {Parent = hl})
 
-        local function wipe(p)
-            p = math.clamp(p, 0.0005, 0.9995)
+        local cred = make("TextButton", {
+            Size = UDim2.new(1, 0, 0, 13),
+            Position = UDim2.fromOffset(0, 24),
+            BackgroundTransparency = 1,
+            AutoButtonColor = false,
+            Text = "",
+            TextColor3 = t.subtext,
+            TextTransparency = 0.45,
+            TextSize = 10,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Visible = false,
+            Parent = box
+        })
+
+        setfont(cred, f_med)
+
+        local full_credit = nil
+        cred.MouseButton1Click:Connect(function()
+            if full_credit and kyri.copybox then kyri.copybox(full_credit, "lyrics credit") end
+        end)
+
+        local function wipe(v)
+            v = math.clamp(v, 0.0005, 0.9995)
             grad.Transparency = NumberSequence.new({
                 NumberSequenceKeypoint.new(0, 0),
-                NumberSequenceKeypoint.new(p, 0),
-                NumberSequenceKeypoint.new(math.min(p + 0.0004, 1), 1),
+                NumberSequenceKeypoint.new(v, 0),
+                NumberSequenceKeypoint.new(math.min(v + 0.0004, 1), 1),
                 NumberSequenceKeypoint.new(1, 1)
             })
         end
 
         wipe(0)
 
-        local shown = ""
-        local fitting = 0
-        local api = {box = box}
+        local inf = Vector2.new(9999, 100)
+        local function width(str, sz)
+            if str == "" then return 0 end
+            local ok, v = pcall(function()
+                return kyri.svc.ts:GetTextSize(str, sz, f_measure, inf).X
+            end)
+            return ok and v or 0
+        end
 
-        function api:set(text, pct)
-            text = text or ""
+        local key = nil
+        local span = {}
+        local total = 0
 
-            if text ~= shown then
-                shown = text
-                base.Text = text
-                hl.Text = text
-                base.TextSize = 14
-                hl.TextSize = 14
-                wipe(0)
+        local function layout(text, syl)
+            local room = box.AbsoluteSize.X
+            if room <= 4 then room = ew - 28 end
 
-                roll.Position = UDim2.fromOffset(0, 15)
-                base.TextTransparency = 1
-                hl.TextTransparency = 1
-                kyri.svc.tw:Create(roll, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                    Position = UDim2.fromOffset(0, 0)
-                }):Play()
-                kyri.svc.tw:Create(base, TweenInfo.new(0.26), {TextTransparency = 0.5}):Play()
-                kyri.svc.tw:Create(hl, TweenInfo.new(0.26), {TextTransparency = 0}):Play()
-
-                fitting = fitting + 1
-                local mine = fitting
-                task.spawn(function()
-                    task.wait()
-                    if mine ~= fitting or base.Text ~= text then return end
-                    local room = box.AbsoluteSize.X
-                    local wide = base.TextBounds.X
-                    if room > 0 and wide > room then
-                        local sz = math.max(8, math.floor(14 * room / wide))
-                        base.TextSize = sz
-                        hl.TextSize = sz
-                        local cut = (wide * sz / 14) > room
-                        base.TextTruncate = cut and Enum.TextTruncate.AtEnd or Enum.TextTruncate.None
-                        hl.TextTruncate = base.TextTruncate
-                    end
-                end)
+            local sz = 14
+            local wide = width(text, sz)
+            while wide > room and sz > 8 do
+                sz = sz - 1
+                wide = width(text, sz)
             end
 
+            base.TextSize = sz
+            hl.TextSize = sz
+            total = wide
+
+            span = {}
+            if syl then
+                for n,w in pairs(syl) do
+                    span[n] = {a = width(text:sub(1, w.at), sz), b = width(text:sub(1, w.to), sz)}
+                end
+            end
+        end
+
+        local function sweep(syl, now)
+            if total <= 0 or not syl then return 0 end
+
+            local k = 0
+            for n,w in pairs(syl) do
+                if w.t and w.t <= now then k = n else break end
+            end
+            if k == 0 then return 0 end
+
+            local m = span[k]
+            if not m then return 0 end
+
+            local w = syl[k]
+            local dur = math.max((w.e or w.t) - w.t, 0.06)
+            local f = math.clamp((now - w.t) / dur, 0, 1)
+            return (m.a + (m.b - m.a) * f) / total
+        end
+
+        local api = {box = box}
+
+        local function swap(text)
+            base.Text = text
+            hl.Text = text
+            roll.Position = UDim2.fromOffset(0, 15)
+            base.TextTransparency = 1
+            hl.TextTransparency = 1
+            kyri.svc.tw:Create(roll, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                Position = UDim2.fromOffset(0, 0)
+            }):Play()
+            kyri.svc.tw:Create(base, TweenInfo.new(0.26), {TextTransparency = 0.5}):Play()
+            kyri.svc.tw:Create(hl, TweenInfo.new(0.26), {TextTransparency = 0}):Play()
+        end
+
+        function api:line(text, syl, now, id)
+            text = text or ""
+            if id ~= key then
+                key = id
+                layout(text, syl)
+                wipe(0)
+                swap(text)
+            end
+            wipe(sweep(syl, now))
+        end
+
+        function api:set(text, pct, id)
+            text = text or ""
+            if id ~= key then
+                key = id
+                layout(text, nil)
+                wipe(0)
+                swap(text)
+            end
             wipe(pct or 0)
         end
 
+        function api:credit(short, long)
+            full_credit = long
+            cred.Text = short or ""
+            cred.Visible = (short or "") ~= ""
+            cred.Active = long ~= nil
+        end
+
         function api:clear()
-            shown = ""
+            key = nil
+            span = {}
+            total = 0
             base.Text = ""
             hl.Text = ""
             wipe(0)
