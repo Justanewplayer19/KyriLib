@@ -403,7 +403,7 @@ isl:button(icon, callback)     -- adds a round button to the transport row, retu
 isl:row(text)                  -- adds a text row, returns {set}
 isl:input(placeholder, cb)     -- search field with songs/lists toggle, returns {show, visible, get, set, focus}
 isl:list(max)                  -- replaceable rows of clickable results, returns {set, clear, count}
-isl:lyrics()                   -- three line synced lyric view, returns {set, show, visible}
+isl:lyrics()                   -- synced lyric line, returns {line, set, credit, show, visible}
 isl:notify(text, duration)     -- morph the pill to show a message, then revert
 isl:expand() / isl:collapse() / isl:toggle()
 isl:relayout()                 -- re-measure after adding rows
@@ -436,15 +436,43 @@ The island is a full client on its own, not just transport buttons.
 - **Search.** The magnifier opens a field with a `songs` / `lists` toggle. Songs show their album
   art and play on click; lists show playlists and play the whole context. Submitting an empty
   query in `lists` mode shows your own playlists.
-- **Lyrics.** Each track is looked up on [lrclib.net](https://lrclib.net). If it has *synced*
-  lyrics the island shows the current line only, with a highlight sweeping across it as the line
-  plays and a short slide when the line changes. Plain-only lyrics are returned by `sp:lyrics()`
-  but not displayed, since there is nothing to sync to. Pass `lyrics = false` to turn it off.
+- **Lyrics.** Three providers are tried in order, and the first one that answers with timings
+  wins. An answer without timings is kept aside and only used if nobody else has a synced one.
 
-  lrclib sometimes has timings cut against a different master, which reads as the line landing
-  seconds early. Two things help. The lookup now falls back to `/api/search` and takes the
-  closest candidate whose duration is within 6 seconds of the track, rather than accepting
-  whatever `/api/get` returned. If one is still off, nudge it:
+  | Provider | Key | Sync |
+  | --- | --- | --- |
+  | [Spicy Lyrics](https://developers.spicylyrics.org) | yes | syllable |
+  | [lrc.red](https://lrc.red) | no | syllable |
+  | [lrclib.net](https://lrclib.net) | no | line |
+
+  The first two are community run and carry per syllable timing, so the highlight sweeps word by
+  word instead of gliding evenly across the whole line. The position is measured with
+  `TextService:GetTextSize`, so it lands on real letter boundaries. A line too wide for the pill
+  scrolls sideways to keep the syllable being sung about 40 percent across, rather than shrinking
+  to nothing. Pass `lyrics = false` to turn the whole thing off.
+
+  Spicy Lyrics needs a key. Create an application at
+  [developers.spicylyrics.org](https://developers.spicylyrics.org), then give it to KyriLib
+  without putting it in a script you share:
+
+  ```lua
+  getgenv().KYRI_SPICY_KEY = "sl_sk_..."
+  -- or
+  kyri.spotify({spicy_key = "sl_sk_..."})
+  ```
+
+  Their terms require attribution, so the island shows it under the line: the provider always,
+  plus the uploader and the maker when the sync is a community one. That is read from each
+  response rather than hardcoded, because a track answered by a community sync today can be
+  answered by Apple Music tomorrow. Click the credit to copy the profile links. Responses are
+  held in memory for the session only, which keeps the 30 day cache limit.
+
+  Without a key it falls through to lrc.red, which needs nothing but a User-Agent and still
+  gives syllable timing, and then to lrclib, which gives whole lines.
+
+  Timings are sometimes cut against a different master, which reads as the line landing seconds
+  early. The lrclib lookup falls back to `/api/search` and takes the closest candidate whose
+  duration is within 6 seconds of the track. If one is still off, nudge it:
 
   ```lua
   sp:nudge(0.5)       -- line was half a second early
@@ -549,10 +577,12 @@ sp:transfer(id, play)          -- move playback to a device id
 sp:playlists(limit)            -- your playlists
 sp:playcontext(uri)            -- play a playlist or album uri
 sp:features()                  -- audio features, sets sp.bpm when spotify allows it
+sp.lyric_source                -- pin one provider: "spicy", "lrc.red" or "lrclib"
 sp:lyricsalts()                -- other synced lrclib matches, sorted by duration gap
 sp:uselyrics(n)                -- switch to one of them
 sp.device_id                   -- the device plays are sent to, learned from sync
-sp:lyrics()                    -- lrclib lookup, {plain, synced, instrumental} or nil
+sp:lyrics()                    -- best of spicy, lrc.red, lrclib
+                               -- {synced, plain, provider, credit, words, instrumental} or nil
 sp:sync()                 -- force a refresh now
 sp:authed()
 sp:artists()              -- current track artists as a string

@@ -1356,8 +1356,10 @@ function kyri.island(opts)
         local total = 0
         local room = 0
         local at = 0
+        local held, held_syl = "", nil
 
         local function layout(text, syl)
+            held, held_syl = text, syl
             room = box.AbsoluteSize.X
             if room <= 4 then room = ew - 28 end
 
@@ -1402,6 +1404,13 @@ function kyri.island(opts)
             return (m.a + (m.b - m.a) * f) / total
         end
 
+        local function recheck()
+            local now = box.AbsoluteSize.X
+            if now > 4 and math.abs(now - room) > 2 and held ~= "" then
+                layout(held, held_syl)
+            end
+        end
+
         local function follow(pct)
             local want = 0
             if total > room then
@@ -1434,6 +1443,7 @@ function kyri.island(opts)
                 wipe(0)
                 swap(text)
             end
+            recheck()
             local pct = sweep(syl, now)
             wipe(pct)
             follow(pct)
@@ -1447,6 +1457,7 @@ function kyri.island(opts)
                 wipe(0)
                 swap(text)
             end
+            recheck()
             pct = math.clamp(pct or 0, 0, 1)
             wipe(pct)
             follow(pct)
@@ -1464,6 +1475,7 @@ function kyri.island(opts)
             span = {}
             total = 0
             at = 0
+            held, held_syl = "", nil
             base.Text = ""
             hl.Text = ""
             shift.Position = UDim2.fromOffset(0, 0)

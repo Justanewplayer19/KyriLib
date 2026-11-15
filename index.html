@@ -1149,7 +1149,7 @@ isl:button(icon, callback)  -- round button on the transport row, returns {icon,
 isl:row(text)               -- text row, returns {set}
 isl:input(placeholder, cb)  -- search field with songs/lists toggle
 isl:list(max)               -- replaceable rows of clickable results
-isl:lyrics()                -- three line synced lyric view
+isl:lyrics()                -- synced lyric line with attribution
 isl:notify(text, duration)  -- morph the pill to show a message, then revert
 isl:expand()
 isl:collapse()
@@ -1270,7 +1270,8 @@ w.flags.ws_set(100, true)</code></pre>
 				<p>the island is a full client on its own, not just transport buttons.</p>
 				<ul>
 					<li><strong>search.</strong> the magnifier opens a field with a <code>songs</code> / <code>lists</code> toggle. songs show their album art and play on click, lists show playlists and play the whole context. submitting an empty query in <code>lists</code> mode shows your own playlists.</li>
-					<li><strong>lyrics.</strong> each track is looked up on <a href="https://lrclib.net" target="_blank" rel="noopener">lrclib.net</a>. if it has <em>synced</em> lyrics the island shows the previous, current and next line and follows along. plain-only lyrics come back from <code>sp:lyrics()</code> but are not displayed, since there is nothing to sync to. pass <code>lyrics = false</code> to turn it off.</li>
+					<li><strong>lyrics.</strong> three providers are tried in order and the first with timings wins: <a href="https://developers.spicylyrics.org" target="_blank" rel="noopener">spicy lyrics</a>, then <a href="https://lrc.red" target="_blank" rel="noopener">lrc.red</a>, then <a href="https://lrclib.net" target="_blank" rel="noopener">lrclib.net</a>. the first two are community run and carry per syllable timing, so the highlight sweeps word by word, measured with <code>TextService:GetTextSize</code> so it lands on real letter boundaries. a line too wide for the pill scrolls sideways instead of shrinking. pass <code>lyrics = false</code> to turn it off.</li>
+					<li><strong>the spicy key.</strong> spicy lyrics needs one. make an application at <a href="https://developers.spicylyrics.org" target="_blank" rel="noopener">developers.spicylyrics.org</a> and set <code>getgenv().KYRI_SPICY_KEY</code>, or pass <code>spicy_key</code> to <code>kyri.spotify</code>. keep it out of any script you share. their terms require attribution, so the island prints it under the line: the provider always, and the uploader and maker when the sync is a community one, read from each response rather than hardcoded. without a key it falls through to lrc.red, which needs no key and still gives syllable timing.</li>
 					<li><code>island_results</code> sets how many rows a search shows, default 5.</li>
 				</ul>
 
@@ -1340,7 +1341,8 @@ sp:devices()                   -- list of connected devices
 sp:transfer(id, play)          -- move playback to a device id
 sp:playlists(limit)            -- your playlists
 sp:playcontext(uri)            -- play a playlist or album uri
-sp:lyrics()                    -- lrclib lookup, {plain, synced, instrumental} or nil
+sp:lyrics()                    -- best of spicy, lrc.red, lrclib
+                               -- {synced, plain, provider, credit, words} or nil
 sp:sync()                 -- force a refresh now
 sp:authed()
 sp:artists()              -- current track artists as one string

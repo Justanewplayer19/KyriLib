@@ -1,3 +1,5 @@
+getgenv().KYRI_SPICY_KEY = getgenv().KYRI_SPICY_KEY or ""
+
 local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
 
 local sp = kyri.spotify({
@@ -16,6 +18,11 @@ if not sp:authed() then
     tell("not signed in, tap the island and use the two rows")
 else
     tell("signed in, tap the magnifier to search")
+end
+
+if getgenv().KYRI_SPICY_KEY == "" then
+    tell("no spicy key set, falling back to lrc.red and lrclib")
+    tell("get one at developers.spicylyrics.org, then set KYRI_SPICY_KEY at the top")
 end
 
 task.spawn(function()
@@ -42,17 +49,19 @@ task.spawn(function()
                 task.spawn(function()
                     local got = sp:lyrics()
                     if not got then
-                        tell("  no lyrics on lrclib")
+                        tell("  no lyrics anywhere")
                     elseif got.instrumental then
                         tell("  instrumental")
                     elseif got.synced then
-                        tell("  synced, " .. #got.synced .. " lines")
+                        local kind = got.words and "word synced" or "line synced"
+                        tell("  " .. kind .. " from " .. tostring(got.provider))
+                        tell("  " .. tostring(got.credit))
                         if got.drift and got.drift > 2 then
-                            tell("  lrclib duration is off by " .. string.format("%.0f", got.drift)
+                            tell("  duration is off by " .. string.format("%.0f", got.drift)
                                 .. "s, if the lines run early use: !sp sync 0.5")
                         end
                     elseif got.plain then
-                        tell("  plain only, nothing to follow")
+                        tell("  plain only from " .. tostring(got.provider) .. ", nothing to follow")
                     else
                         tell("  no lyrics")
                     end
