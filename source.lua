@@ -1806,18 +1806,30 @@ function kyri.new(title, options)
     task.spawn(function()
         local url = "https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/kyriliblogo.png"
         local path = "kyrilib_logo.png"
+        local shown = false
 
-        if isfile and writefile and not isfile(path) then
-            local data = http_get(url)
-            if data then pcall(function() writefile(path, data) end) end
+        if options.Splash ~= false then
+            if isfile and writefile and not isfile(path) then
+                local data = http_get(url)
+                if data then pcall(function() writefile(path, data) end) end
+            end
+
+            if isfile and getcustomasset and isfile(path) then
+                pcall(function()
+                    logo.Image = getcustomasset(path)
+                    shown = logo.Image ~= ""
+                end)
+            end
         end
 
-        if isfile and getcustomasset and isfile(path) then
-            pcall(function() logo.Image = getcustomasset(path) end)
+        if not shown then
+            load_gui:Destroy()
+            loaded = true
+            return
         end
 
         kyri.svc.tw:Create(logo, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
-        task.wait(3)
+        task.wait(options.SplashTime or 3)
         kyri.svc.tw:Create(logo, TweenInfo.new(0.5), {ImageTransparency = 1}):Play()
         task.wait(0.5)
         load_gui:Destroy()

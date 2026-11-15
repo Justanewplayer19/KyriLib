@@ -818,6 +818,7 @@ body {
 local w = kyri.new("my hub")
 w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")</code></pre>
 				<p>everything past that line is the same. <code>kyri.studio</code> is <code>true</code> so you can branch if you need to.</p>
+				<p>the logo splash is skipped in studio, because the logo needs <code>getcustomasset</code> to load and studio has none, so it would be four seconds of an empty screen. <code>kyri.new</code> returns in about 0.01s there.</p>
 				<p><a href="https://github.com/Justanewplayer19/KyriLib/blob/main/examples/studio_demo.lua" target="_blank" rel="noopener">examples/studio_demo.lua</a> is a working demo you can drop into a LocalScript: real fly, walkspeed and jump, plus one of every element. teleport destinations are placeholders, since an empty baseplate has nowhere to go.</p>
 
 				<h3>where everything goes</h3>
@@ -926,6 +927,8 @@ end, "ws")</code></pre>
 						<tr><td>Island</td><td>bool</td><td><code>true</code> is the same as <code>Mode = "island"</code></td></tr>
 						<tr><td>Remember</td><td>bool</td><td><code>true</code>. persists position and size to <code>KyriLib/window.json</code></td></tr>
 						<tr><td>Shadow</td><td>bool</td><td><code>false</code>. set <code>true</code> for a drop shadow under the frame</td></tr>
+						<tr><td>Splash</td><td>bool</td><td><code>true</code>. the logo screen. skipped automatically when the logo cannot load</td></tr>
+						<tr><td>SplashTime</td><td>number</td><td><code>3</code>. seconds the logo holds before fading</td></tr>
 					</tbody>
 				</table>
 

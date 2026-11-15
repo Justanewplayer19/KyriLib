@@ -63,6 +63,8 @@ svc.run.RenderStepped:Connect(function(dt)
     end
 end)
 
+local t0 = os.clock()
+
 local w = kyri.new("studio demo", {
     Island = true,
     GameName = "StudioDemo",
@@ -220,4 +222,4 @@ tst:button("three at once", function()
     w:notify("three", "third", 4, "bell")
 end, "layers")
 
-w:notify("studio demo", "f toggles fly, right control hides the ui", 5, "check")
+w:notify("studio demo", string.format("ready in %.2fs, f toggles fly", os.clock() - t0), 5, "check")

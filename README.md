@@ -154,6 +154,8 @@ Full docs: [https://justanewplayer19.github.io/KyriLib](https://justanewplayer19
 | `Island` | bool | `true` is the same as `Mode = "island"` |
 | `Remember` | bool | `true`. persist position (and window size) to `KyriLib/window.json` |
 | `Shadow` | bool | `false`. set `true` for a drop shadow under the frame |
+| `Splash` | bool | `true`. the logo screen. skipped automatically when the logo cannot load |
+| `SplashTime` | number | `3`. seconds the logo holds before fading |
 
 ### Window methods
 
