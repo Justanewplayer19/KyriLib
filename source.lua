@@ -233,11 +233,13 @@ function kyri.island(opts)
     local old = lp.PlayerGui:FindFirstChild("KyriIsland")
     if old then old:Destroy() end
 
+    -- inset is NOT ignored on purpose: the roblox topbar lives in CoreGui and draws
+    -- over PlayerGui at any DisplayOrder, so y=0 here would hide the pill behind it
     local gui = make("ScreenGui", {
         Name = "KyriIsland",
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn = false,
-        IgnoreGuiInset = true,
+        IgnoreGuiInset = false,
         DisplayOrder = 999999997,
         Parent = lp.PlayerGui
     })
