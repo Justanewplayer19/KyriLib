@@ -755,16 +755,25 @@ local w = kyri.new("my hub")
 w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")</code></pre>
 				<p>everything past that line is the same. <code>kyri.studio</code> is <code>true</code> so you can branch if you need to.</p>
 
-				<h3>what degrades</h3>
+				<h3>saving</h3>
+				<p>nothing persists until you name a datastore.</p>
+				<pre><code>kyri.persist("MyHubSaves")</code></pre>
+				<p>configs, window position and island position then load from it on startup, and batch back every 7 seconds plus on <code>BindToClose</code>. the name is yours to pick, and two scripts with different names never see each other's saves.</p>
+				<p><code>DataStoreService</code> only answers the server, so from a LocalScript this needs a bridge: drop <code>tools/KyriStoreServer.lua</code> into ServerScriptService as a Script. it creates a <code>KyriStore</code> RemoteFunction and does the reads and writes on the server. also tick <strong>Studio Access to API Services</strong> in Game Settings &gt; Security.</p>
+				<pre><code>local ok, why = kyri.persist("MyHubSaves")
+if not ok then warn(why) end</code></pre>
+				<p>without it, saves stay in memory and die with the playtest. <code>kyri.flush()</code> forces a write.</p>
+
+				<h3>what else differs</h3>
 				<table>
 					<thead><tr><th></th><th>executor</th><th>studio</th></tr></thead>
 					<tbody>
-						<tr><td>configs, saved positions</td><td>written to disk</td><td>kept in memory, gone when the playtest stops</td></tr>
+						<tr><td>spotify</td><td>works</td><td>not in the build at all, 735 lines cut</td></tr>
 						<tr><td>tab icons</td><td>fetched once, cached</td><td>needs <code>HttpService</code>, which only answers on the server</td></tr>
-						<tr><td>spotify</td><td>works</td><td>no <code>request()</code> in any Studio script, so it stays idle and says so</td></tr>
-						<tr><td>clipboard</td><td><code>setclipboard</code></td><td>prints to the output instead</td></tr>
+						<tr><td>clipboard</td><td><code>setclipboard</code></td><td><code>kyri.copybox</code> shows a selectable box to copy by hand</td></tr>
 					</tbody>
 				</table>
+				<p>spotify needs <code>request()</code>, which no studio script has, so it is stripped rather than shipped broken. <code>kyri.spotify()</code> still returns a no-op stub and <code>w:spotify()</code> says so in a notification, which means a script written for the executor still runs here without erroring.</p>
 				<p>nothing throws. each of those checks for the function it needs and skips if it is missing.</p>
 				<p><code>studiosource.lua</code> is generated: <code>source.lua</code> is the only file anyone edits, and <code>python tools/build_studio.py</code> rebuilds the studio copy by prepending a compatibility shim. the library body is byte-identical in both, so the two cannot drift apart.</p>
 			</section>
@@ -830,6 +839,7 @@ w:island(opts)                 -- attach an island, inherits the window title
 w:spotify(opts)                -- attach spotify, builds tabs on this window
 w:resetpos()                   -- forget the saved position and size
 w:destroy()                    -- destroy the window, island and spotify loop</code></pre>
+				<p><code>kyri.copybox(text, title)</code> puts text in a focused, pre-selected TextBox so it can be copied by hand. the spotify auth tab falls back to it when <code>setclipboard</code> is missing.</p>
 				<p>in island mode you also get <code>w.expand()</code>, <code>w.collapse()</code> and <code>w.expanded()</code>.</p>
 
 				<h3>layout modes</h3>

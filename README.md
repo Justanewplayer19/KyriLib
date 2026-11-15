@@ -26,14 +26,43 @@ w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")
 
 Everything past that line is the same. `kyri.studio` is `true` so you can branch if you need to.
 
-**What degrades, and why:**
+### Saving
+
+Nothing persists until you name a DataStore:
+
+```lua
+kyri.persist("MyHubSaves")
+```
+
+Configs, window position and island position then load from it on startup, and batch back every
+7 seconds plus on `BindToClose`. The name is yours to pick, and two scripts with different names
+never see each other's saves.
+
+`DataStoreService` only answers the server, so from a LocalScript this needs a bridge: drop
+`tools/KyriStoreServer.lua` into ServerScriptService as a Script. It creates a `KyriStore`
+RemoteFunction and does the reads and writes on the server. Also tick **Studio Access to API
+Services** in Game Settings > Security.
+
+`kyri.persist` returns `false` and a reason when it cannot save, so you can check:
+
+```lua
+local ok, why = kyri.persist("MyHubSaves")
+if not ok then warn(why) end
+```
+
+Without it, saves stay in memory and die with the playtest. `kyri.flush()` forces a write.
+
+### What else differs
 
 | | executor | studio |
 |-|----------|--------|
-| configs, saved positions | written to disk | kept in memory, gone when the playtest stops |
+| spotify | works | not in the build at all, 735 lines cut |
 | tab icons | fetched once, cached | needs `HttpService`, which only answers on the server |
-| spotify | works | no `request()` in any Studio script, so it stays idle and says so |
-| clipboard | `setclipboard` | prints to the output instead |
+| clipboard | `setclipboard` | `kyri.copybox` shows a selectable box to copy by hand |
+
+Spotify needs `request()`, which no Studio script has, so it is stripped rather than shipped
+broken. `kyri.spotify()` still returns a no-op stub and `w:spotify()` says so in a notification,
+which means a script written for the executor still runs here without erroring.
 
 Nothing throws. Each of those checks for the function it needs and skips if it is missing.
 
@@ -94,6 +123,9 @@ w:apply_theme(overrides)        -- change any theme colors live (partial or full
 w:resetpos()                    -- forget the saved position/size
 w:destroy()                     -- destroy the window
 ```
+
+`kyri.copybox(text, title)` puts text in a focused, pre-selected TextBox so it can be copied by
+hand. The Spotify auth tab falls back to it when `setclipboard` is missing.
 
 In island mode you also get `w.expand()`, `w.collapse()` and `w.expanded()`.
 
