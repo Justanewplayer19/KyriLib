@@ -638,6 +638,11 @@ function kyri.island(opts)
         return h + math.max(n - 1, 0) * gap + 28
     end
 
+    if body and opts.total_height then
+        local over = exp_h() - body.Size.Y.Offset
+        body.Size = UDim2.new(1, 0, 0, math.max(opts.total_height - over, 120))
+    end
+
     local tap = make("TextButton", {
         Size = UDim2.fromScale(1, 1),
         BackgroundTransparency = 1,
@@ -2030,6 +2035,7 @@ function kyri.new(title, options)
             volume = false,
             expanded_width = pan_w,
             body_height = pan_h,
+            total_height = pan_h,
             on_close = function() w:destroy() end
         }))
 
@@ -4750,6 +4756,7 @@ function kyri.new(title, options)
                 title = w.title,
                 expanded_width = w.pan_w,
                 body_height = w.pan_h,
+                total_height = w.pan_h,
                 on_close = function() w:destroy() end
             })
             for i,c in pairs(kept) do
