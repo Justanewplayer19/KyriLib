@@ -16,6 +16,16 @@ kyri.svc = {
     txt = svc("TextChatService")
 }
 
+kyri.studio = KYRI_STUDIO == true or (kyri.svc.run:IsStudio() and not (identifyexecutor or getgenv or gethui))
+
+local function http_get(url)
+    local ok, res = pcall(function() return game:HttpGet(url) end)
+    if ok and type(res) == "string" and #res > 0 then return res end
+    ok, res = pcall(function() return kyri.svc.http:GetAsync(url) end)
+    if ok and type(res) == "string" and #res > 0 then return res end
+    return nil
+end
+
 kyri.theme = {
     bg = Color3.fromRGB(8, 8, 10),
     container = Color3.fromRGB(14, 14, 18),
@@ -93,7 +103,7 @@ local function fetch_icons()
 
     local raw
     pcall(function()
-        raw = game:HttpGet((getgenv and getgenv().kyri_icon_source) or ICON_URL)
+        raw = http_get((getgenv and getgenv().kyri_icon_source) or ICON_URL)
     end)
     tbl = decode_icons(raw)
 
@@ -1498,6 +1508,11 @@ function kyri.spotify(opts)
 
         local st_lbl
         at:button("copy auth url", function()
+            if not setclipboard then
+                w:notify("spotify", "no clipboard here, the url is printed to the console", 4)
+                print(sp:authurl())
+                return
+            end
             setclipboard(sp:authurl())
             w:notify("copied", "auth url copied, open it in your browser", 3)
         end, "link")
@@ -1673,15 +1688,13 @@ function kyri.new(title, options)
         local url = "https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/kyriliblogo.png"
         local path = "kyrilib_logo.png"
 
-        if not isfile(path) then
-            local success, data = pcall(function()
-                return game:HttpGet(url)
-            end)
-            if success then writefile(path, data) end
+        if isfile and writefile and not isfile(path) then
+            local data = http_get(url)
+            if data then pcall(function() writefile(path, data) end) end
         end
 
-        if isfile(path) then
-            logo.Image = getcustomasset(path)
+        if isfile and getcustomasset and isfile(path) then
+            pcall(function() logo.Image = getcustomasset(path) end)
         end
 
         kyri.svc.tw:Create(logo, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
