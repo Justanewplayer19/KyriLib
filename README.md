@@ -88,6 +88,18 @@ If a step is missing, `kyri.persist` returns `false` and tells you which one:
 Running from a server Script instead? Then it talks to `DataStoreService` directly and step 2 is
 unnecessary. `kyri.new` is client only though, so that is rare.
 
+### The splash
+
+It tries four things in order and uses the first that actually renders:
+
+1. `Logo`, if you passed one
+2. the PNG cached on disk through `getcustomasset`, which only executors have
+3. `rbxassetid://88259917092947`, the logo uploaded to Roblox, which works anywhere
+4. the KyriLib wordmark drawn as text in Merriweather
+
+Each step loads the image and checks `IsLoaded` rather than assuming, so a pending, moderated or
+deleted asset falls through instead of leaving a blank frame on screen.
+
 ### What else differs
 
 | | executor | studio |
@@ -154,8 +166,9 @@ Full docs: [https://justanewplayer19.github.io/KyriLib](https://justanewplayer19
 | `Island` | bool | `true` is the same as `Mode = "island"` |
 | `Remember` | bool | `true`. persist position (and window size) to `KyriLib/window.json` |
 | `Shadow` | bool | `false`. set `true` for a drop shadow under the frame |
-| `Splash` | bool | `true`. the logo screen. skipped automatically when the logo cannot load |
+| `Splash` | bool | `true`. the logo screen |
 | `SplashTime` | number | `1.5`. seconds the logo holds before fading |
+| `Logo` | string | your own asset id for the splash, tried before the built-in one |
 
 ### Window methods
 
