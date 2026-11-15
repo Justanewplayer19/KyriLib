@@ -1,6 +1,7 @@
 # KyriLib
 
-Modern UI library for Roblox executor scripts. Clean dark theme, smooth animations, built-in config system.
+Modern UI library for Roblox executor scripts. Clean dark theme, smooth animations, built-in config system,
+a dynamic island, and one-line Spotify control.
 
 ## Installation
 
@@ -81,6 +82,16 @@ Some useful names: `sword`, `axe`, `skull`, `flame`, `shield`, `crosshair`, `tar
 
 Full list at [lucide.dev/icons](https://lucide.dev/icons). Use the icon name as-is (e.g. `"arrow-up-right"`, `"battery-charging"`).
 
+Icons are not bundled in `source.lua`. They live in [`icons.json`](icons.json) and are fetched on the
+first icon lookup, then cached to `KyriLib/icons.json` so later runs read from disk.
+
+```lua
+kyri.preload_icons()    -- optional: warm the cache in the background before you build UI
+kyri.icon_source = "https://.../my-icons.json"   -- optional: point at your own pack
+```
+
+If the fetch fails, elements fall back to a default glyph instead of erroring.
+
 ### Elements
 
 **Button**
@@ -142,6 +153,123 @@ tab:label(text)
 tab:paragraph(title, body)
 tab:space(height)   -- height defaults to 8
 ```
+
+### Island
+
+A floating pill at the top of the screen that expands into a panel — a dynamic island. It is
+standalone: it works with or without a window.
+
+```lua
+local isl = kyri.island({
+    title = "my script",
+    subtitle = "idle",
+    icon = "zap"
+})
+
+isl:button("play", function() print("hi") end)
+isl:set({ title = "running", subtitle = "3 targets", progress = 0.5 })
+isl:notify("saved", 2)
+```
+
+**Options:**
+| key | type | default | description |
+|-----|------|---------|-------------|
+| `title` | string | `"kyri"` | collapsed + expanded title |
+| `subtitle` | string | `""` | second line, expanded only |
+| `icon` | string | `"music"` | fallback glyph when there is no `image` |
+| `image` | string | `""` | asset id shown as artwork |
+| `width` / `height` | number | `230` / `38` | collapsed pill size |
+| `expanded_width` | number | `330` | width when open |
+| `bars` | bool | `true` | animated EQ bars while `playing` |
+| `seek` | bool | `true` | seek bar + elapsed/duration row |
+| `volume` | bool | `true` | volume row |
+| `draggable` | bool | `true` | drag to reposition (a tap under 6px still opens it) |
+| `hover` | bool | `false` | expand on hover instead of only on tap |
+| `y` | number | `10` | offset from the top |
+| `position` | UDim2 | — | absolute position, overrides the top-center anchor |
+| `on_seek` | function | — | `fn(pct)` where pct is 0-1 |
+| `on_volume` | function | — | `fn(percent)` where percent is 0-100 |
+| `on_toggle` | function | — | `fn(expanded)` |
+
+**Methods:**
+```lua
+isl:set(data)                  -- title, subtitle, image, icon, progress, left, right, volume, playing
+isl:button(icon, callback)     -- adds a round button to the transport row, returns {icon, tint, setcallback}
+isl:row(text)                  -- adds a text row, returns {set}
+isl:notify(text, duration)     -- morph the pill to show a message, then revert
+isl:expand() / isl:collapse() / isl:toggle()
+isl:relayout()                 -- re-measure after adding rows
+isl:visible(bool)
+isl:destroy()
+```
+
+`isl:set` ignores `progress` while the user is dragging the seek bar, so polling loops will not fight
+the drag. From a window, `w:island(opts)` does the same thing and inherits the window title.
+
+### Spotify
+
+Control real Spotify playback. One call wires up the island, the tabs, the auth flow and the polling
+loop — you do not write any of it:
+
+```lua
+kyri.spotify()
+```
+
+Or attach it to a window you already have:
+
+```lua
+local w = kyri.new("my hub")
+local sp = w:spotify({ commands = true })
+```
+
+**Options:**
+| key | type | default | description |
+|-----|------|---------|-------------|
+| `island` | bool | `true` | show the island with transport controls |
+| `tabs` | bool | `true` | build Now Playing / Search / Auth tabs |
+| `window` | window | — | build tabs on this window instead of creating one |
+| `commands` | bool | `false` | enable `!sp` chat commands |
+| `client_id` | string | built-in | use your own Spotify app |
+| `on_track` | function | — | `fn(track)` when the track changes |
+| `island_y`, `island_width`, `island_position`, `island_hover` | — | — | passed through to the island |
+
+**Connecting** (once per machine — the refresh token is saved to `KyriLib/spotify/tokens.json`):
+
+1. open the **Auth** tab, click *copy auth url*
+2. paste it in a browser and approve
+3. the callback page fails to load, which is expected
+4. copy the whole url from the address bar
+5. paste it in the input and hit submit
+
+Auth uses the Authorization Code + PKCE flow, so there is no client secret in the script. The code
+verifier is generated locally, SHA-256'd and sent as a challenge.
+
+**Methods:**
+```lua
+sp:play() / sp:pause() / sp:toggle()
+sp:next() / sp:prev()
+sp:seek(pct)              -- 0-1
+sp:volume(percent)        -- 0-100
+sp:setshuffle(bool)
+sp:setloop(mode)          -- "off" / "context" / "track", or nil to cycle; returns ok, mode
+sp:like()                 -- save the current track
+sp:search(query, limit)   -- returns a list of track objects
+sp:playuri(uri) / sp:queue(uri)
+sp:devices()
+sp:sync()                 -- force a refresh now
+sp:authed()
+sp:artists()              -- current track artists as a string
+sp:destroy()
+```
+
+Readable state: `sp.playing`, `sp.pos`, `sp.dur`, `sp.vol`, `sp.shuffle`, `sp.loop`, `sp.track`,
+`sp.results`, `sp.island`, `sp.window`. `sp.request(method, endpoint, body)` hits any Web API endpoint
+with auth and refresh already handled.
+
+**Chat commands** (`commands = true`): `!sp play`, `pause`, `skip`, `back`, `current`, `like`,
+`search [query]`, `pick [n]`, `volume [0-100]`, `loop [mode]`, `shuffle [on/off]`, `help`
+
+Requires an executor with `request`/`http_request`, `writefile` and `getcustomasset` (for album art).
 
 ### Config
 

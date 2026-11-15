@@ -678,6 +678,7 @@ body {
 				<a href="#window" class="sidebar-link">window</a>
 				<a href="#tabs" class="sidebar-link">tabs</a>
 				<a href="#elements" class="sidebar-link">elements</a>
+				<a href="#island" class="sidebar-link">island</a>
 				<a href="#keybinds" class="sidebar-link">keybinds</a>
 				<a href="#notifications" class="sidebar-link">notifications</a>
 				<a href="#themes" class="sidebar-link">themes</a>
@@ -686,6 +687,7 @@ body {
 
 			<div class="sidebar-section">
 				<div class="sidebar-title">features</div>
+				<a href="#spotify" class="sidebar-link">spotify</a>
 				<a href="#key-system" class="sidebar-link">key system</a>
 			</div>
 
@@ -730,7 +732,9 @@ body {
 					<li>built-in save/load config system with auto-load support</li>
 					<li>draggable and resizable window</li>
 					<li>keybind system with press or hold modes, supports mouse buttons</li>
-					<li>tab icons via 1,000+ lucideblox names, rbxassetid://, rbxthumb://, or https://</li>
+					<li>tab icons via 560+ lucideblox names, rbxassetid://, rbxthumb://, or https:// — fetched on demand, not bundled</li>
+					<li>dynamic island: a floating pill that expands into a panel, usable for anything</li>
+					<li>one-line spotify control with PKCE auth, album art, and chat commands</li>
 					<li>mobile support</li>
 				</ul>
 			</section>
@@ -794,7 +798,9 @@ end, "ws")</code></pre>
 w:notify(title, text, duration) -- send notification
 w:accent(color)                -- change accent color live
 w:apply_theme(overrides)       -- change any theme colors live
-w:destroy()                    -- destroy the window</code></pre>
+w:island(opts)                 -- attach an island, inherits the window title
+w:spotify(opts)                -- attach spotify, builds tabs on this window
+w:destroy()                    -- destroy the window, island and spotify loop</code></pre>
 
 				<h3>toggle visibility</h3>
 				<p>press <code>RightControl</code> to show/hide the window.</p>
@@ -815,8 +821,16 @@ w:tab("Web",      "https://example.com/icon.png") -- https url (see note below)<
 
 				<div class="admonition admonition-info">
 					<div class="admonition-title">lucideblox icon pack</div>
-					<p>1,000+ <a href="https://lucide.dev/icons" target="_blank">Lucide icons</a> are built in. Pass the icon name as a string exactly as it appears on lucide.dev, e.g. <code>"arrow-up-right"</code>, <code>"battery-charging"</code>, <code>"shield-check"</code>.</p>
+					<p>566 <a href="https://lucide.dev/icons" target="_blank">Lucide icons</a> are available by name. Pass the icon name as a string exactly as it appears on lucide.dev, e.g. <code>"arrow-up-right"</code>, <code>"battery-charging"</code>, <code>"shield-check"</code>.</p>
 					<p>Common names: <code>sword</code> &bull; <code>axe</code> &bull; <code>skull</code> &bull; <code>flame</code> &bull; <code>shield</code> &bull; <code>crosshair</code> &bull; <code>target</code> &bull; <code>eye</code> &bull; <code>ghost</code> &bull; <code>users</code> &bull; <code>user</code> &bull; <code>crown</code> &bull; <code>star</code> &bull; <code>heart</code> &bull; <code>settings</code> &bull; <code>settings-2</code> &bull; <code>sliders</code> &bull; <code>wrench</code> &bull; <code>key</code> &bull; <code>lock</code> &bull; <code>map-pin</code> &bull; <code>compass</code> &bull; <code>home</code> &bull; <code>search</code> &bull; <code>filter</code> &bull; <code>list</code> &bull; <code>grid</code> &bull; <code>music</code> &bull; <code>mic</code> &bull; <code>wifi</code> &bull; <code>monitor</code> &bull; <code>camera</code> &bull; <code>video</code> &bull; <code>file</code> &bull; <code>folder</code> &bull; <code>download</code> &bull; <code>upload</code> &bull; <code>save</code> &bull; <code>trash</code> &bull; <code>edit</code> &bull; <code>bell</code> &bull; <code>clock</code> &bull; <code>info</code> &bull; <code>alert-triangle</code> &bull; <code>check</code> &bull; <code>x</code> &bull; <code>plus</code> &bull; <code>terminal</code> &bull; <code>bot</code> &bull; <code>gamepad</code> &bull; <code>gamepad-2</code></p>
+				</div>
+
+				<div class="admonition admonition-info">
+					<div class="admonition-title">where icons come from</div>
+					<p>The icon pack is <strong>not</strong> bundled in <code>source.lua</code>. It lives in <code>icons.json</code> and is fetched on the first icon lookup, then cached to <code>KyriLib/icons.json</code> so later runs read it from disk.</p>
+					<pre><code>kyri.preload_icons()   -- optional: warm the cache before you build UI
+kyri.icon_source = "https://.../my-icons.json"   -- optional: use your own pack</code></pre>
+					<p>If the fetch fails, elements fall back to a default glyph instead of erroring.</p>
 				</div>
 
 				<div class="admonition admonition-info">
@@ -884,6 +898,69 @@ pb:set(value, animated)   -- animated is optional boolean</code></pre>
 tab:label(text)                -- plain text line
 tab:paragraph(title, body)     -- titled text block
 tab:space(height)              -- empty gap, default 8px</code></pre>
+			</section>
+
+			<section id="island">
+				<h2>island</h2>
+
+				<p>a floating pill at the top of the screen that expands into a panel. it is standalone — it works with or without a window, and it is not music-specific.</p>
+
+				<pre><code>local isl = kyri.island({
+    title = "my script",
+    subtitle = "idle",
+    icon = "zap"
+})
+
+isl:button("play", function() print("hi") end)
+isl:set({ title = "running", subtitle = "3 targets", progress = 0.5 })
+isl:notify("saved", 2)</code></pre>
+
+				<h3>options</h3>
+				<table>
+					<thead>
+						<tr><th>option</th><th>type</th><th>default</th><th>description</th></tr>
+					</thead>
+					<tbody>
+						<tr><td>title</td><td>string</td><td><code>"kyri"</code></td><td>collapsed and expanded title</td></tr>
+						<tr><td>subtitle</td><td>string</td><td><code>""</code></td><td>second line, expanded only</td></tr>
+						<tr><td>icon</td><td>string</td><td><code>"music"</code></td><td>fallback glyph when there is no image</td></tr>
+						<tr><td>image</td><td>string</td><td><code>""</code></td><td>asset id shown as artwork</td></tr>
+						<tr><td>width / height</td><td>number</td><td>230 / 38</td><td>collapsed pill size</td></tr>
+						<tr><td>expanded_width</td><td>number</td><td>330</td><td>width when open</td></tr>
+						<tr><td>bars</td><td>bool</td><td><code>true</code></td><td>animated EQ bars while playing</td></tr>
+						<tr><td>seek</td><td>bool</td><td><code>true</code></td><td>seek bar with elapsed and duration</td></tr>
+						<tr><td>volume</td><td>bool</td><td><code>true</code></td><td>volume row</td></tr>
+						<tr><td>draggable</td><td>bool</td><td><code>true</code></td><td>drag to reposition</td></tr>
+						<tr><td>hover</td><td>bool</td><td><code>false</code></td><td>expand on hover instead of on tap only</td></tr>
+						<tr><td>y</td><td>number</td><td>10</td><td>offset from the top of the screen</td></tr>
+						<tr><td>position</td><td>UDim2</td><td>—</td><td>absolute position, overrides the top-center anchor</td></tr>
+						<tr><td>on_seek</td><td>function</td><td>—</td><td><code>fn(pct)</code> where pct is 0-1</td></tr>
+						<tr><td>on_volume</td><td>function</td><td>—</td><td><code>fn(percent)</code> where percent is 0-100</td></tr>
+						<tr><td>on_toggle</td><td>function</td><td>—</td><td><code>fn(expanded)</code></td></tr>
+					</tbody>
+				</table>
+
+				<h3>methods</h3>
+				<pre><code>isl:set(data)               -- title, subtitle, image, icon, progress, left, right, volume, playing
+isl:button(icon, callback)  -- round button on the transport row, returns {icon, tint, setcallback}
+isl:row(text)               -- text row, returns {set}
+isl:notify(text, duration)  -- morph the pill to show a message, then revert
+isl:expand()
+isl:collapse()
+isl:toggle()
+isl:relayout()              -- re-measure after adding rows
+isl:visible(bool)
+isl:destroy()</code></pre>
+
+				<div class="admonition admonition-info">
+					<div class="admonition-title">tap vs drag</div>
+					<p>The pill is draggable, but a press that moves less than 6px still counts as a tap and opens it, so you never have to choose between moving it and using it.</p>
+				</div>
+
+				<div class="admonition admonition-info">
+					<div class="admonition-title">seek-safe updates</div>
+					<p><code>isl:set</code> ignores <code>progress</code> while the user is dragging the seek bar, so a polling loop will not fight the drag.</p>
+				</div>
 			</section>
 
 			<section id="keybinds">
@@ -974,6 +1051,92 @@ w.flags.ws_set(100, true)</code></pre>
 				<div class="admonition admonition-info">
 					<div class="admonition-title">info</div>
 					<p>configs are stored per-game using GameName. Color3 values serialize correctly.</p>
+				</div>
+			</section>
+
+			<section id="spotify">
+				<h2>spotify</h2>
+
+				<p>control real Spotify playback from in-game. one call wires up the island, the tabs, the auth flow and the polling loop — you do not write any of it:</p>
+
+				<pre><code>local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
+
+kyri.spotify()</code></pre>
+
+				<p>or attach it to a window you already have:</p>
+
+				<pre><code>local w = kyri.new("my hub")
+local sp = w:spotify({ commands = true })</code></pre>
+
+				<h3>options</h3>
+				<table>
+					<thead>
+						<tr><th>option</th><th>type</th><th>default</th><th>description</th></tr>
+					</thead>
+					<tbody>
+						<tr><td>island</td><td>bool</td><td><code>true</code></td><td>show the island with transport controls</td></tr>
+						<tr><td>tabs</td><td>bool</td><td><code>true</code></td><td>build Now Playing, Search and Auth tabs</td></tr>
+						<tr><td>window</td><td>window</td><td>—</td><td>build tabs on this window instead of creating one</td></tr>
+						<tr><td>commands</td><td>bool</td><td><code>false</code></td><td>enable <code>!sp</code> chat commands</td></tr>
+						<tr><td>client_id</td><td>string</td><td>built-in</td><td>use your own Spotify app</td></tr>
+						<tr><td>on_track</td><td>function</td><td>—</td><td><code>fn(track)</code> when the track changes</td></tr>
+						<tr><td>island_y / island_width / island_position / island_hover</td><td>—</td><td>—</td><td>passed through to the island</td></tr>
+					</tbody>
+				</table>
+
+				<h3>connecting</h3>
+				<p>once per machine — the refresh token is saved to <code>KyriLib/spotify/tokens.json</code> and reused from then on.</p>
+				<ol>
+					<li>open the <strong>Auth</strong> tab and click <em>copy auth url</em></li>
+					<li>paste it in a browser and approve</li>
+					<li>the callback page fails to load — that is expected, there is no local server</li>
+					<li>copy the whole url from the address bar</li>
+					<li>paste it in the input and hit submit</li>
+				</ol>
+
+				<div class="admonition admonition-info">
+					<div class="admonition-title">no client secret</div>
+					<p>Auth uses the Authorization Code + PKCE flow, so there is no client secret anywhere in the script. The code verifier is generated locally, SHA-256 hashed and sent as a challenge. Both SHA-256 and base64url are implemented in pure Luau over <code>bit32</code>.</p>
+				</div>
+
+				<h3>methods</h3>
+				<pre><code>sp:play()
+sp:pause()
+sp:toggle()
+sp:next()
+sp:prev()
+sp:seek(pct)              -- 0-1
+sp:volume(percent)        -- 0-100
+sp:setshuffle(bool)
+sp:setloop(mode)          -- "off" / "context" / "track", or nil to cycle; returns ok, mode
+sp:like()                 -- save the current track to your library
+sp:search(query, limit)   -- returns a list of track objects
+sp:playuri(uri)
+sp:queue(uri)
+sp:devices()
+sp:sync()                 -- force a refresh now
+sp:authed()
+sp:artists()              -- current track artists as one string
+sp:destroy()</code></pre>
+
+				<h3>state</h3>
+				<pre><code>sp.playing   sp.pos    sp.dur     sp.vol
+sp.shuffle   sp.loop   sp.track   sp.results
+sp.island    sp.window</code></pre>
+
+				<p><code>sp.request(method, endpoint, body)</code> hits any Web API endpoint with auth and token refresh already handled.</p>
+
+				<h3>chat commands</h3>
+				<p>with <code>commands = true</code>, type these in game chat:</p>
+				<pre><code>!sp play        !sp pause       !sp skip       !sp back
+!sp current     !sp like        !sp help
+!sp search [query]              !sp pick [n]
+!sp volume [0-100]              !sp loop [off/context/track]
+!sp shuffle [on/off]</code></pre>
+
+				<div class="admonition admonition-warning">
+					<div class="admonition-title">executor requirements</div>
+					<p>Needs <code>request</code> or <code>http_request</code> for the Spotify Web API, <code>writefile</code> to persist tokens, and <code>getcustomasset</code> for album art. Playback also needs an active Spotify device — open Spotify on any device first, otherwise the API has nothing to control.</p>
 				</div>
 			</section>
 
@@ -1840,4 +2003,4 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 		document.querySelectorAll('section').forEach(section => observer.observe(section));
 	</script>
 </body>
-</html
+</html>

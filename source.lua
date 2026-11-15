@@ -12,7 +12,8 @@ kyri.svc = {
     gui = svc("GuiService"),
     run = svc("RunService"),
     http = svc("HttpService"),
-    cas = svc("ContextActionService")
+    cas = svc("ContextActionService"),
+    txt = svc("TextChatService")
 }
 
 kyri.theme = {
@@ -65,578 +66,70 @@ kyri.presets = {
     },
 }
 
--- LucideBlox icon pack (lucide.dev icons ported to Roblox asset IDs)
--- Usage: w:tab("Name", "icon-name") — e.g. "sword", "users", "settings-2"
-kyri.icons = {
-    ["CD"] = "rbxassetid://7734110220",
-    ["activity"] = "rbxassetid://7733655755",
-    ["airplay"] = "rbxassetid://7733655834",
-    ["alarm-check"] = "rbxassetid://7733655912",
-    ["alarm-clock-off"] = "rbxassetid://7733656003",
-    ["alarm-clock"] = "rbxassetid://7733656100",
-    ["alarm-minus"] = "rbxassetid://7733656164",
-    ["alarm-plus"] = "rbxassetid://7733658066",
-    ["album"] = "rbxassetid://7733658133",
-    ["alert-circle"] = "rbxassetid://7733658271",
-    ["alert-octagon"] = "rbxassetid://7733658335",
-    ["alert-triangle"] = "rbxassetid://7733658504",
-    ["align-center-horizontal"] = "rbxassetid://8997380477",
-    ["align-center-vertical"] = "rbxassetid://8997380737",
-    ["align-center"] = "rbxassetid://7733909776",
-    ["align-end-horizontal"] = "rbxassetid://8997380820",
-    ["align-end-vertical"] = "rbxassetid://8997380907",
-    ["align-horizonal-distribute-center"] = "rbxassetid://8997381028",
-    ["align-horizonal-distribute-end"] = "rbxassetid://8997381144",
-    ["align-horizonal-distribute-start"] = "rbxassetid://8997381290",
-    ["align-horizontal-justify-center"] = "rbxassetid://8997381461",
-    ["align-horizontal-justify-end"] = "rbxassetid://8997381549",
-    ["align-horizontal-justify-start"] = "rbxassetid://8997381652",
-    ["align-horizontal-space-around"] = "rbxassetid://8997381738",
-    ["align-horizontal-space-between"] = "rbxassetid://8997381854",
-    ["align-justify"] = "rbxassetid://7733661326",
-    ["align-left"] = "rbxassetid://7733911357",
-    ["align-right"] = "rbxassetid://7733663582",
-    ["align-start-horizontal"] = "rbxassetid://8997381965",
-    ["align-start-vertical"] = "rbxassetid://8997382085",
-    ["align-vertical-distribute-center"] = "rbxassetid://8997382212",
-    ["align-vertical-distribute-end"] = "rbxassetid://8997382326",
-    ["align-vertical-distribute-start"] = "rbxassetid://8997382428",
-    ["align-vertical-justify-center"] = "rbxassetid://8997382502",
-    ["align-vertical-justify-end"] = "rbxassetid://8997382584",
-    ["align-vertical-justify-start"] = "rbxassetid://8997382639",
-    ["align-vertical-space-around"] = "rbxassetid://8997382708",
-    ["align-vertical-space-between"] = "rbxassetid://8997382793",
-    ["anchor"] = "rbxassetid://7733911490",
-    ["aperture"] = "rbxassetid://7733666258",
-    ["archive"] = "rbxassetid://7733911621",
-    ["arrow-big-down"] = "rbxassetid://7733668653",
-    ["arrow-big-left"] = "rbxassetid://7733911731",
-    ["arrow-big-right"] = "rbxassetid://7733671493",
-    ["arrow-big-up"] = "rbxassetid://7733671663",
-    ["arrow-down-circle"] = "rbxassetid://7733671763",
-    ["arrow-down-left"] = "rbxassetid://7733672282",
-    ["arrow-down-right"] = "rbxassetid://7733672831",
-    ["arrow-down"] = "rbxassetid://7733672933",
-    ["arrow-left-circle"] = "rbxassetid://7733673056",
-    ["arrow-left-right"] = "rbxassetid://8997382869",
-    ["arrow-left"] = "rbxassetid://7733673136",
-    ["arrow-right-circle"] = "rbxassetid://7733673229",
-    ["arrow-right"] = "rbxassetid://7733673345",
-    ["arrow-up-circle"] = "rbxassetid://7733673466",
-    ["arrow-up-left"] = "rbxassetid://7733673539",
-    ["arrow-up-right"] = "rbxassetid://7733673646",
-    ["arrow-up"] = "rbxassetid://7733673717",
-    ["asterisk"] = "rbxassetid://7733673800",
-    ["at-sign"] = "rbxassetid://7733673907",
-    ["award"] = "rbxassetid://7733673987",
-    ["axe"] = "rbxassetid://7733674079",
-    ["banknote"] = "rbxassetid://7733674153",
-    ["bar-chart-2"] = "rbxassetid://7733674239",
-    ["bar-chart"] = "rbxassetid://7733674319",
-    ["battery-charging"] = "rbxassetid://7733674402",
-    ["battery-full"] = "rbxassetid://7733674503",
-    ["battery-low"] = "rbxassetid://7733674589",
-    ["battery-medium"] = "rbxassetid://7733674731",
-    ["battery"] = "rbxassetid://7733674820",
-    ["beaker"] = "rbxassetid://7733674922",
-    ["bell-minus"] = "rbxassetid://7733675028",
-    ["bell-off"] = "rbxassetid://7733675107",
-    ["bell-plus"] = "rbxassetid://7733675181",
-    ["bell-ring"] = "rbxassetid://7733675275",
-    ["bell"] = "rbxassetid://7733911828",
-    ["bike"] = "rbxassetid://7733678330",
-    ["binary"] = "rbxassetid://7733678388",
-    ["bluetooth-connected"] = "rbxassetid://7734110952",
-    ["bluetooth-off"] = "rbxassetid://7733914252",
-    ["bluetooth-searching"] = "rbxassetid://7733914320",
-    ["bluetooth"] = "rbxassetid://7733687147",
-    ["bold"] = "rbxassetid://7733687211",
-    ["book-open"] = "rbxassetid://7733687281",
-    ["book"] = "rbxassetid://7733914390",
-    ["bookmark-minus"] = "rbxassetid://7733689754",
-    ["bookmark-plus"] = "rbxassetid://7734111084",
-    ["bookmark"] = "rbxassetid://7733692043",
-    ["bot"] = "rbxassetid://7733916988",
-    ["box-select"] = "rbxassetid://7733696665",
-    ["box"] = "rbxassetid://7733917120",
-    ["briefcase"] = "rbxassetid://7733919017",
-    ["brush"] = "rbxassetid://7733701455",
-    ["bug"] = "rbxassetid://7733701545",
-    ["building"] = "rbxassetid://7733701625",
-    ["bus"] = "rbxassetid://7733701715",
-    ["calculator"] = "rbxassetid://7733919105",
-    ["calendar"] = "rbxassetid://7733919198",
-    ["camera-off"] = "rbxassetid://7733919260",
-    ["camera"] = "rbxassetid://7733708692",
-    ["car"] = "rbxassetid://7733708835",
-    ["carrot"] = "rbxassetid://8997382987",
-    ["cast"] = "rbxassetid://7733919326",
-    ["charge"] = "rbxassetid://8997383136",
-    ["check-circle-2"] = "rbxassetid://7733710700",
-    ["check-circle"] = "rbxassetid://7733919427",
-    ["check-square"] = "rbxassetid://7733919526",
-    ["check"] = "rbxassetid://7733715400",
-    ["chevron-down"] = "rbxassetid://7733717447",
-    ["chevron-first"] = "rbxassetid://8997383275",
-    ["chevron-last"] = "rbxassetid://8997383390",
-    ["chevron-left"] = "rbxassetid://7733717651",
-    ["chevron-right"] = "rbxassetid://7733717755",
-    ["chevron-up"] = "rbxassetid://7733919605",
-    ["chevrons-down-up"] = "rbxassetid://7733720483",
-    ["chevrons-down"] = "rbxassetid://7733720604",
-    ["chevrons-left"] = "rbxassetid://7733720701",
-    ["chevrons-right"] = "rbxassetid://7733919682",
-    ["chevrons-up-down"] = "rbxassetid://7733723321",
-    ["chevrons-up"] = "rbxassetid://7733723433",
-    ["chrome"] = "rbxassetid://7733919783",
-    ["circle-slashed"] = "rbxassetid://8997383530",
-    ["circle"] = "rbxassetid://7733919881",
-    ["clipboard-check"] = "rbxassetid://7733919947",
-    ["clipboard-copy"] = "rbxassetid://7733920037",
-    ["clipboard-list"] = "rbxassetid://7733920117",
-    ["clipboard-x"] = "rbxassetid://7733734668",
-    ["clipboard"] = "rbxassetid://7733734762",
-    ["clock-1"] = "rbxassetid://8997383694",
-    ["clock-10"] = "rbxassetid://8997383876",
-    ["clock-11"] = "rbxassetid://8997384034",
-    ["clock-12"] = "rbxassetid://8997384150",
-    ["clock-2"] = "rbxassetid://8997384295",
-    ["clock-3"] = "rbxassetid://8997384456",
-    ["clock-4"] = "rbxassetid://8997384603",
-    ["clock-5"] = "rbxassetid://8997384798",
-    ["clock-6"] = "rbxassetid://8997384977",
-    ["clock-7"] = "rbxassetid://8997385147",
-    ["clock-8"] = "rbxassetid://8997385352",
-    ["clock-9"] = "rbxassetid://8997385485",
-    ["clock"] = "rbxassetid://7733734848",
-    ["cloud-drizzle"] = "rbxassetid://7733920226",
-    ["cloud-fog"] = "rbxassetid://7733920317",
-    ["cloud-hail"] = "rbxassetid://7733920444",
-    ["cloud-lightning"] = "rbxassetid://7733741741",
-    ["cloud-moon"] = "rbxassetid://7733920519",
-    ["cloud-off"] = "rbxassetid://7733745572",
-    ["cloud-rain-wind"] = "rbxassetid://7733746456",
-    ["cloud-rain"] = "rbxassetid://7733746651",
-    ["cloud-snow"] = "rbxassetid://7733746798",
-    ["cloud-sun"] = "rbxassetid://7733746880",
-    ["cloud"] = "rbxassetid://7733746980",
-    ["cloudy"] = "rbxassetid://7733747106",
-    ["clover"] = "rbxassetid://7733747233",
-    ["code-2"] = "rbxassetid://7733920644",
-    ["code"] = "rbxassetid://7733749837",
-    ["codepen"] = "rbxassetid://7733920768",
-    ["codesandbox"] = "rbxassetid://7733752575",
-    ["coffee"] = "rbxassetid://7733752630",
-    ["coins"] = "rbxassetid://7743866529",
-    ["columns"] = "rbxassetid://7733757178",
-    ["command"] = "rbxassetid://7733924046",
-    ["compass"] = "rbxassetid://7733924216",
-    ["contact"] = "rbxassetid://7743866666",
-    ["contrast"] = "rbxassetid://7733764005",
-    ["cookie"] = "rbxassetid://8997385628",
-    ["copy"] = "rbxassetid://7733764083",
-    ["copyleft"] = "rbxassetid://7733764196",
-    ["copyright"] = "rbxassetid://7733764275",
-    ["corner-down-left"] = "rbxassetid://7733764327",
-    ["corner-down-right"] = "rbxassetid://7733764385",
-    ["corner-left-down"] = "rbxassetid://7733764448",
-    ["corner-left-up"] = "rbxassetid://7733764536",
-    ["corner-right-down"] = "rbxassetid://7733764605",
-    ["corner-right-up"] = "rbxassetid://7733764680",
-    ["corner-up-left"] = "rbxassetid://7733764800",
-    ["corner-up-right"] = "rbxassetid://7733764915",
-    ["cpu"] = "rbxassetid://7733765045",
-    ["crop"] = "rbxassetid://7733765140",
-    ["cross"] = "rbxassetid://7733765224",
-    ["crosshair"] = "rbxassetid://7733765307",
-    ["crown"] = "rbxassetid://7733765398",
-    ["currency"] = "rbxassetid://7733765592",
-    ["database"] = "rbxassetid://7743866778",
-    ["delete"] = "rbxassetid://7733768142",
-    ["divide-circle"] = "rbxassetid://7733769152",
-    ["divide-square"] = "rbxassetid://7733769261",
-    ["divide"] = "rbxassetid://7733769365",
-    ["dollar-sign"] = "rbxassetid://7733770599",
-    ["download-cloud"] = "rbxassetid://7733770689",
-    ["download"] = "rbxassetid://7733770755",
-    ["dribbble"] = "rbxassetid://7733770843",
-    ["droplet"] = "rbxassetid://7733770982",
-    ["droplets"] = "rbxassetid://7733771078",
-    ["drumstick"] = "rbxassetid://8997385789",
-    ["edit-2"] = "rbxassetid://7733771217",
-    ["edit-3"] = "rbxassetid://7733771361",
-    ["edit"] = "rbxassetid://7733771472",
-    ["egg"] = "rbxassetid://8997385940",
-    ["electricity-off"] = "rbxassetid://7733771563",
-    ["electricity"] = "rbxassetid://7733771628",
-    ["equal-not"] = "rbxassetid://7733771726",
-    ["equal"] = "rbxassetid://7733771811",
-    ["euro"] = "rbxassetid://7733771891",
-    ["expand"] = "rbxassetid://7733771982",
-    ["external-link"] = "rbxassetid://7743866903",
-    ["eye-off"] = "rbxassetid://7733774495",
-    ["eye"] = "rbxassetid://7733774602",
-    ["fast-forward"] = "rbxassetid://7743867090",
-    ["feather"] = "rbxassetid://7733777166",
-    ["figma"] = "rbxassetid://7743867310",
-    ["file-check-2"] = "rbxassetid://7733779610",
-    ["file-check"] = "rbxassetid://7733779668",
-    ["file-code"] = "rbxassetid://7733779730",
-    ["file-digit"] = "rbxassetid://7733935829",
-    ["file-input"] = "rbxassetid://7733935917",
-    ["file-minus-2"] = "rbxassetid://7733936010",
-    ["file-minus"] = "rbxassetid://7733936115",
-    ["file-output"] = "rbxassetid://7733788742",
-    ["file-plus-2"] = "rbxassetid://7733788816",
-    ["file-plus"] = "rbxassetid://7733788885",
-    ["file-search"] = "rbxassetid://7733788966",
-    ["file-text"] = "rbxassetid://7733789088",
-    ["file-x-2"] = "rbxassetid://7743867554",
-    ["file-x"] = "rbxassetid://7733938136",
-    ["file"] = "rbxassetid://7733793319",
-    ["files"] = "rbxassetid://7743867811",
-    ["film"] = "rbxassetid://7733942579",
-    ["filter"] = "rbxassetid://7733798407",
-    ["flag-triangle-left"] = "rbxassetid://7733798509",
-    ["flag-triangle-right"] = "rbxassetid://7733798634",
-    ["flag"] = "rbxassetid://7733798691",
-    ["flame"] = "rbxassetid://7733798747",
-    ["flashlight-off"] = "rbxassetid://7733798799",
-    ["flashlight"] = "rbxassetid://7733798851",
-    ["flask-conical"] = "rbxassetid://7733798901",
-    ["flask-round"] = "rbxassetid://7733798957",
-    ["folder-minus"] = "rbxassetid://7733799022",
-    ["folder-open"] = "rbxassetid://8997386062",
-    ["folder-plus"] = "rbxassetid://7733799092",
-    ["folder"] = "rbxassetid://7733799185",
-    ["form-input"] = "rbxassetid://7733799275",
-    ["forward"] = "rbxassetid://7733799371",
-    ["framer"] = "rbxassetid://7733799486",
-    ["frown"] = "rbxassetid://7733799591",
-    ["function-square"] = "rbxassetid://7733799682",
-    ["gamepad-2"] = "rbxassetid://7733799795",
-    ["gamepad"] = "rbxassetid://7733799901",
-    ["gauge"] = "rbxassetid://7733799969",
-    ["gavel"] = "rbxassetid://7733800044",
-    ["gem"] = "rbxassetid://7733942651",
-    ["ghost"] = "rbxassetid://7743868000",
-    ["gift-card"] = "rbxassetid://7733945018",
-    ["gift"] = "rbxassetid://7733946818",
-    ["git-branch-plus"] = "rbxassetid://7743868200",
-    ["git-branch"] = "rbxassetid://7733949149",
-    ["git-commit"] = "rbxassetid://7743868360",
-    ["git-merge"] = "rbxassetid://7733952195",
-    ["git-pull-request"] = "rbxassetid://7733952287",
-    ["github"] = "rbxassetid://7733954058",
-    ["gitlab"] = "rbxassetid://7733954246",
-    ["glasses"] = "rbxassetid://7733954403",
-    ["globe-2"] = "rbxassetid://7733954611",
-    ["globe"] = "rbxassetid://7733954760",
-    ["grab"] = "rbxassetid://7733954884",
-    ["graduation-cap"] = "rbxassetid://7733955058",
-    ["grid"] = "rbxassetid://7733955179",
-    ["grip-horizontal"] = "rbxassetid://7733955302",
-    ["grip-vertical"] = "rbxassetid://7733955410",
-    ["hammer"] = "rbxassetid://7733955511",
-    ["hand-metal"] = "rbxassetid://7733955664",
-    ["hand"] = "rbxassetid://7733955740",
-    ["hard-drive"] = "rbxassetid://7733955793",
-    ["hard-hat"] = "rbxassetid://7733955850",
-    ["hash"] = "rbxassetid://7733955906",
-    ["haze"] = "rbxassetid://7733955969",
-    ["headphones"] = "rbxassetid://7733956063",
-    ["heart"] = "rbxassetid://7733956134",
-    ["help-circle"] = "rbxassetid://7733956210",
-    ["hexagon"] = "rbxassetid://7743868527",
-    ["highlighter"] = "rbxassetid://7743868648",
-    ["history"] = "rbxassetid://7733960880",
-    ["home"] = "rbxassetid://7733960981",
-    ["image-minus"] = "rbxassetid://7733963797",
-    ["image-off"] = "rbxassetid://7733963907",
-    ["image-plus"] = "rbxassetid://7733964016",
-    ["image"] = "rbxassetid://7733964126",
-    ["import"] = "rbxassetid://7733964240",
-    ["inbox"] = "rbxassetid://7733964370",
-    ["indent"] = "rbxassetid://7733964452",
-    ["indian-rupee"] = "rbxassetid://7733964536",
-    ["infinity"] = "rbxassetid://7733964640",
-    ["info"] = "rbxassetid://7733964719",
-    ["inspect"] = "rbxassetid://7733964808",
-    ["italic"] = "rbxassetid://7733964917",
-    ["jersey-pound"] = "rbxassetid://7733965029",
-    ["key"] = "rbxassetid://7733965118",
-    ["landmark"] = "rbxassetid://7733965184",
-    ["languages"] = "rbxassetid://7733965249",
-    ["laptop-2"] = "rbxassetid://7733965313",
-    ["laptop"] = "rbxassetid://7733965386",
-    ["lasso-select"] = "rbxassetid://7743868832",
-    ["lasso"] = "rbxassetid://7733967892",
-    ["layers"] = "rbxassetid://7743868936",
-    ["layout-dashboard"] = "rbxassetid://7733970318",
-    ["layout-grid"] = "rbxassetid://7733970390",
-    ["layout-list"] = "rbxassetid://7733970442",
-    ["layout-template"] = "rbxassetid://7733970494",
-    ["layout"] = "rbxassetid://7733970543",
-    ["library"] = "rbxassetid://7743869054",
-    ["life-buoy"] = "rbxassetid://7733973479",
-    ["lightbulb-off"] = "rbxassetid://7733975123",
-    ["lightbulb"] = "rbxassetid://7733975185",
-    ["link-2-off"] = "rbxassetid://7733975283",
-    ["link-2"] = "rbxassetid://7743869163",
-    ["link"] = "rbxassetid://7733978098",
-    ["list-checks"] = "rbxassetid://7743869317",
-    ["list-minus"] = "rbxassetid://7733980795",
-    ["list-ordered"] = "rbxassetid://7743869411",
-    ["list-plus"] = "rbxassetid://7733984995",
-    ["list-x"] = "rbxassetid://7743869517",
-    ["list"] = "rbxassetid://7743869612",
-    ["loader-2"] = "rbxassetid://7733989869",
-    ["loader"] = "rbxassetid://7733992358",
-    ["locate-fixed"] = "rbxassetid://7733992424",
-    ["locate"] = "rbxassetid://7733992469",
-    ["lock"] = "rbxassetid://7733992528",
-    ["log-in"] = "rbxassetid://7733992604",
-    ["log-out"] = "rbxassetid://7733992677",
-    ["mail"] = "rbxassetid://7733992732",
-    ["map-pin"] = "rbxassetid://7733992789",
-    ["map"] = "rbxassetid://7733992829",
-    ["maximize-2"] = "rbxassetid://7733992901",
-    ["maximize"] = "rbxassetid://7733992982",
-    ["megaphone"] = "rbxassetid://7733993049",
-    ["meh"] = "rbxassetid://7733993147",
-    ["menu"] = "rbxassetid://7733993211",
-    ["message-circle"] = "rbxassetid://7733993311",
-    ["message-square"] = "rbxassetid://7733993369",
-    ["mic-off"] = "rbxassetid://7743869714",
-    ["mic"] = "rbxassetid://7743869805",
-    ["minimize-2"] = "rbxassetid://7733997870",
-    ["minimize"] = "rbxassetid://7733997941",
-    ["minus-circle"] = "rbxassetid://7733998053",
-    ["minus-square"] = "rbxassetid://7743869899",
-    ["minus"] = "rbxassetid://7734000129",
-    ["monitor-off"] = "rbxassetid://7734000184",
-    ["monitor-speaker"] = "rbxassetid://7743869988",
-    ["monitor"] = "rbxassetid://7734002839",
-    ["moon"] = "rbxassetid://7743870134",
-    ["more-horizontal"] = "rbxassetid://7734006080",
-    ["more-vertical"] = "rbxassetid://7734006187",
-    ["mountain-snow"] = "rbxassetid://7743870286",
-    ["mountain"] = "rbxassetid://7734008868",
-    ["mouse-pointer-2"] = "rbxassetid://7734010405",
-    ["mouse-pointer-click"] = "rbxassetid://7734010488",
-    ["mouse-pointer"] = "rbxassetid://7743870392",
-    ["move-diagonal-2"] = "rbxassetid://7734013178",
-    ["move-diagonal"] = "rbxassetid://7743870505",
-    ["move-horizontal"] = "rbxassetid://7734016210",
-    ["move-vertical"] = "rbxassetid://7743870608",
-    ["move"] = "rbxassetid://7743870731",
-    ["music"] = "rbxassetid://7734020554",
-    ["navigation-2"] = "rbxassetid://7734020942",
-    ["navigation"] = "rbxassetid://7734020989",
-    ["network"] = "rbxassetid://7734021047",
-    ["no_entry"] = "rbxassetid://7734021118",
-    ["octagon"] = "rbxassetid://7734021165",
-    ["on-charge"] = "rbxassetid://7734021231",
-    ["option"] = "rbxassetid://7734021300",
-    ["outdent"] = "rbxassetid://7734021384",
-    ["package-check"] = "rbxassetid://8997386143",
-    ["package-minus"] = "rbxassetid://8997386266",
-    ["package-plus"] = "rbxassetid://8997386355",
-    ["package-search"] = "rbxassetid://8997386448",
-    ["package-x"] = "rbxassetid://8997386545",
-    ["package"] = "rbxassetid://7734021469",
-    ["palette"] = "rbxassetid://7734021595",
-    ["paperclip"] = "rbxassetid://7734021680",
-    ["pause-circle"] = "rbxassetid://7734021767",
-    ["pause-octagon"] = "rbxassetid://7734021827",
-    ["pause"] = "rbxassetid://7734021897",
-    ["pen-tool"] = "rbxassetid://7734022041",
-    ["pencil"] = "rbxassetid://7734022107",
-    ["percent"] = "rbxassetid://7743870852",
-    ["person-standing"] = "rbxassetid://7743871002",
-    ["phone-call"] = "rbxassetid://7734027264",
-    ["phone-forwarded"] = "rbxassetid://7734027345",
-    ["phone-incoming"] = "rbxassetid://7743871120",
-    ["phone-missed"] = "rbxassetid://7734029465",
-    ["phone-off"] = "rbxassetid://7734029534",
-    ["phone-outgoing"] = "rbxassetid://7743871253",
-    ["phone"] = "rbxassetid://7734032056",
-    ["pie-chart"] = "rbxassetid://7734034378",
-    ["piggy-bank"] = "rbxassetid://7734034513",
-    ["pin"] = "rbxassetid://8997386648",
-    ["pipette"] = "rbxassetid://7743871384",
-    ["plane"] = "rbxassetid://7734037723",
-    ["play-circle"] = "rbxassetid://7734037784",
-    ["play"] = "rbxassetid://7743871480",
-    ["plus-circle"] = "rbxassetid://7734040271",
-    ["plus-square"] = "rbxassetid://7734040369",
-    ["plus"] = "rbxassetid://7734042071",
-    ["pocket"] = "rbxassetid://7734042139",
-    ["podcast"] = "rbxassetid://7734042234",
-    ["pointer"] = "rbxassetid://7734042307",
-    ["pound-sterling"] = "rbxassetid://7734042354",
-    ["power-off"] = "rbxassetid://7734042423",
-    ["power"] = "rbxassetid://7734042493",
-    ["printer"] = "rbxassetid://7734042580",
-    ["qr-code"] = "rbxassetid://7743871575",
-    ["quote"] = "rbxassetid://7734045100",
-    ["radio-receiver"] = "rbxassetid://7734045155",
-    ["radio"] = "rbxassetid://7743871662",
-    ["redo"] = "rbxassetid://7743871739",
-    ["refresh-ccw"] = "rbxassetid://7734050715",
-    ["refresh-cw"] = "rbxassetid://7734051052",
-    ["regex"] = "rbxassetid://7734051188",
-    ["repeat-1"] = "rbxassetid://7734051342",
-    ["repeat"] = "rbxassetid://7734051454",
-    ["reply-all"] = "rbxassetid://7734051524",
-    ["reply"] = "rbxassetid://7734051594",
-    ["rewind"] = "rbxassetid://7734051670",
-    ["rocking-chair"] = "rbxassetid://7734051769",
-    ["rotate-ccw"] = "rbxassetid://7734051861",
-    ["rotate-cw"] = "rbxassetid://7734051957",
-    ["rss"] = "rbxassetid://7734052075",
-    ["ruler"] = "rbxassetid://7734052157",
-    ["russian-ruble"] = "rbxassetid://7734052248",
-    ["save"] = "rbxassetid://7734052335",
-    ["scale"] = "rbxassetid://7734052454",
-    ["scan-line"] = "rbxassetid://8997386772",
-    ["scan"] = "rbxassetid://8997386861",
-    ["scissors"] = "rbxassetid://7734052570",
-    ["screen-share-off"] = "rbxassetid://7734052653",
-    ["screen-share"] = "rbxassetid://7734052814",
-    ["search"] = "rbxassetid://7734052925",
-    ["send"] = "rbxassetid://7734053039",
-    ["separator-horizontal"] = "rbxassetid://7734053146",
-    ["separator-vertical"] = "rbxassetid://7734053213",
-    ["server-crash"] = "rbxassetid://7734053281",
-    ["server-off"] = "rbxassetid://7734053361",
-    ["server"] = "rbxassetid://7734053426",
-    ["settings-2"] = "rbxassetid://8997386997",
-    ["settings"] = "rbxassetid://7734053495",
-    ["share-2"] = "rbxassetid://7734053595",
-    ["share"] = "rbxassetid://7734053697",
-    ["sheet"] = "rbxassetid://7743871876",
-    ["shield-alert"] = "rbxassetid://7734056326",
-    ["shield-check"] = "rbxassetid://7734056411",
-    ["shield-close"] = "rbxassetid://7734056470",
-    ["shield-off"] = "rbxassetid://7734056540",
-    ["shield"] = "rbxassetid://7734056608",
-    ["shirt"] = "rbxassetid://7734056672",
-    ["shopping-bag"] = "rbxassetid://7734056747",
-    ["shopping-cart"] = "rbxassetid://7734056813",
-    ["shovel"] = "rbxassetid://7734056878",
-    ["shrink"] = "rbxassetid://7734056971",
-    ["shuffle"] = "rbxassetid://7734057059",
-    ["sidebar-close"] = "rbxassetid://7734058092",
-    ["sidebar-open"] = "rbxassetid://7734058165",
-    ["sidebar"] = "rbxassetid://7734058260",
-    ["sigma"] = "rbxassetid://7734058345",
-    ["signal-high"] = "rbxassetid://8997387110",
-    ["signal-low"] = "rbxassetid://8997387189",
-    ["signal-medium"] = "rbxassetid://8997387319",
-    ["signal-zero"] = "rbxassetid://8997387434",
-    ["signal"] = "rbxassetid://8997387546",
-    ["skip-back"] = "rbxassetid://7734058404",
-    ["skip-forward"] = "rbxassetid://7734058495",
-    ["skull"] = "rbxassetid://7734058599",
-    ["slash"] = "rbxassetid://8997387644",
-    ["sliders"] = "rbxassetid://7734058803",
-    ["smartphone-charging"] = "rbxassetid://7734058894",
-    ["smartphone"] = "rbxassetid://7734058979",
-    ["smile"] = "rbxassetid://7734059095",
-    ["snowflake"] = "rbxassetid://7734059180",
-    ["sort-asc"] = "rbxassetid://7734060715",
-    ["sort-desc"] = "rbxassetid://7743871973",
-    ["speaker"] = "rbxassetid://7734063416",
-    ["sprout"] = "rbxassetid://7743872071",
-    ["square"] = "rbxassetid://7743872181",
-    ["star-half"] = "rbxassetid://7734068258",
-    ["star"] = "rbxassetid://7734068321",
-    ["stop-circle"] = "rbxassetid://7734068379",
-    ["stretch-horizontal"] = "rbxassetid://8997387754",
-    ["stretch-vertical"] = "rbxassetid://8997387862",
-    ["strikethrough"] = "rbxassetid://7734068425",
-    ["subscript"] = "rbxassetid://8997387937",
-    ["sun"] = "rbxassetid://7734068495",
-    ["sunrise"] = "rbxassetid://7743872365",
-    ["sunset"] = "rbxassetid://7734070982",
-    ["superscript"] = "rbxassetid://8997388036",
-    ["swiss-franc"] = "rbxassetid://7734071038",
-    ["switch-camera"] = "rbxassetid://7743872492",
-    ["table"] = "rbxassetid://7734073253",
-    ["tablet"] = "rbxassetid://7743872620",
-    ["tag"] = "rbxassetid://7734075797",
-    ["target"] = "rbxassetid://7743872758",
-    ["tent"] = "rbxassetid://7734078943",
-    ["terminal-square"] = "rbxassetid://7734079055",
-    ["terminal"] = "rbxassetid://7743872929",
-    ["text-cursor-input"] = "rbxassetid://8997388094",
-    ["text-cursor"] = "rbxassetid://8997388195",
-    ["thermometer-snowflake"] = "rbxassetid://7743873074",
-    ["thermometer-sun"] = "rbxassetid://7734084018",
-    ["thermometer"] = "rbxassetid://7734084149",
-    ["thumbs-down"] = "rbxassetid://7734084236",
-    ["thumbs-up"] = "rbxassetid://7743873212",
-    ["ticket"] = "rbxassetid://7734086558",
-    ["timer-off"] = "rbxassetid://8997388325",
-    ["timer-reset"] = "rbxassetid://7743873336",
-    ["timer"] = "rbxassetid://7743873443",
-    ["toggle-left"] = "rbxassetid://7734091286",
-    ["toggle-right"] = "rbxassetid://7743873539",
-    ["tornado"] = "rbxassetid://7743873633",
-    ["trash-2"] = "rbxassetid://7743873772",
-    ["trash"] = "rbxassetid://7743873871",
-    ["trello"] = "rbxassetid://7743873996",
-    ["trending-down"] = "rbxassetid://7743874143",
-    ["trending-up"] = "rbxassetid://7743874262",
-    ["triangle"] = "rbxassetid://7743874367",
-    ["truck"] = "rbxassetid://7743874482",
-    ["tv-2"] = "rbxassetid://7743874599",
-    ["tv"] = "rbxassetid://7743874674",
-    ["type"] = "rbxassetid://7743874740",
-    ["umbrella"] = "rbxassetid://7743874820",
-    ["underline"] = "rbxassetid://7743874904",
-    ["undo"] = "rbxassetid://7743874974",
-    ["unlink-2"] = "rbxassetid://7743875069",
-    ["unlink"] = "rbxassetid://7743875149",
-    ["unlock"] = "rbxassetid://7743875263",
-    ["upload-cloud"] = "rbxassetid://7743875358",
-    ["upload"] = "rbxassetid://7743875428",
-    ["user-check"] = "rbxassetid://7743875503",
-    ["user-minus"] = "rbxassetid://7743875629",
-    ["user-plus"] = "rbxassetid://7743875759",
-    ["user-x"] = "rbxassetid://7743875879",
-    ["user"] = "rbxassetid://7743875962",
-    ["users"] = "rbxassetid://7743876054",
-    ["verified"] = "rbxassetid://7743876142",
-    ["vibrate"] = "rbxassetid://7743876302",
-    ["video-off"] = "rbxassetid://7743876466",
-    ["video"] = "rbxassetid://7743876610",
-    ["view"] = "rbxassetid://7743876754",
-    ["voicemail"] = "rbxassetid://7743876916",
-    ["volume-1"] = "rbxassetid://7743877081",
-    ["volume-2"] = "rbxassetid://7743877250",
-    ["volume-x"] = "rbxassetid://7743877381",
-    ["volume"] = "rbxassetid://7743877487",
-    ["wallet"] = "rbxassetid://7743877573",
-    ["wand"] = "rbxassetid://8997388430",
-    ["watch"] = "rbxassetid://7743877668",
-    ["webcam"] = "rbxassetid://7743877896",
-    ["wifi-off"] = "rbxassetid://7743878056",
-    ["wifi"] = "rbxassetid://7743878148",
-    ["wind"] = "rbxassetid://7743878264",
-    ["wrap-text"] = "rbxassetid://8997388548",
-    ["wrench"] = "rbxassetid://7743878358",
-    ["x-circle"] = "rbxassetid://7743878496",
-    ["x-octagon"] = "rbxassetid://7743878618",
-    ["x-square"] = "rbxassetid://7743878737",
-    ["x"] = "rbxassetid://7743878857",
-    ["zoom-in"] = "rbxassetid://7743878977",
-    ["zoom-out"] = "rbxassetid://7743879082",
-    -- legacy aliases kept for backwards compatibility
-    ["sword"] = "rbxassetid://7733674079",
-    ["move"] = "rbxassetid://7743870731",
-}
+-- LucideBlox icon pack, fetched from icons.json and cached to KyriLib/icons.json
+-- Usage: w:tab("Name", "icon-name") -- e.g. "sword", "users", "settings-2"
+-- Set kyri.icon_source before the first lookup to point at your own pack.
+local ICON_URL = "https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/icons.json"
+local ICON_FILE = "KyriLib/icons.json"
+
+local icon_data, icon_busy
+
+local function decode(raw)
+    if type(raw) ~= "string" or #raw < 64 then return nil end
+    local ok, tbl = pcall(function() return kyri.svc.http:JSONDecode(raw) end)
+    if ok and type(tbl) == "table" and next(tbl) then return tbl end
+    return nil
+end
+
+local function icon_pack()
+    if icon_data then return icon_data end
+    if icon_busy then
+        repeat task.wait() until icon_data
+        return icon_data
+    end
+    icon_busy = true
+
+    local tbl
+    if isfile then
+        pcall(function()
+            if isfile(ICON_FILE) then tbl = decode(readfile(ICON_FILE)) end
+        end)
+    end
+
+    if not tbl then
+        local raw
+        pcall(function() raw = game:HttpGet(kyri.icon_source or ICON_URL) end)
+        tbl = decode(raw)
+        if tbl and writefile then
+            pcall(function()
+                if isfolder and not isfolder("KyriLib") then makefolder("KyriLib") end
+                writefile(ICON_FILE, raw)
+            end)
+        end
+    end
+
+    icon_data = tbl or {}
+    icon_busy = false
+    return icon_data
+end
+
+kyri.icons = setmetatable({}, {
+    __index = function(_, k)
+        return icon_pack()[k]
+    end,
+    __iter = function()
+        return next, icon_pack()
+    end,
+    __len = function()
+        local n = 0
+        for k,v in pairs(icon_pack()) do n = n + 1 end
+        return n
+    end
+})
+
+function kyri.preload_icons()
+    task.spawn(icon_pack)
+end
 
 local function make(c, p)
     local o = Instance.new(c)
@@ -700,6 +193,1295 @@ end
 local function delete_config(game_name, config_name)
     local path = CONFIG_FOLDER .. "/" .. game_name .. "/" .. config_name .. ".json"
     if isfile(path) then delfile(path) end
+end
+
+local function ico(ic)
+    if not ic then return nil end
+    if kyri.icons[ic] then return kyri.icons[ic] end
+    if type(ic) == "string" and (ic:find("^rbxassetid://") or ic:find("^rbxthumb://") or ic:find("^rbxasset://")) then return ic end
+    return nil
+end
+
+local has_cg = pcall(function()
+    local o = Instance.new("CanvasGroup")
+    o:Destroy()
+end)
+
+local function layer(p, vis)
+    return make(has_cg and "CanvasGroup" or "Frame", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        GroupTransparency = has_cg and (vis and 0 or 1) or nil,
+        Visible = vis,
+        Parent = p
+    })
+end
+
+local function fade(o, tr, dur)
+    if has_cg then
+        kyri.svc.tw:Create(o, TweenInfo.new(dur or 0.18), {GroupTransparency = tr}):Play()
+    else
+        o.Visible = tr < 0.5
+    end
+end
+
+function kyri.island(opts)
+    opts = opts or {}
+    local t = kyri.theme
+    local lp = kyri.svc.plr.LocalPlayer
+    local conns = {}
+
+    local isl = {}
+    isl.expanded = false
+    isl.playing = false
+    isl.seeking = false
+
+    local cw = opts.width or 230
+    local ch = opts.height or 38
+    local ew = opts.expanded_width or 330
+    local gap = 11
+    local show_bars = opts.bars ~= false
+    local show_seek = opts.seek ~= false
+    local show_vol = opts.volume ~= false
+    local draggable = opts.draggable ~= false
+
+    local old = lp.PlayerGui:FindFirstChild("KyriIsland")
+    if old then old:Destroy() end
+
+    local gui = make("ScreenGui", {
+        Name = "KyriIsland",
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false,
+        IgnoreGuiInset = true,
+        DisplayOrder = 999999997,
+        Parent = lp.PlayerGui
+    })
+    isl.gui = gui
+
+    local root = make("Frame", {
+        Size = UDim2.fromOffset(cw, ch),
+        Position = opts.position or UDim2.new(0.5, 0, 0, opts.y or 10),
+        AnchorPoint = opts.position and Vector2.new(0, 0) or Vector2.new(0.5, 0),
+        BackgroundColor3 = opts.color or Color3.fromRGB(7, 7, 9),
+        ClipsDescendants = true,
+        Parent = gui
+    })
+    isl.root = root
+
+    local rc = make("UICorner", {CornerRadius = UDim.new(0, math.floor(ch / 2)), Parent = root})
+    make("UIStroke", {Color = t.border, Thickness = 1, Transparency = 0.3, Parent = root})
+
+    local cv = layer(root, true)
+    local ev = layer(root, false)
+
+    local art = make("ImageLabel", {
+        Size = UDim2.fromOffset(24, 24),
+        Position = UDim2.new(0, 7, 0.5, -12),
+        BackgroundColor3 = t.element,
+        Image = opts.image or "",
+        ScaleType = Enum.ScaleType.Crop,
+        Parent = cv
+    })
+    make("UICorner", {CornerRadius = UDim.new(0, 7), Parent = art})
+
+    local art_ic = make("ImageLabel", {
+        Size = UDim2.fromOffset(13, 13),
+        Position = UDim2.new(0.5, -7, 0.5, -7),
+        BackgroundTransparency = 1,
+        Image = ico(opts.icon) or kyri.icons["music"],
+        ImageColor3 = t.subtext,
+        Visible = (opts.image or "") == "",
+        Parent = art
+    })
+
+    local ctitle = make("TextLabel", {
+        Size = UDim2.new(1, show_bars and -74 or -48, 1, 0),
+        Position = UDim2.fromOffset(39, 0),
+        BackgroundTransparency = 1,
+        Text = opts.title or "kyri",
+        TextColor3 = t.text,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 13,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = cv
+    })
+
+    local bar_objs = {}
+    if show_bars then
+        local bars = make("Frame", {
+            Size = UDim2.fromOffset(17, 14),
+            Position = UDim2.new(1, -26, 0.5, -7),
+            BackgroundTransparency = 1,
+            Parent = cv
+        })
+        for i = 1, 3 do
+            local b = make("Frame", {
+                Size = UDim2.fromOffset(3, 3),
+                Position = UDim2.new(0, (i - 1) * 7, 1, 0),
+                AnchorPoint = Vector2.new(0, 1),
+                BackgroundColor3 = t.accent,
+                Parent = bars
+            })
+            make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = b})
+            bar_objs[i] = b
+        end
+        task.spawn(function()
+            while gui.Parent do
+                if isl.playing and not isl.expanded then
+                    for i,b in pairs(bar_objs) do
+                        kyri.svc.tw:Create(b, TweenInfo.new(0.21), {Size = UDim2.fromOffset(3, math.random(3, 14))}):Play()
+                    end
+                elseif bar_objs[1] and bar_objs[1].Size.Y.Offset ~= 3 then
+                    for i,b in pairs(bar_objs) do
+                        kyri.svc.tw:Create(b, TweenInfo.new(0.2), {Size = UDim2.fromOffset(3, 3)}):Play()
+                    end
+                end
+                task.wait(0.22)
+            end
+        end)
+    end
+
+    make("UIPadding", {
+        PaddingTop = UDim.new(0, 14),
+        PaddingBottom = UDim.new(0, 14),
+        PaddingLeft = UDim.new(0, 14),
+        PaddingRight = UDim.new(0, 14),
+        Parent = ev
+    })
+    make("UIListLayout", {
+        Padding = UDim.new(0, gap),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = ev
+    })
+
+    local head = make("Frame", {
+        Size = UDim2.new(1, 0, 0, 52),
+        BackgroundTransparency = 1,
+        LayoutOrder = 1,
+        Parent = ev
+    })
+
+    local bart = make("ImageLabel", {
+        Size = UDim2.fromOffset(52, 52),
+        BackgroundColor3 = t.element,
+        Image = opts.image or "",
+        ScaleType = Enum.ScaleType.Crop,
+        Parent = head
+    })
+    make("UICorner", {CornerRadius = UDim.new(0, 10), Parent = bart})
+
+    local bart_ic = make("ImageLabel", {
+        Size = UDim2.fromOffset(20, 20),
+        Position = UDim2.new(0.5, -10, 0.5, -10),
+        BackgroundTransparency = 1,
+        Image = ico(opts.icon) or kyri.icons["music"],
+        ImageColor3 = t.subtext,
+        Visible = (opts.image or "") == "",
+        Parent = bart
+    })
+
+    local etitle = make("TextLabel", {
+        Size = UDim2.new(1, -96, 0, 20),
+        Position = UDim2.fromOffset(64, 6),
+        BackgroundTransparency = 1,
+        Text = opts.title or "kyri",
+        TextColor3 = t.text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 15,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = head
+    })
+
+    local esub = make("TextLabel", {
+        Size = UDim2.new(1, -96, 0, 16),
+        Position = UDim2.fromOffset(64, 27),
+        BackgroundTransparency = 1,
+        Text = opts.subtitle or "",
+        TextColor3 = t.subtext,
+        Font = Enum.Font.Gotham,
+        TextSize = 12,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = head
+    })
+
+    local close = make("ImageButton", {
+        Size = UDim2.fromOffset(20, 20),
+        Position = UDim2.new(1, -20, 0, 6),
+        BackgroundTransparency = 1,
+        Image = kyri.icons["x"],
+        ImageColor3 = t.subtext,
+        Parent = head
+    })
+
+    local function drag_bar(hit, track, fill, cb, held)
+        local down = false
+        local function upd(x)
+            local pct = math.clamp((x - track.AbsolutePosition.X) / math.max(track.AbsoluteSize.X, 1), 0, 1)
+            fill.Size = UDim2.fromScale(pct, 1)
+            return pct
+        end
+        hit.InputBegan:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                down = true
+                if held then isl.seeking = true end
+                upd(i.Position.X)
+            end
+        end)
+        table.insert(conns, kyri.svc.inp.InputChanged:Connect(function(i)
+            if not down then return end
+            if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
+                upd(i.Position.X)
+            end
+        end))
+        table.insert(conns, kyri.svc.inp.InputEnded:Connect(function(i)
+            if not down then return end
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                down = false
+                local pct = upd(i.Position.X)
+                if cb then pcall(cb, pct) end
+                if held then
+                    task.delay(0.5, function() isl.seeking = false end)
+                end
+            end
+        end))
+    end
+
+    local sfill, lt, rt
+    if show_seek then
+        local srow = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 26),
+            BackgroundTransparency = 1,
+            LayoutOrder = 2,
+            Parent = ev
+        })
+        local strack = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 4),
+            BackgroundColor3 = t.element,
+            Parent = srow
+        })
+        make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = strack})
+
+        sfill = make("Frame", {
+            Size = UDim2.fromScale(0, 1),
+            BackgroundColor3 = t.accent,
+            Parent = strack
+        })
+        make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = sfill})
+
+        local shit = make("TextButton", {
+            Size = UDim2.new(1, 0, 0, 18),
+            Position = UDim2.fromOffset(0, -7),
+            BackgroundTransparency = 1,
+            Text = "",
+            Parent = strack
+        })
+        drag_bar(shit, strack, sfill, function(p)
+            if isl.on_seek then isl.on_seek(p) end
+        end, true)
+
+        lt = make("TextLabel", {
+            Size = UDim2.new(0, 60, 0, 14),
+            Position = UDim2.fromOffset(0, 10),
+            BackgroundTransparency = 1,
+            Text = "0:00",
+            TextColor3 = t.subtext,
+            Font = Enum.Font.Gotham,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = srow
+        })
+
+        rt = make("TextLabel", {
+            Size = UDim2.new(0, 60, 0, 14),
+            Position = UDim2.new(1, -60, 0, 10),
+            BackgroundTransparency = 1,
+            Text = "0:00",
+            TextColor3 = t.subtext,
+            Font = Enum.Font.Gotham,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Right,
+            Parent = srow
+        })
+    end
+
+    local trow = make("Frame", {
+        Size = UDim2.new(1, 0, 0, 36),
+        BackgroundTransparency = 1,
+        LayoutOrder = 3,
+        Parent = ev
+    })
+    make("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 8),
+        Parent = trow
+    })
+
+    local vfill, vic
+    if show_vol then
+        local vrow = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 16),
+            BackgroundTransparency = 1,
+            LayoutOrder = 4,
+            Parent = ev
+        })
+        vic = make("ImageLabel", {
+            Size = UDim2.fromOffset(14, 14),
+            Position = UDim2.fromOffset(0, 1),
+            BackgroundTransparency = 1,
+            Image = kyri.icons["volume-2"],
+            ImageColor3 = t.subtext,
+            Parent = vrow
+        })
+        local vtrack = make("Frame", {
+            Size = UDim2.new(1, -24, 0, 4),
+            Position = UDim2.fromOffset(24, 6),
+            BackgroundColor3 = t.element,
+            Parent = vrow
+        })
+        make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = vtrack})
+
+        vfill = make("Frame", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundColor3 = t.subtext,
+            Parent = vtrack
+        })
+        make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = vfill})
+
+        local vhit = make("TextButton", {
+            Size = UDim2.new(1, 0, 0, 16),
+            Position = UDim2.fromOffset(0, -6),
+            BackgroundTransparency = 1,
+            Text = "",
+            Parent = vtrack
+        })
+        drag_bar(vhit, vtrack, vfill, function(p)
+            if isl.on_volume then isl.on_volume(math.floor(p * 100)) end
+        end)
+    end
+
+    local function exp_h()
+        local h, n = 0, 0
+        for i,c in pairs(ev:GetChildren()) do
+            if c:IsA("GuiObject") then
+                h = h + c.Size.Y.Offset
+                n = n + 1
+            end
+        end
+        return h + math.max(n - 1, 0) * gap + 28
+    end
+
+    local tap = make("TextButton", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Text = "",
+        ZIndex = 10,
+        Parent = root
+    })
+
+    local function set_expanded(state)
+        if isl.expanded == state then return end
+        isl.expanded = state
+        tap.Visible = not state
+        local ti = TweenInfo.new(0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        if state then
+            ev.Visible = true
+            kyri.svc.tw:Create(root, ti, {Size = UDim2.fromOffset(ew, exp_h())}):Play()
+            kyri.svc.tw:Create(rc, TweenInfo.new(0.3), {CornerRadius = UDim.new(0, 22)}):Play()
+            fade(cv, 1, 0.12)
+            fade(ev, 0, 0.26)
+        else
+            kyri.svc.tw:Create(root, ti, {Size = UDim2.fromOffset(cw, ch)}):Play()
+            kyri.svc.tw:Create(rc, TweenInfo.new(0.3), {CornerRadius = UDim.new(0, math.floor(ch / 2))}):Play()
+            fade(ev, 1, 0.12)
+            fade(cv, 0, 0.26)
+            task.delay(0.24, function()
+                if not isl.expanded then ev.Visible = false end
+            end)
+        end
+        if isl.on_toggle then pcall(isl.on_toggle, state) end
+    end
+
+    close.MouseButton1Click:Connect(function()
+        set_expanded(false)
+    end)
+    close.MouseEnter:Connect(function()
+        kyri.svc.tw:Create(close, TweenInfo.new(0.15), {ImageColor3 = t.text}):Play()
+    end)
+    close.MouseLeave:Connect(function()
+        kyri.svc.tw:Create(close, TweenInfo.new(0.15), {ImageColor3 = t.subtext}):Play()
+    end)
+
+    do
+        local held, moved, start, origin = false, 0, nil, nil
+
+        tap.InputBegan:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                held = true
+                moved = 0
+                start = i.Position
+                origin = root.Position
+                kyri.svc.tw:Create(root, TweenInfo.new(0.12), {Size = UDim2.fromOffset(cw + 6, ch + 2)}):Play()
+            end
+        end)
+
+        table.insert(conns, kyri.svc.inp.InputChanged:Connect(function(i)
+            if not held or not draggable then return end
+            if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
+                local d = i.Position - start
+                moved = math.max(moved, math.abs(d.X) + math.abs(d.Y))
+                if moved > 6 then
+                    root.Position = UDim2.new(origin.X.Scale, origin.X.Offset + d.X, origin.Y.Scale, origin.Y.Offset + d.Y)
+                end
+            end
+        end))
+
+        table.insert(conns, kyri.svc.inp.InputEnded:Connect(function(i)
+            if not held then return end
+            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                held = false
+                if moved <= 6 then
+                    root.Size = UDim2.fromOffset(cw, ch)
+                    set_expanded(true)
+                else
+                    kyri.svc.tw:Create(root, TweenInfo.new(0.15), {Size = UDim2.fromOffset(cw, ch)}):Play()
+                end
+            end
+        end))
+    end
+
+    tap.MouseEnter:Connect(function()
+        kyri.svc.tw:Create(root, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(16, 16, 20)}):Play()
+        if opts.hover then set_expanded(true) end
+    end)
+    tap.MouseLeave:Connect(function()
+        kyri.svc.tw:Create(root, TweenInfo.new(0.15), {BackgroundColor3 = opts.color or Color3.fromRGB(7, 7, 9)}):Play()
+    end)
+
+    function isl:button(icon, cb, name)
+        local b = make("ImageButton", {
+            Size = UDim2.fromOffset(34, 34),
+            BackgroundColor3 = t.element,
+            Image = "",
+            AutoButtonColor = false,
+            Parent = trow
+        })
+        make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = b})
+
+        local im = make("ImageLabel", {
+            Size = UDim2.fromOffset(16, 16),
+            Position = UDim2.new(0.5, -8, 0.5, -8),
+            BackgroundTransparency = 1,
+            Image = ico(icon) or kyri.icons["play"],
+            ImageColor3 = t.text,
+            Parent = b
+        })
+
+        b.MouseButton1Click:Connect(function()
+            if cb then pcall(cb) end
+        end)
+        b.MouseEnter:Connect(function()
+            kyri.svc.tw:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = t.hover}):Play()
+        end)
+        b.MouseLeave:Connect(function()
+            kyri.svc.tw:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = t.element}):Play()
+        end)
+        if name then b.Name = name end
+
+        local api = {box = b, img = im}
+        function api:icon(new) im.Image = ico(new) or im.Image end
+        function api:tint(c) im.ImageColor3 = c end
+        function api:setcallback(fn) cb = fn end
+        return api
+    end
+
+    function isl:row(text)
+        local r = make("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 16),
+            BackgroundTransparency = 1,
+            Text = text or "",
+            TextColor3 = t.subtext,
+            Font = Enum.Font.Gotham,
+            TextSize = 12,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            LayoutOrder = 9,
+            Parent = ev
+        })
+        local api = {box = r}
+        function api:set(v) r.Text = v end
+        return api
+    end
+
+    function isl:set(d)
+        if not d then return end
+        if d.title then
+            ctitle.Text = d.title
+            etitle.Text = d.title
+        end
+        if d.subtitle ~= nil then esub.Text = d.subtitle end
+        if d.image ~= nil then
+            art.Image = d.image
+            bart.Image = d.image
+            art_ic.Visible = d.image == ""
+            bart_ic.Visible = d.image == ""
+        end
+        if d.icon then
+            local id = ico(d.icon)
+            if id then
+                art_ic.Image = id
+                bart_ic.Image = id
+            end
+        end
+        if d.progress and sfill and not isl.seeking then
+            sfill.Size = UDim2.fromScale(math.clamp(d.progress, 0, 1), 1)
+        end
+        if d.left and lt then lt.Text = d.left end
+        if d.right and rt then rt.Text = d.right end
+        if d.volume and vfill then
+            vfill.Size = UDim2.fromScale(math.clamp(d.volume / 100, 0, 1), 1)
+            if vic then vic.Image = d.volume <= 0 and kyri.icons["volume-x"] or kyri.icons["volume-2"] end
+        end
+        if d.playing ~= nil then isl.playing = d.playing end
+    end
+
+    function isl:expand() set_expanded(true) end
+    function isl:collapse() set_expanded(false) end
+    function isl:toggle() set_expanded(not isl.expanded) end
+
+    function isl:relayout()
+        if isl.expanded then
+            kyri.svc.tw:Create(root, TweenInfo.new(0.2), {Size = UDim2.fromOffset(ew, exp_h())}):Play()
+        end
+    end
+
+    function isl:notify(text, dur)
+        local was = ctitle.Text
+        local wasbar = isl.playing
+        isl.playing = false
+        ctitle.Text = text
+        if not isl.expanded then
+            kyri.svc.tw:Create(root, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Size = UDim2.fromOffset(cw + 24, ch)
+            }):Play()
+        end
+        task.delay(dur or 2.5, function()
+            if ctitle.Text ~= text then return end
+            ctitle.Text = was
+            isl.playing = wasbar
+            if not isl.expanded then
+                kyri.svc.tw:Create(root, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
+                    Size = UDim2.fromOffset(cw, ch)
+                }):Play()
+            end
+        end)
+    end
+
+    function isl:visible(v) root.Visible = v end
+    function isl:onseek(fn) isl.on_seek = fn end
+    function isl:onvolume(fn) isl.on_volume = fn end
+
+    function isl:destroy()
+        for i,c in pairs(conns) do
+            pcall(function() c:Disconnect() end)
+        end
+        if gui and gui.Parent then gui:Destroy() end
+    end
+
+    isl.on_seek = opts.on_seek
+    isl.on_volume = opts.on_volume
+    isl.on_toggle = opts.on_toggle
+
+    root.Size = UDim2.fromOffset(cw, 0)
+    kyri.svc.tw:Create(root, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.fromOffset(cw, ch)
+    }):Play()
+
+    return isl
+end
+local sha_k = {
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+}
+
+local function sha256(msg)
+    local h = {0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19}
+    local len = #msg
+    local bits = len * 8
+    local tail = ""
+    for i = 7, 0, -1 do
+        tail = tail .. string.char(math.floor(bits / 2 ^ (8 * i)) % 256)
+    end
+    msg = msg .. "\128" .. string.rep("\0", (55 - len) % 64) .. tail
+
+    for i = 1, #msg, 64 do
+        local w = {}
+        for j = 0, 15 do
+            local a, b, c, d = msg:byte(i + j * 4, i + j * 4 + 3)
+            w[j + 1] = a * 16777216 + b * 65536 + c * 256 + d
+        end
+        for j = 17, 64 do
+            local v, v2 = w[j - 15], w[j - 2]
+            local s0 = bit32.bxor(bit32.rrotate(v, 7), bit32.rrotate(v, 18), bit32.rshift(v, 3))
+            local s1 = bit32.bxor(bit32.rrotate(v2, 17), bit32.rrotate(v2, 19), bit32.rshift(v2, 10))
+            w[j] = (w[j - 16] + s0 + w[j - 7] + s1) % 4294967296
+        end
+
+        local a, b, c, d, e, f, g, hh = h[1], h[2], h[3], h[4], h[5], h[6], h[7], h[8]
+        for j = 1, 64 do
+            local S1 = bit32.bxor(bit32.rrotate(e, 6), bit32.rrotate(e, 11), bit32.rrotate(e, 25))
+            local ch = bit32.bxor(bit32.band(e, f), bit32.band(bit32.bnot(e), g))
+            local t1 = (hh + S1 + ch + sha_k[j] + w[j]) % 4294967296
+            local S0 = bit32.bxor(bit32.rrotate(a, 2), bit32.rrotate(a, 13), bit32.rrotate(a, 22))
+            local mj = bit32.bxor(bit32.band(a, b), bit32.band(a, c), bit32.band(b, c))
+            local t2 = (S0 + mj) % 4294967296
+            hh, g, f, e = g, f, e, (d + t1) % 4294967296
+            d, c, b, a = c, b, a, (t1 + t2) % 4294967296
+        end
+
+        h[1] = (h[1] + a) % 4294967296
+        h[2] = (h[2] + b) % 4294967296
+        h[3] = (h[3] + c) % 4294967296
+        h[4] = (h[4] + d) % 4294967296
+        h[5] = (h[5] + e) % 4294967296
+        h[6] = (h[6] + f) % 4294967296
+        h[7] = (h[7] + g) % 4294967296
+        h[8] = (h[8] + hh) % 4294967296
+    end
+
+    local out = ""
+    for i = 1, 8 do
+        local v = h[i]
+        out = out .. string.char(bit32.extract(v, 24, 8), bit32.extract(v, 16, 8), bit32.extract(v, 8, 8), bit32.extract(v, 0, 8))
+    end
+    return out
+end
+
+local b64c = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+
+local function b64url(data)
+    local out = {}
+    for i = 1, #data, 3 do
+        local a, b, c = data:byte(i, i + 2)
+        local n = a * 65536 + (b or 0) * 256 + (c or 0)
+        local idx = {bit32.extract(n, 18, 6), bit32.extract(n, 12, 6), bit32.extract(n, 6, 6), bit32.extract(n, 0, 6)}
+        local cnt = b and (c and 4 or 3) or 2
+        for j = 1, cnt do
+            out[#out + 1] = b64c:sub(idx[j] + 1, idx[j] + 1)
+        end
+    end
+    return table.concat(out)
+end
+
+local vchars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
+
+local function verifier()
+    local rng = Random.new(math.floor(tick() * 1e6) % 2147483647)
+    local out = {}
+    for i = 1, 64 do
+        local p = rng:NextInteger(1, #vchars)
+        out[i] = vchars:sub(p, p)
+    end
+    return table.concat(out)
+end
+
+local function fmt_time(s)
+    return string.format("%d:%02d", math.floor(s / 60), math.floor(s % 60))
+end
+
+function kyri.spotify(opts)
+    opts = opts or {}
+    local hs = kyri.svc.http
+    local req = request or http_request or (http and http.request) or (syn and syn.request)
+
+    local sp = {}
+    sp.ready = false
+    sp.playing = false
+    sp.pos, sp.dur, sp.vol = 0, 0, 100
+    sp.shuffle = false
+    sp.loop = "off"
+    sp.track = nil
+    sp.results = {}
+
+    local CID = opts.client_id or "035b9c837a6f46ffaffce6ada163a6ad"
+    local REDIR = opts.redirect or "http://127.0.0.1:8888/callback"
+    local SCOPES = opts.scopes or "user-read-playback-state user-modify-playback-state user-read-currently-playing user-read-recently-played user-library-modify user-library-read"
+    local DIR = "KyriLib/spotify"
+    local TOK = DIR .. "/tokens.json"
+    local PK = DIR .. "/pkce.txt"
+    local ART = DIR .. "/art"
+
+    local token, refresh, alive = "", "", true
+    local cur_id, seeking, last_seek = "", false, 0
+
+    local function dirs()
+        if not isfolder("KyriLib") then makefolder("KyriLib") end
+        if not isfolder(DIR) then makefolder(DIR) end
+        if not isfolder(ART) then makefolder(ART) end
+    end
+
+    local function save_tokens(a, r)
+        dirs()
+        if a then token = a end
+        if r then refresh = r end
+        writefile(TOK, hs:JSONEncode({access_token = token, refresh_token = refresh}))
+    end
+
+    local function load_tokens()
+        if not isfile(TOK) then return false end
+        local ok, d = pcall(function() return hs:JSONDecode(readfile(TOK)) end)
+        if not ok or type(d) ~= "table" then return false end
+        token = d.access_token or ""
+        refresh = d.refresh_token or ""
+        return refresh ~= ""
+    end
+
+    local function form(tbl)
+        local parts = {}
+        for k,v in pairs(tbl) do
+            parts[#parts + 1] = k .. "=" .. hs:UrlEncode(v)
+        end
+        return table.concat(parts, "&")
+    end
+
+    local function new_token()
+        if refresh == "" or not req then return false end
+        local res = req({
+            Url = "https://accounts.spotify.com/api/token",
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/x-www-form-urlencoded"},
+            Body = form({grant_type = "refresh_token", refresh_token = refresh, client_id = CID})
+        })
+        if res and res.StatusCode == 200 then
+            local d = hs:JSONDecode(res.Body)
+            save_tokens(d.access_token, d.refresh_token)
+            sp.ready = true
+            return true
+        end
+        return false
+    end
+
+    function sp:authurl()
+        local v = verifier()
+        dirs()
+        writefile(PK, v)
+        return "https://accounts.spotify.com/authorize?"
+            .. form({
+                client_id = CID,
+                response_type = "code",
+                redirect_uri = REDIR,
+                scope = SCOPES,
+                code_challenge_method = "S256",
+                code_challenge = b64url(sha256(v))
+            })
+    end
+
+    function sp:submit(code)
+        if not code or code == "" then return false, "no code" end
+        if not isfile(PK) then return false, "no verifier, copy the auth url again" end
+        code = code:gsub("%s", "")
+        code = code:match("[?&]code=([^&]+)") or code
+        local res = req({
+            Url = "https://accounts.spotify.com/api/token",
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/x-www-form-urlencoded"},
+            Body = form({
+                grant_type = "authorization_code",
+                code = code,
+                redirect_uri = REDIR,
+                client_id = CID,
+                code_verifier = readfile(PK)
+            })
+        })
+        if res and res.StatusCode == 200 then
+            local d = hs:JSONDecode(res.Body)
+            save_tokens(d.access_token, d.refresh_token)
+            pcall(function() delfile(PK) end)
+            sp.ready = true
+            return true
+        end
+        return false, res and res.Body or "no response"
+    end
+
+    local function api(method, ep, body)
+        if not sp.ready and not new_token() then return nil end
+        local headers = {
+            ["Authorization"] = "Bearer " .. token,
+            ["Content-Type"] = "application/json",
+            ["Content-Length"] = "0"
+        }
+        local rd = {Url = "https://api.spotify.com/v1" .. ep, Method = method, Headers = headers}
+        if body then
+            local bs = hs:JSONEncode(body)
+            rd.Body = bs
+            headers["Content-Length"] = tostring(#bs)
+        end
+        local ok, res = pcall(req, rd)
+        if not ok then return nil end
+        if res and res.StatusCode == 401 and new_token() then
+            headers["Authorization"] = "Bearer " .. token
+            rd.Headers = headers
+            local ok2, res2 = pcall(req, rd)
+            if ok2 then res = res2 end
+        end
+        return res
+    end
+
+    local function good(r)
+        return r and (r.StatusCode == 200 or r.StatusCode == 202 or r.StatusCode == 204)
+    end
+
+    sp.request = api
+
+    function sp:authed() return sp.ready end
+
+    function sp:play()
+        local r = api("PUT", "/me/player/play")
+        if good(r) then sp.playing = true end
+        return good(r)
+    end
+
+    function sp:pause()
+        local r = api("PUT", "/me/player/pause")
+        if good(r) then sp.playing = false end
+        return good(r)
+    end
+
+    function sp:toggle()
+        if sp.playing then return sp:pause() end
+        return sp:play()
+    end
+
+    function sp:next()
+        local r = api("POST", "/me/player/next")
+        cur_id = ""
+        task.delay(0.4, function() sp:sync() end)
+        return good(r)
+    end
+
+    function sp:prev()
+        local r = api("POST", "/me/player/previous")
+        cur_id = ""
+        task.delay(0.4, function() sp:sync() end)
+        return good(r)
+    end
+
+    function sp:seek(pct)
+        if sp.dur <= 0 then return false end
+        local now = tick()
+        if now - last_seek < 0.35 then return false end
+        last_seek = now
+        seeking = true
+        local r = api("PUT", "/me/player/seek?position_ms=" .. math.floor(math.clamp(pct, 0, 1) * sp.dur * 1000))
+        if good(r) then sp.pos = math.floor(pct * sp.dur) end
+        task.delay(0.6, function() seeking = false end)
+        return good(r)
+    end
+
+    function sp:volume(v)
+        v = math.clamp(math.floor(v), 0, 100)
+        local r = api("PUT", "/me/player/volume?volume_percent=" .. v)
+        if good(r) then sp.vol = v end
+        return good(r)
+    end
+
+    function sp:setshuffle(state)
+        local r = api("PUT", "/me/player/shuffle?state=" .. (state and "true" or "false"))
+        if good(r) then sp.shuffle = state end
+        return good(r)
+    end
+
+    function sp:setloop(mode)
+        if mode == nil then
+            mode = sp.loop == "off" and "context" or (sp.loop == "context" and "track" or "off")
+        end
+        local r = api("PUT", "/me/player/repeat?state=" .. mode)
+        if good(r) then sp.loop = mode end
+        return good(r), sp.loop
+    end
+
+    function sp:like()
+        if not sp.track or not sp.track.id then return false end
+        return good(api("PUT", "/me/tracks?ids=" .. sp.track.id))
+    end
+
+    function sp:search(q, limit)
+        if not q or q == "" then return {} end
+        local r = api("GET", "/search?q=" .. hs:UrlEncode(q) .. "&type=track&limit=" .. (limit or 8))
+        if not r or r.StatusCode ~= 200 then return {} end
+        local d = hs:JSONDecode(r.Body)
+        sp.results = (d.tracks and d.tracks.items) or {}
+        return sp.results
+    end
+
+    function sp:playuri(uri)
+        local r = api("PUT", "/me/player/play", {uris = {uri}})
+        cur_id = ""
+        task.delay(0.4, function() sp:sync() end)
+        return good(r)
+    end
+
+    function sp:queue(uri)
+        return good(api("POST", "/me/player/queue?uri=" .. hs:UrlEncode(uri)))
+    end
+
+    function sp:devices()
+        local r = api("GET", "/me/player/devices")
+        if not r or r.StatusCode ~= 200 then return {} end
+        return hs:JSONDecode(r.Body).devices or {}
+    end
+
+    function sp:artists()
+        if not sp.track or not sp.track.artists then return "" end
+        local a = {}
+        for i,v in pairs(sp.track.artists) do a[#a + 1] = v.name end
+        return table.concat(a, ", ")
+    end
+
+    local art_cache = {}
+
+    local function load_art(url, id, cb)
+        if not url or url == "" or not getcustomasset then return end
+        if art_cache[id] then
+            cb(art_cache[id])
+            return
+        end
+        task.spawn(function()
+            pcall(function()
+                dirs()
+                local f = ART .. "/" .. id .. ".jpg"
+                if not isfile(f) then
+                    local res = req({Url = url, Method = "GET"})
+                    if not res or res.StatusCode ~= 200 then return end
+                    writefile(f, res.Body)
+                end
+                local asset = getcustomasset(f)
+                art_cache[id] = asset
+                cb(asset)
+            end)
+        end)
+    end
+
+    local isl, ui
+    sp.on_track = opts.on_track
+
+    local function push(d)
+        if isl then isl:set(d) end
+        if ui then ui(d) end
+    end
+
+    function sp:sync()
+        local r = api("GET", "/me/player/currently-playing")
+        if not r or r.StatusCode ~= 200 then
+            if r and r.StatusCode == 204 then
+                push({title = "nothing playing", subtitle = "", playing = false, progress = 0})
+                sp.playing = false
+            end
+            return
+        end
+        local ok, d = pcall(function() return hs:JSONDecode(r.Body) end)
+        if not ok or not d or not d.item then return end
+
+        sp.playing = d.is_playing and true or false
+        sp.pos = math.floor((d.progress_ms or 0) / 1000)
+        sp.dur = math.floor((d.item.duration_ms or 0) / 1000)
+        if d.device and d.device.volume_percent then sp.vol = d.device.volume_percent end
+        if d.shuffle_state ~= nil then sp.shuffle = d.shuffle_state end
+        if d.repeat_state then sp.loop = d.repeat_state end
+
+        local changed = d.item.id ~= cur_id
+        sp.track = d.item
+
+        if changed then
+            cur_id = d.item.id
+            push({title = d.item.name, subtitle = sp:artists(), image = "", playing = sp.playing})
+            if d.item.album and d.item.album.images and #d.item.album.images > 0 then
+                load_art(d.item.album.images[1].url, d.item.id, function(asset)
+                    if cur_id == d.item.id then push({image = asset}) end
+                end)
+            end
+            if sp.on_track then pcall(sp.on_track, d.item) end
+        end
+
+        push({
+            playing = sp.playing,
+            volume = sp.vol,
+            progress = sp.dur > 0 and (sp.pos / sp.dur) or 0,
+            left = fmt_time(sp.pos),
+            right = fmt_time(sp.dur)
+        })
+    end
+
+    function sp:destroy()
+        alive = false
+        if isl then pcall(function() isl:destroy() end) end
+    end
+
+    dirs()
+    if load_tokens() then
+        sp.ready = true
+        task.spawn(new_token)
+    end
+
+    if opts.island ~= false then
+        isl = kyri.island({
+            title = sp.ready and "spotify" or "spotify · not connected",
+            subtitle = "",
+            icon = "music",
+            width = opts.island_width or 240,
+            expanded_width = 340,
+            on_seek = function(p) sp:seek(p) end,
+            on_volume = function(v) sp:volume(v) end,
+            y = opts.island_y,
+            position = opts.island_position,
+            hover = opts.island_hover
+        })
+        sp.island = isl
+
+        isl:button("shuffle", function()
+            sp:setshuffle(not sp.shuffle)
+            isl:notify(sp.shuffle and "shuffle on" or "shuffle off", 1.5)
+        end, "shuffle")
+
+        isl:button("skip-back", function() sp:prev() end, "prev")
+
+        local pb
+        pb = isl:button("play", function()
+            sp:toggle()
+            pb:icon(sp.playing and "pause" or "play")
+        end, "toggle")
+
+        isl:button("skip-forward", function() sp:next() end, "next")
+
+        local lb
+        lb = isl:button("repeat", function()
+            local _, m = sp:setloop()
+            lb:tint(m == "off" and kyri.theme.subtext or kyri.theme.accent)
+            isl:notify("repeat: " .. m, 1.5)
+        end, "loop")
+        lb:tint(kyri.theme.subtext)
+
+        isl:button("heart", function()
+            if sp:like() then isl:notify("added to liked", 1.5) end
+        end, "like")
+
+        local base_push = push
+        push = function(d)
+            base_push(d)
+            if d.playing ~= nil then pb:icon(d.playing and "pause" or "play") end
+        end
+    end
+
+    local w = opts.window
+    if not w and opts.tabs ~= false then
+        w = kyri.new(opts.title or "spotify", {GameName = "Spotify"})
+    end
+    sp.window = w
+
+    if w and opts.tabs ~= false then
+        local np = w:tab("Now Playing", "music")
+        local art_api = np:image("", 240, Enum.ScaleType.Crop)
+        local t_lbl = np:label("not playing")
+        local a_lbl = np:label("")
+        local time_lbl = np:label("0:00 / 0:00")
+
+        np:section("seek")
+        local seek_api = np:slider("position", 0, 100, 0, function(pct)
+            sp:seek(pct / 100)
+        end, nil, 0.1)
+
+        np:section("controls")
+        local play_api = np:button("play / pause", function() sp:toggle() end, "play")
+        np:button("previous", function() sp:prev() end, "skip-back")
+        np:button("next", function() sp:next() end, "skip-forward")
+
+        np:section("playback")
+        local vol_api = np:slider("volume", 0, 100, 100, function(v) sp:volume(v) end, "sp_vol", 1)
+        np:toggle("shuffle", false, function(s) sp:setshuffle(s) end)
+        local loop_api
+        loop_api = np:button("repeat: off", function()
+            local _, m = sp:setloop()
+            loop_api:set("repeat: " .. m)
+        end, "repeat")
+        np:button("like current track", function()
+            if sp:like() then w:notify("spotify", "added to liked songs", 2) end
+        end, "heart")
+
+        local srch = w:tab("Search", "search")
+        srch:label("type a song name and press enter")
+        srch:space()
+        srch:input("search", "song name...", function(q)
+            for i,c in pairs(srch.page:GetChildren()) do
+                if c.Name == "SpotifyResult" then c:Destroy() end
+            end
+            local items = sp:search(q)
+            if #items == 0 then
+                w:notify("search", "no results for: " .. q, 2)
+                return
+            end
+            for i,tr in pairs(items) do
+                if tr and tr.name and tr.uri then
+                    local a = {}
+                    for j,v in pairs(tr.artists or {}) do a[#a + 1] = v.name end
+                    local rb = srch:button(i .. ".  " .. tr.name .. "  —  " .. table.concat(a, ", "), function()
+                        if sp:playuri(tr.uri) then
+                            w:notify("playing", tr.name, 3)
+                            if isl then isl:notify(tr.name, 2.5) end
+                        end
+                    end)
+                    rb.box.Name = "SpotifyResult"
+                end
+            end
+        end)
+
+        local at = w:tab("Auth", "key")
+        at:section("connect spotify")
+        at:paragraph("how to authenticate",
+            "1. click 'copy auth url'\n2. open it in your browser and approve\n3. the page will fail to load — that is normal\n4. copy the whole url from the address bar\n5. paste it below and submit")
+
+        local st_lbl
+        at:button("copy auth url", function()
+            setclipboard(sp:authurl())
+            w:notify("copied", "auth url copied, open it in your browser", 3)
+        end, "link")
+
+        at:space()
+        st_lbl = at:label(sp.ready and "status: connected" or "status: not connected")
+        local code_in = at:input("callback url or code", "paste here", function() end)
+
+        at:button("submit", function()
+            local raw = code_in.input.Text
+            if raw == "" then
+                w:notify("spotify", "paste the code first", 2)
+                return
+            end
+            st_lbl:set("status: connecting...")
+            task.spawn(function()
+                local ok, err = sp:submit(raw)
+                if ok then
+                    st_lbl:set("status: connected")
+                    w:notify("spotify", "connected", 3)
+                    if isl then isl:set({title = "spotify"}) end
+                    sp:sync()
+                else
+                    st_lbl:set("status: failed, try again")
+                    w:notify("spotify", tostring(err):sub(1, 90), 4)
+                end
+            end)
+        end, "check")
+
+        at:space()
+        at:button("sign out", function()
+            pcall(function() delfile(TOK) end)
+            token, refresh, sp.ready = "", "", false
+            st_lbl:set("status: not connected")
+            w:notify("spotify", "signed out", 2)
+        end, "log-out")
+
+        ui = function(d)
+            if d.title then t_lbl:set(d.title) end
+            if d.subtitle ~= nil and d.subtitle ~= "" then a_lbl:set(d.subtitle) end
+            if d.image ~= nil then art_api:set(d.image) end
+            if d.left and d.right then time_lbl:set(d.left .. "  /  " .. d.right) end
+            if d.progress and not seeking then seek_api:set(math.clamp(d.progress * 100, 0, 100)) end
+            if d.volume then vol_api:set(d.volume) end
+        end
+    end
+
+    if not req then
+        if w then w:notify("spotify", "this executor has no http support", 5) end
+        return sp
+    end
+
+    task.spawn(function()
+        local n = 0
+        while alive and task.wait(1) do
+            if sp.ready then
+                if sp.playing and not seeking then
+                    sp.pos = math.min(sp.pos + 1, sp.dur)
+                    push({
+                        progress = sp.dur > 0 and (sp.pos / sp.dur) or 0,
+                        left = fmt_time(sp.pos),
+                        right = fmt_time(sp.dur)
+                    })
+                end
+                n = n + 1
+                if n % 5 == 0 then
+                    task.spawn(function() sp:sync() end)
+                end
+            end
+        end
+    end)
+
+    if sp.ready then task.spawn(function() sp:sync() end) end
+
+    if opts.commands then
+        local function say(m)
+            pcall(function()
+                kyri.svc.txt.TextChannels.RBXGeneral:SendAsync(m)
+            end)
+        end
+        local cmds = {
+            play = function() sp:play() say("resumed") end,
+            pause = function() sp:pause() say("paused") end,
+            skip = function() sp:next() say("skipped") end,
+            back = function() sp:prev() say("back") end,
+            like = function() say(sp:like() and "liked" or "failed") end,
+            current = function()
+                if sp.track then
+                    say((sp.playing and "playing" or "paused") .. ": " .. sp.track.name .. " by " .. sp:artists())
+                else
+                    say("nothing playing")
+                end
+            end,
+            volume = function(a) if sp:volume(tonumber(a[1]) or 50) then say("volume " .. sp.vol) end end,
+            shuffle = function(a)
+                sp:setshuffle(a[1] == "on")
+                say("shuffle " .. (a[1] or "off"))
+            end,
+            loop = function(a) local _, m = sp:setloop(a[1]) say("repeat " .. m) end,
+            search = function(a)
+                local items = sp:search(table.concat(a, " "), 5)
+                for i,tr in pairs(items) do say(i .. ". " .. tr.name) end
+            end,
+            pick = function(a)
+                local tr = sp.results[tonumber(a[1]) or 0]
+                if tr then
+                    sp:playuri(tr.uri)
+                    say("playing " .. tr.name)
+                end
+            end,
+            help = function()
+                say("!sp play/pause/skip/back/current/like | search [q] pick [n] | volume [0-100] | loop [mode] | shuffle [on/off]")
+            end
+        }
+        local me = kyri.svc.plr.LocalPlayer
+        kyri.svc.txt.MessageReceived:Connect(function(msg)
+            if not msg.TextSource or msg.TextSource.UserId ~= me.UserId then return end
+            local args = {}
+            for word in msg.Text:gmatch("%S+") do args[#args + 1] = word end
+            if args[1] ~= "!sp" or not args[2] then return end
+            local fn = cmds[args[2]:lower()]
+            if not fn then return end
+            local rest = {}
+            for i = 3, #args do rest[#rest + 1] = args[i] end
+            task.spawn(function() pcall(fn, rest) end)
+        end)
+    end
+
+    if getgenv then getgenv().__kyri_spotify = sp end
+    return sp
 end
 
 function kyri.new(title, options)
@@ -3541,10 +4323,26 @@ function kyri.new(title, options)
         end
     end
 
+    function w:island(opts)
+        opts = opts or {}
+        if opts.title == nil then opts.title = title end
+        w.isl = kyri.island(opts)
+        return w.isl
+    end
+
+    function w:spotify(opts)
+        opts = opts or {}
+        opts.window = w
+        w.sp = kyri.spotify(opts)
+        return w.sp
+    end
+
     function w:destroy()
         for _, c in ipairs(conns) do
             pcall(function() c:Disconnect() end)
         end
+        if w.sp then pcall(function() w.sp:destroy() end) end
+        if w.isl then pcall(function() w.isl:destroy() end) end
         if w.gui and w.gui.Parent then w.gui:Destroy() end
         local ng = w.localPlayer.PlayerGui:FindFirstChild("KyriNotifications")
         if ng then ng:Destroy() end
