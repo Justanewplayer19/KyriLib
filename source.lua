@@ -447,6 +447,25 @@ function kyri.island(opts)
         Parent = head
     })
 
+    local quit
+    if opts.on_close then
+        quit = make("ImageButton", {
+            Size = UDim2.fromOffset(20, 20),
+            Position = UDim2.new(1, -48, 0, 6),
+            BackgroundTransparency = 1,
+            Image = ico("power") or kyri.icons["x"],
+            ImageColor3 = t.subtext,
+            Parent = head
+        })
+        quit.MouseButton1Click:Connect(function() pcall(opts.on_close) end)
+        quit.MouseEnter:Connect(function()
+            kyri.svc.tw:Create(quit, TweenInfo.new(0.15), {ImageColor3 = t.text}):Play()
+        end)
+        quit.MouseLeave:Connect(function()
+            kyri.svc.tw:Create(quit, TweenInfo.new(0.15), {ImageColor3 = t.subtext}):Play()
+        end)
+    end
+
     local function drag_bar(hit, track, fill, cb, held)
         local down = false
         local function upd(x)
@@ -594,6 +613,18 @@ function kyri.island(opts)
         drag_bar(vhit, vtrack, vfill, function(p)
             if isl.on_volume then isl.on_volume(math.floor(p * 100)) end
         end)
+    end
+
+    local body
+    if opts.body_height then
+        body = make("Frame", {
+            Size = UDim2.new(1, 0, 0, opts.body_height),
+            BackgroundTransparency = 1,
+            ClipsDescendants = true,
+            LayoutOrder = 5,
+            Parent = ev
+        })
+        isl.body = body
     end
 
     local function exp_h()
@@ -1212,6 +1243,7 @@ function kyri.spotify(opts)
     end
 
     local isl, ui
+    local own_island = true
     sp.on_track = opts.on_track
 
     local function push(d)
@@ -1263,7 +1295,7 @@ function kyri.spotify(opts)
 
     function sp:destroy()
         alive = false
-        if isl then pcall(function() isl:destroy() end) end
+        if isl and own_island then pcall(function() isl:destroy() end) end
     end
 
     dirs()
@@ -1272,10 +1304,11 @@ function kyri.spotify(opts)
         task.spawn(new_token)
     end
 
-    -- an island-mode window is already a pill at the top of the screen, a second
-    -- one would land straight on top of it. opts.island = true forces both
-    local own_island = opts.island ~= false
-    if opts.island ~= true and opts.window and opts.window.mode == "island" then
+    -- an island-mode window already owns a pill, so share it rather than drop a
+    -- second one on top. opts.island = true forces a separate island anyway
+    own_island = opts.island ~= false
+    if opts.island ~= true and opts.window and opts.window.isl then
+        isl = opts.window.isl
         own_island = false
     end
 
@@ -1292,6 +1325,9 @@ function kyri.spotify(opts)
             position = opts.island_position,
             hover = opts.island_hover
         })
+    end
+
+    if isl then
         sp.island = isl
 
         isl:button("shuffle", function()
@@ -1964,123 +2000,45 @@ function kyri.new(title, options)
 
     local main, top, sidebar, content, tab_holder, tab_list
     local ind_pos, ind_off, ind_on
-    local on_header_tap
+    local on_header_tap, rebind
     local pos_adjust = function(p) return p end
 
     if mode == "island" then
-        local pill_w, pill_h = 236, 40
         local pan_w = w.is_mobile and math.clamp(math.floor(vp.X * 0.9), 260, 420) or 370
         local pan_h = w.is_mobile and math.clamp(math.floor(vp.Y * 0.62), 300, 520) or 430
+        w.pan_w, w.pan_h = pan_w, pan_h
 
         ind_pos = UDim2.new(0, 0, 1, -2)
         ind_off = UDim2.new(0, 0, 0, 2)
         ind_on = UDim2.new(1, 0, 0, 2)
 
-        local sv = read_pos()
-        local pos = UDim2.new(0.5, -pill_w / 2, 0, 12)
-        if sv then
-            local x, y = fit(sv.x, sv.y, pill_w, pill_h)
-            pos = UDim2.fromOffset(x, y)
+        -- w:spotify swaps the island for one with transport chrome, so every
+        -- reference to it has to be reachable again afterwards
+        rebind = function(isl)
+            w.isl = isl
+            main = isl.root
+            w.expand = function() isl:expand() end
+            w.collapse = function() isl:collapse() end
+            w.expanded = function() return isl.expanded end
         end
 
-        local pill_r = math.floor(pill_h / 2)
-        local pan_r = 14
+        rebind(kyri.island({
+            title = w.title,
+            icon = options.Icon,
+            bars = false,
+            seek = false,
+            volume = false,
+            expanded_width = pan_w,
+            body_height = pan_h,
+            on_close = function() w:destroy() end
+        }))
 
-        main = make("Frame", {
-            Name = rnd(),
-            Size = UDim2.fromOffset(pill_w, pill_h),
-            Position = pos,
-            BackgroundColor3 = t.bg,
-            ClipsDescendants = true,
-            Parent = w.gui
-        })
-        local mrc = make("UICorner", {CornerRadius = UDim.new(0, pill_r), Parent = main})
-        make("UIStroke", {Color = t.border, Thickness = 1, Transparency = 0.3, Parent = main})
-
-        top = make("Frame", {
-            Size = UDim2.new(1, 0, 0, pill_h),
-            BackgroundColor3 = t.container,
-            Parent = main
-        })
-        local trc = make("UICorner", {CornerRadius = UDim.new(0, pill_r), Parent = top})
-
-        local top_fill = make("Frame", {
-            Size = UDim2.new(1, 0, 0, pill_r),
-            Position = UDim2.new(0, 0, 1, -pill_r),
-            BackgroundColor3 = t.container,
-            BorderSizePixel = 0,
-            Visible = false,
-            Parent = top
-        })
-
-        local badge = make("Frame", {
-            Size = UDim2.fromOffset(24, 24),
-            Position = UDim2.new(0, 7, 0.5, -12),
-            BackgroundColor3 = t.element,
-            Parent = top
-        })
-        make("UICorner", {CornerRadius = UDim.new(0, 7), Parent = badge})
-
-        local badge_txt = make("TextLabel", {
-            Size = UDim2.fromScale(1, 1),
-            BackgroundTransparency = 1,
-            Text = (w.title or "k"):sub(1, 1):upper(),
-            TextColor3 = t.accent,
-            Font = Enum.Font.GothamBold,
-            TextSize = 13,
-            Parent = badge
-        })
-        table.insert(w.accents, {obj = badge_txt, prop = "TextColor3"})
-
-        local title_lbl = make("TextLabel", {
-            Size = UDim2.new(1, -107, 1, 0),
-            Position = UDim2.fromOffset(39, 0),
-            BackgroundTransparency = 1,
-            Text = w.title,
-            TextColor3 = t.text,
-            Font = Enum.Font.GothamBold,
-            TextSize = 15,
-            TextTruncate = Enum.TextTruncate.AtEnd,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = top
-        })
-
-        local chev = make("ImageButton", {
-            Size = UDim2.fromOffset(16, 16),
-            Position = UDim2.new(1, -40, 0.5, 0),
-            AnchorPoint = Vector2.new(1, 0.5),
-            BackgroundTransparency = 1,
-            Image = ico("chevron-down") or "rbxassetid://7733717447",
-            ImageColor3 = t.subtext,
-            Parent = top
-        })
-
-        local close = make("ImageButton", {
-            Size = UDim2.fromOffset(15, 15),
-            Position = UDim2.new(1, -14, 0.5, 0),
-            AnchorPoint = Vector2.new(1, 0.5),
-            BackgroundTransparency = 1,
-            Image = ico("x") or "rbxassetid://7743878857",
-            ImageColor3 = t.subtext,
-            Parent = top
-        })
-
-        for i,b in pairs({chev, close}) do
-            b.MouseEnter:Connect(function()
-                play("hover")
-                kyri.svc.tw:Create(b, TweenInfo.new(0.2), {ImageColor3 = t.text}):Play()
-            end)
-            b.MouseLeave:Connect(function()
-                kyri.svc.tw:Create(b, TweenInfo.new(0.2), {ImageColor3 = t.subtext}):Play()
-            end)
-        end
+        local host = w.isl.body
 
         local strip = make("Frame", {
-            Size = UDim2.new(1, -20, 0, 28),
-            Position = UDim2.fromOffset(10, pill_h + 6),
+            Size = UDim2.new(1, 0, 0, 28),
             BackgroundTransparency = 1,
-            Visible = false,
-            Parent = main
+            Parent = host
         })
         sidebar = strip
 
@@ -2105,74 +2063,12 @@ function kyri.new(title, options)
         end)
 
         content = make("Frame", {
-            Size = UDim2.new(1, -20, 1, -(pill_h + 46)),
-            Position = UDim2.fromOffset(10, pill_h + 42),
+            Size = UDim2.new(1, 0, 1, -38),
+            Position = UDim2.fromOffset(0, 38),
             BackgroundTransparency = 1,
             ClipsDescendants = true,
-            Visible = false,
-            Parent = main
+            Parent = host
         })
-
-        local open = false
-        local dx = math.floor((pan_w - pill_w) / 2)
-        local ti = TweenInfo.new(0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-
-        local function set_open(v)
-            if open == v then return end
-            open = v
-            play("click")
-
-            local p = main.Position
-            local d = dx
-
-            kyri.svc.tw:Create(mrc, ti, {CornerRadius = UDim.new(0, open and pan_r or pill_r)}):Play()
-            kyri.svc.tw:Create(trc, ti, {CornerRadius = UDim.new(0, open and pan_r or pill_r)}):Play()
-
-            if open then
-                top_fill.Visible = true
-                local nx = p.X.Offset - d
-                if p.X.Scale == 0 then nx = math.max(nx, 8) end
-                kyri.svc.tw:Create(main, ti, {
-                    Size = UDim2.fromOffset(pan_w, pan_h),
-                    Position = UDim2.new(p.X.Scale, nx, p.Y.Scale, p.Y.Offset)
-                }):Play()
-                task.delay(0.1, function()
-                    if open then
-                        strip.Visible = true
-                        content.Visible = true
-                    end
-                end)
-            else
-                strip.Visible = false
-                content.Visible = false
-                top_fill.Visible = false
-                kyri.svc.tw:Create(main, ti, {
-                    Size = UDim2.fromOffset(pill_w, pill_h),
-                    Position = UDim2.new(p.X.Scale, p.X.Offset + d, p.Y.Scale, p.Y.Offset)
-                }):Play()
-            end
-
-            kyri.svc.tw:Create(chev, TweenInfo.new(0.25), {Rotation = open and 180 or 0}):Play()
-        end
-
-        chev.MouseButton1Click:Connect(function() set_open(not open) end)
-        close.MouseButton1Click:Connect(function()
-            play("click")
-            w:destroy()
-        end)
-
-        on_header_tap = function() set_open(not open) end
-
-        -- the panel grows left of the pill, so a position saved while open
-        -- would drift the pill on the next run
-        pos_adjust = function(p)
-            if not open then return p end
-            return UDim2.new(p.X.Scale, p.X.Offset + dx, p.Y.Scale, p.Y.Offset)
-        end
-
-        w.expand = function() set_open(true) end
-        w.collapse = function() set_open(false) end
-        w.expanded = function() return open end
     else
         local win_w, win_h = 520, 400
         if w.is_mobile then
@@ -2422,6 +2318,8 @@ function kyri.new(title, options)
         })
     end
 
+    if mode == "window" then
+
     -- drop shadow sits outside main, so it is a sibling: main clips its children.
     -- off by default, any soft edge around the frame just looks like a smudge
     local want_shadow = options.Shadow == true
@@ -2500,7 +2398,13 @@ function kyri.new(title, options)
         if drag and drag_input then update_input(drag_input) end
     end))
 
+    end
+
     function w:resetpos()
+        if mode == "island" then
+            if w.isl then w.isl:resetpos() end
+            return
+        end
         if isfile and isfile(POS_FILE) then pcall(function() delfile(POS_FILE) end) end
     end
 
@@ -4815,6 +4719,7 @@ function kyri.new(title, options)
     end
 
     function w:island(opts)
+        if w.mode == "island" then return w.isl end
         opts = opts or {}
         if opts.title == nil then opts.title = title end
         w.isl = kyri.island(opts)
@@ -4824,6 +4729,38 @@ function kyri.new(title, options)
     function w:spotify(opts)
         opts = opts or {}
         opts.window = w
+
+        -- the hub island has no seek or volume rows, so swap in one that does
+        -- and carry the tab panel across. spotify then shares the single pill
+        if w.mode == "island" and w.isl and opts.island ~= true then
+            local old = w.isl
+            local kept = {}
+
+            -- park them outside the island first: kyri.island is a singleton and
+            -- destroys the old ScreenGui, which would take these with it
+            for i,c in pairs(old.body:GetChildren()) do
+                if c:IsA("GuiObject") then
+                    c.Visible = false
+                    c.Parent = w.gui
+                    kept[#kept + 1] = c
+                end
+            end
+
+            local fresh = kyri.island({
+                title = w.title,
+                expanded_width = w.pan_w,
+                body_height = w.pan_h,
+                on_close = function() w:destroy() end
+            })
+            for i,c in pairs(kept) do
+                c.Parent = fresh.body
+                c.Visible = true
+            end
+
+            old:destroy()
+            if rebind then rebind(fresh) end
+        end
+
         w.sp = kyri.spotify(opts)
         return w.sp
     end
