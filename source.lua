@@ -2464,9 +2464,12 @@ function kyri.new(title, options)
             Parent = page
         })
 
+        -- right gutter for the scrollbar: elements are full width, so without it
+        -- the 3px accent bar draws on top of their right edge on scrollable tabs
         make("UIPadding", {
             PaddingTop = UDim.new(0, 4),
             PaddingBottom = UDim.new(0, 8),
+            PaddingRight = UDim.new(0, 8),
             Parent = page
         })
 
