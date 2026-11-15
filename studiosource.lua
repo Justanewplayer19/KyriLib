@@ -685,13 +685,27 @@ function kyri.island(opts)
     })
     make("UICorner", {CornerRadius = UDim.new(0, 7), Parent = art})
 
+    local glyph = ico(opts.icon)
+    local letter = (not glyph) and (opts.letter or (opts.title or "k"):sub(1, 1):upper()) or nil
+
     local art_ic = make("ImageLabel", {
         Size = UDim2.fromOffset(13, 13),
         Position = UDim2.new(0.5, -7, 0.5, -7),
         BackgroundTransparency = 1,
-        Image = ico(opts.icon) or kyri.icons["music"],
+        Image = glyph or "",
         ImageColor3 = t.subtext,
-        Visible = (opts.image or "") == "",
+        Visible = glyph ~= nil and (opts.image or "") == "",
+        Parent = art
+    })
+
+    local art_tx = make("TextLabel", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Text = letter or "",
+        TextColor3 = t.accent,
+        Font = Enum.Font.GothamBold,
+        TextSize = 12,
+        Visible = letter ~= nil and (opts.image or "") == "",
         Parent = art
     })
 
@@ -790,9 +804,20 @@ function kyri.island(opts)
         Size = UDim2.fromOffset(20, 20),
         Position = UDim2.new(0.5, -10, 0.5, -10),
         BackgroundTransparency = 1,
-        Image = ico(opts.icon) or kyri.icons["music"],
+        Image = glyph or "",
         ImageColor3 = t.subtext,
-        Visible = (opts.image or "") == "",
+        Visible = glyph ~= nil and (opts.image or "") == "",
+        Parent = bart
+    })
+
+    local bart_tx = make("TextLabel", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Text = letter or "",
+        TextColor3 = t.accent,
+        Font = Enum.Font.GothamBold,
+        TextSize = 20,
+        Visible = letter ~= nil and (opts.image or "") == "",
         Parent = bart
     })
 
@@ -826,7 +851,7 @@ function kyri.island(opts)
         Size = UDim2.fromOffset(20, 20),
         Position = UDim2.new(1, -20, 0, 6),
         BackgroundTransparency = 1,
-        Image = kyri.icons["x"],
+        Image = ico("chevron-up") or ico("x") or "",
         ImageColor3 = t.subtext,
         Parent = head
     })
@@ -837,7 +862,7 @@ function kyri.island(opts)
             Size = UDim2.fromOffset(20, 20),
             Position = UDim2.new(1, -48, 0, 6),
             BackgroundTransparency = 1,
-            Image = ico("power") or kyri.icons["x"],
+            Image = ico("power") or ico("log-out") or "",
             ImageColor3 = t.subtext,
             Parent = head
         })
@@ -1183,14 +1208,21 @@ function kyri.island(opts)
         if d.image ~= nil then
             art.Image = d.image
             bart.Image = d.image
-            art_ic.Visible = d.image == ""
-            bart_ic.Visible = d.image == ""
+            art_ic.Visible = d.image == "" and glyph ~= nil
+            bart_ic.Visible = d.image == "" and glyph ~= nil
+            art_tx.Visible = d.image == "" and letter ~= nil
+            bart_tx.Visible = d.image == "" and letter ~= nil
         end
         if d.icon then
             local id = ico(d.icon)
             if id then
+                glyph = id
                 art_ic.Image = id
                 bart_ic.Image = id
+                art_ic.Visible = art.Image == ""
+                bart_ic.Visible = bart.Image == ""
+                art_tx.Visible = false
+                bart_tx.Visible = false
             end
         end
         if d.progress and sfill and not isl.seeking then
@@ -1733,6 +1765,7 @@ function kyri.new(title, options)
         rebind(kyri.island({
             title = w.title,
             icon = options.Icon,
+            letter = (w.title or "k"):sub(1, 1):upper(),
             bars = false,
             seek = false,
             volume = false,
@@ -4287,7 +4320,13 @@ function kyri.new(title, options)
             Parent = slot
         })
         make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = card})
-        make("UIStroke", {Color = t.border, Thickness = 1, Transparency = 0.3, Parent = card})
+
+        local stroke = make("UIStroke", {
+            Color = t.border,
+            Thickness = 1,
+            Transparency = 1,
+            Parent = card
+        })
 
         local gid = ico(icon) or ico("bell")
 
@@ -4315,8 +4354,22 @@ function kyri.new(title, options)
             tile.BackgroundTransparency = 0.15
         end
 
+        local count = make("TextLabel", {
+            Size = UDim2.fromOffset(30, 16),
+            Position = UDim2.new(1, -12, 0, 11),
+            AnchorPoint = Vector2.new(1, 0),
+            BackgroundTransparency = 1,
+            Text = tostring(math.ceil(duration)),
+            TextColor3 = t.subtext,
+            TextTransparency = 0.25,
+            Font = Enum.Font.GothamMedium,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Right,
+            Parent = card
+        })
+
         local tl = make("TextLabel", {
-            Size = UDim2.new(1, -64, 0, 17),
+            Size = UDim2.new(1, -98, 0, 17),
             Position = UDim2.fromOffset(52, 11),
             BackgroundTransparency = 1,
             Text = title or "",
@@ -4330,10 +4383,12 @@ function kyri.new(title, options)
 
         if text == "" then
             tl.Position = UDim2.fromOffset(52, 0)
-            tl.Size = UDim2.new(1, -64, 1, 0)
+            tl.Size = UDim2.new(1, -98, 1, 0)
+            count.Position = UDim2.new(1, -12, 0.5, 0)
+            count.AnchorPoint = Vector2.new(1, 0.5)
         else
             make("TextLabel", {
-                Size = UDim2.new(1, -64, 0, 16),
+                Size = UDim2.new(1, -98, 0, 16),
                 Position = UDim2.fromOffset(52, 29),
                 BackgroundTransparency = 1,
                 Text = text,
@@ -4345,14 +4400,6 @@ function kyri.new(title, options)
                 Parent = card
             })
         end
-
-        local prog = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 2),
-            Position = UDim2.new(0, 0, 1, -2),
-            BackgroundColor3 = t.accent,
-            BorderSizePixel = 0,
-            Parent = card
-        })
 
         local hit = make("TextButton", {
             Size = UDim2.fromScale(1, 1),
@@ -4366,9 +4413,9 @@ function kyri.new(title, options)
         local function dismiss()
             if gone then return end
             gone = true
-            kyri.svc.tw:Create(card, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                Position = UDim2.fromOffset(44, 0)
-            }):Play()
+            local ti = TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            kyri.svc.tw:Create(card, ti, {Position = UDim2.fromOffset(44, 0)}):Play()
+            kyri.svc.tw:Create(stroke, TweenInfo.new(0.16), {Transparency = 1}):Play()
             fade(card, 1, 0.2)
             task.delay(0.26, function()
                 if slot and slot.Parent then slot:Destroy() end
@@ -4377,20 +4424,29 @@ function kyri.new(title, options)
 
         hit.MouseButton1Click:Connect(dismiss)
         hit.MouseEnter:Connect(function()
+            if gone then return end
             kyri.svc.tw:Create(card, TweenInfo.new(0.15), {BackgroundColor3 = t.container}):Play()
         end)
         hit.MouseLeave:Connect(function()
+            if gone then return end
             kyri.svc.tw:Create(card, TweenInfo.new(0.15), {BackgroundColor3 = t.bg}):Play()
         end)
 
         kyri.svc.tw:Create(card, TweenInfo.new(0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
             Position = UDim2.fromOffset(0, 0)
         }):Play()
+        kyri.svc.tw:Create(stroke, TweenInfo.new(0.26), {Transparency = 0.3}):Play()
         fade(card, 0, 0.26)
 
-        kyri.svc.tw:Create(prog, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
-            Size = UDim2.new(0, 0, 0, 2)
-        }):Play()
+        task.spawn(function()
+            local left = duration
+            while left > 0 do
+                if gone or not card.Parent then return end
+                count.Text = tostring(math.ceil(left))
+                task.wait(0.1)
+                left = left - 0.1
+            end
+        end)
 
         task.delay(duration, dismiss)
         return slot

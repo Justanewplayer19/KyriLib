@@ -155,7 +155,7 @@ Full docs: [https://justanewplayer19.github.io/KyriLib](https://justanewplayer19
 
 ```lua
 w:tab(name, icon)               -- create a tab, returns tab object
-w:notify(title, text, duration) -- send a notification (click to dismiss)
+w:notify(title, text, duration, icon) -- send a notification (click to dismiss)
 w:accent(color)                 -- change accent color live
 w:apply_theme(overrides)        -- change any theme colors live (partial or full)
 w:resetpos()                    -- forget the saved position/size
@@ -368,6 +368,7 @@ isl:notify("saved", 2)
 | `total_height` | number | none | sizes `isl.body` so the whole open island lands on this height |
 | `on_close` | function | none | adds a quit button beside the collapse X |
 | `id` | string | `"main"` | which slot in `island.json` holds this island's position |
+| `letter` | string | first letter of `title` | shown in the artwork tile when no `icon` or `image` resolves |
 
 **Methods:**
 ```lua

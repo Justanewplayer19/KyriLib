@@ -920,7 +920,7 @@ end, "ws")</code></pre>
 
 				<h3>window methods</h3>
 				<pre><code>w:tab(name, icon)              -- create tab, returns tab object
-w:notify(title, text, duration) -- send notification
+w:notify(title, text, duration, icon) -- send notification
 w:accent(color)                -- change accent color live
 w:apply_theme(overrides)       -- change any theme colors live
 w:island(opts)                 -- attach an island, inherits the window title
@@ -1106,6 +1106,7 @@ isl:notify("saved", 2)</code></pre>
 						<tr><td>total_height</td><td>number</td><td>none</td><td>sizes <code>isl.body</code> so the whole open island lands on this height</td></tr>
 						<tr><td>on_close</td><td>function</td><td>none</td><td>adds a quit button beside the collapse X</td></tr>
 						<tr><td>id</td><td>string</td><td><code>"main"</code></td><td>which slot in <code>island.json</code> holds this island's position</td></tr>
+						<tr><td>letter</td><td>string</td><td>first letter of <code>title</code></td><td>shown in the artwork tile when no <code>icon</code> or <code>image</code> resolves</td></tr>
 					</tbody>
 				</table>
 
