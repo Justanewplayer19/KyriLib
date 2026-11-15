@@ -1520,6 +1520,12 @@ function kyri.island(opts)
             Parent = box
         })
 
+        local shift = make("Frame", {
+            Size = UDim2.fromOffset(10, 22),
+            BackgroundTransparency = 1,
+            Parent = roll
+        })
+
         local function mk(col, tr)
             return make("TextLabel", {
                 Size = UDim2.fromScale(1, 1),
@@ -1529,9 +1535,8 @@ function kyri.island(opts)
                 TextTransparency = tr,
                 TextSize = 14,
                 TextWrapped = false,
-                TextTruncate = Enum.TextTruncate.AtEnd,
                 TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = roll
+                Parent = shift
             })
         end
 
@@ -1589,21 +1594,27 @@ function kyri.island(opts)
         local key = nil
         local span = {}
         local total = 0
+        local room = 0
+        local at = 0
 
         local function layout(text, syl)
-            local room = box.AbsoluteSize.X
+            room = box.AbsoluteSize.X
             if room <= 4 then room = ew - 28 end
 
             local sz = 14
             local wide = width(text, sz)
-            while wide > room and sz > 8 do
+            while wide > room and sz > 11 do
                 sz = sz - 1
                 wide = width(text, sz)
             end
 
             base.TextSize = sz
             hl.TextSize = sz
-            total = wide
+
+            total = math.max(wide, room)
+            shift.Size = UDim2.fromOffset(total, 22)
+            shift.Position = UDim2.fromOffset(0, 0)
+            at = 0
 
             span = {}
             if syl then
@@ -1631,6 +1642,15 @@ function kyri.island(opts)
             return (m.a + (m.b - m.a) * f) / total
         end
 
+        local function follow(pct)
+            local want = 0
+            if total > room then
+                want = math.clamp(room * 0.4 - pct * total, -(total - room), 0)
+            end
+            at = at + (want - at) * 0.25
+            shift.Position = UDim2.fromOffset(math.floor(at + 0.5), 0)
+        end
+
         local api = {box = box}
 
         local function swap(text)
@@ -1654,7 +1674,9 @@ function kyri.island(opts)
                 wipe(0)
                 swap(text)
             end
-            wipe(sweep(syl, now))
+            local pct = sweep(syl, now)
+            wipe(pct)
+            follow(pct)
         end
 
         function api:set(text, pct, id)
@@ -1665,7 +1687,9 @@ function kyri.island(opts)
                 wipe(0)
                 swap(text)
             end
-            wipe(pct or 0)
+            pct = math.clamp(pct or 0, 0, 1)
+            wipe(pct)
+            follow(pct)
         end
 
         function api:credit(short, long)
@@ -1679,8 +1703,10 @@ function kyri.island(opts)
             key = nil
             span = {}
             total = 0
+            at = 0
             base.Text = ""
             hl.Text = ""
+            shift.Position = UDim2.fromOffset(0, 0)
             wipe(0)
         end
 
