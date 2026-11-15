@@ -1804,34 +1804,52 @@ function kyri.new(title, options)
     local loaded = false
 
     task.spawn(function()
-        local url = "https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/kyriliblogo.png"
-        local path = "kyrilib_logo.png"
-        local shown = false
-
-        if options.Splash ~= false then
-            if isfile and writefile and not isfile(path) then
-                local data = http_get(url)
-                if data then pcall(function() writefile(path, data) end) end
-            end
-
-            if isfile and getcustomasset and isfile(path) then
-                pcall(function()
-                    logo.Image = getcustomasset(path)
-                    shown = logo.Image ~= ""
-                end)
-            end
-        end
-
-        if not shown then
+        if options.Splash == false then
             load_gui:Destroy()
             loaded = true
             return
         end
 
-        kyri.svc.tw:Create(logo, TweenInfo.new(0.5), {ImageTransparency = 0}):Play()
-        task.wait(options.SplashTime or 3)
-        kyri.svc.tw:Create(logo, TweenInfo.new(0.5), {ImageTransparency = 1}):Play()
-        task.wait(0.5)
+        local url = "https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/kyriliblogo.png"
+        local path = "kyrilib_logo.png"
+        local shown = false
+
+        if isfile and writefile and not isfile(path) then
+            local data = http_get(url)
+            if data then pcall(function() writefile(path, data) end) end
+        end
+
+        if isfile and getcustomasset and isfile(path) then
+            pcall(function()
+                logo.Image = getcustomasset(path)
+                shown = logo.Image ~= ""
+            end)
+        end
+
+        local mark = logo
+        if not shown then
+            logo:Destroy()
+            mark = make("TextLabel", {
+                Size = UDim2.fromOffset(460, 140),
+                Position = UDim2.fromScale(0.5, 0.5),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundTransparency = 1,
+                Text = "KyriLib",
+                TextColor3 = Color3.fromRGB(238, 236, 230),
+                TextTransparency = 1,
+                Font = Enum.Font.Merriweather,
+                TextSize = 64,
+                Parent = load_gui
+            })
+        end
+
+        local into = shown and {ImageTransparency = 0} or {TextTransparency = 0}
+        local outof = shown and {ImageTransparency = 1} or {TextTransparency = 1}
+
+        kyri.svc.tw:Create(mark, TweenInfo.new(0.4), into):Play()
+        task.wait(options.SplashTime or 1.5)
+        kyri.svc.tw:Create(mark, TweenInfo.new(0.4), outof):Play()
+        task.wait(0.4)
         load_gui:Destroy()
         loaded = true
     end)
@@ -1841,6 +1859,7 @@ function kyri.new(title, options)
     if options.KeySystem then
         local ks = options.KeySettings or {}
         local validKeys = ks.Key or {}
+        if type(validKeys) == "string" then validKeys = {validKeys} end
         local fileName = ks.FileName and (ks.FileName .. "_kyrikey.txt")
         local th = kyri.theme
         local mode = options.KeySystem == "Everytime" and "Everytime" or "Once"
@@ -1868,13 +1887,13 @@ function kyri.new(title, options)
             })
 
             local dialog = make("Frame", {
-                Size = UDim2.fromOffset(480, 200),
-                Position = UDim2.new(0.5, -240, 0.5, -100),
+                Size = UDim2.fromOffset(480, 216),
+                Position = UDim2.new(0.5, -240, 0.5, -108),
                 BackgroundColor3 = th.bg,
                 Parent = keyGui
             })
             make("UICorner", { CornerRadius = UDim.new(0, 12), Parent = dialog })
-            make("UIStroke", { Color = th.border, Thickness = 1, Parent = dialog })
+            make("UIStroke", { Color = th.border, Thickness = 1, Transparency = 0.3, Parent = dialog })
 
             make("TextLabel", {
                 Size = UDim2.new(1, -60, 0, 28),
@@ -1900,16 +1919,21 @@ function kyri.new(title, options)
                 Parent = dialog
             })
 
-            local closeBtn = make("TextButton", {
-                Size = UDim2.fromOffset(30, 30),
-                Position = UDim2.new(1, -38, 0, 8),
+            local closeBtn = make("ImageButton", {
+                Size = UDim2.fromOffset(16, 16),
+                Position = UDim2.new(1, -20, 0, 20),
+                AnchorPoint = Vector2.new(1, 0),
                 BackgroundTransparency = 1,
-                Text = "×",
-                TextColor3 = th.subtext,
-                TextSize = 22,
-                Font = Enum.Font.GothamBold,
+                Image = ico("x") or "",
+                ImageColor3 = th.subtext,
                 Parent = dialog
             })
+            closeBtn.MouseEnter:Connect(function()
+                kyri.svc.tw:Create(closeBtn, TweenInfo.new(0.15), {ImageColor3 = th.text}):Play()
+            end)
+            closeBtn.MouseLeave:Connect(function()
+                kyri.svc.tw:Create(closeBtn, TweenInfo.new(0.15), {ImageColor3 = th.subtext}):Play()
+            end)
 
             make("TextLabel", {
                 Size = UDim2.new(0.5, -30, 0, 16),
@@ -1963,7 +1987,7 @@ function kyri.new(title, options)
             end
 
             local submitBtn = make("TextButton", {
-                Size = UDim2.new(0.52, 0, 0, 32),
+                Size = UDim2.fromOffset(ks.Link and 150 or 240, 32),
                 Position = UDim2.fromOffset(20, 148),
                 BackgroundColor3 = th.accent,
                 Text = "Submit",
@@ -1974,9 +1998,31 @@ function kyri.new(title, options)
             })
             make("UICorner", { CornerRadius = UDim.new(0, 8), Parent = submitBtn })
 
+            if ks.Link then
+                local linkBtn = make("TextButton", {
+                    Size = UDim2.fromOffset(86, 32),
+                    Position = UDim2.fromOffset(178, 148),
+                    BackgroundColor3 = th.element,
+                    Text = "get key",
+                    TextColor3 = th.text,
+                    TextSize = 12,
+                    Font = Enum.Font.GothamMedium,
+                    AutoButtonColor = false,
+                    Parent = dialog
+                })
+                make("UICorner", { CornerRadius = UDim.new(0, 8), Parent = linkBtn })
+                linkBtn.MouseButton1Click:Connect(function()
+                    if setclipboard then
+                        pcall(setclipboard, ks.Link)
+                    else
+                        kyri.copybox(ks.Link, "key link")
+                    end
+                end)
+            end
+
             local errLabel = make("TextLabel", {
                 Size = UDim2.new(0.52, 0, 0, 18),
-                Position = UDim2.fromOffset(20, 183),
+                Position = UDim2.fromOffset(20, 186),
                 BackgroundTransparency = 1,
                 Text = "",
                 TextColor3 = Color3.fromRGB(255, 80, 80),
@@ -1997,18 +2043,31 @@ function kyri.new(title, options)
                 return false
             end
 
-            submitBtn.MouseButton1Click:Connect(function()
+            local function submit()
+                if keyDone then return end
                 local ok, trimmed = tryKey(keyInput.Text)
                 if ok then
                     if mode == "Once" and fileName then
                         pcall(function() writefile(fileName, trimmed) end)
                     end
+                    submitBtn.Text = "unlocked"
+                    errLabel.Text = ""
+                    kyri.svc.tw:Create(submitBtn, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(86, 196, 128)
+                    }):Play()
                     keyAccepted = true
+                    task.wait(0.35)
                     keyDone = true
                 else
-                    errLabel.Text = "invalid key"
+                    errLabel.Text = keyInput.Text == "" and "enter a key" or "invalid key"
                     keyInput.Text = ""
                 end
+            end
+
+            submitBtn.MouseButton1Click:Connect(submit)
+
+            keyInput.FocusLost:Connect(function(enter)
+                if enter then submit() end
             end)
 
             closeBtn.MouseButton1Click:Connect(function()
