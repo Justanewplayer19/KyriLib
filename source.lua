@@ -116,6 +116,16 @@ function kyri.reload_icons()
     return kyri.icons
 end
 
+local function rnd(n)
+    local c = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local s = ""
+    for i = 1, n or math.random(9, 15) do
+        local p = math.random(1, #c)
+        s = s .. c:sub(p, p)
+    end
+    return s
+end
+
 local function make(c, p)
     local o = Instance.new(c)
     for k, v in pairs(p) do
@@ -210,6 +220,21 @@ local function fade(o, tr, dur)
     end
 end
 
+local ISLAND_FILE = "KyriLib/island.json"
+
+local function save_island_pos(root)
+    if not writefile then return end
+    pcall(function()
+        if isfolder and not isfolder("KyriLib") then makefolder("KyriLib") end
+        local p = root.Position
+        writefile(ISLAND_FILE, kyri.svc.http:JSONEncode({
+            sx = p.X.Scale, ox = p.X.Offset,
+            sy = p.Y.Scale, oy = p.Y.Offset,
+            ax = root.AnchorPoint.X, ay = root.AnchorPoint.Y
+        }))
+    end)
+end
+
 function kyri.island(opts)
     opts = opts or {}
     local t = kyri.theme
@@ -230,25 +255,44 @@ function kyri.island(opts)
     local show_vol = opts.volume ~= false
     local draggable = opts.draggable ~= false
 
-    local old = lp.PlayerGui:FindFirstChild("KyriIsland")
-    if old then old:Destroy() end
+    if getgenv and getgenv().__kyri_island then
+        pcall(function() getgenv().__kyri_island:Destroy() end)
+        getgenv().__kyri_island = nil
+    end
 
     -- inset is NOT ignored on purpose: the roblox topbar lives in CoreGui and draws
     -- over PlayerGui at any DisplayOrder, so y=0 here would hide the pill behind it
     local gui = make("ScreenGui", {
-        Name = "KyriIsland",
+        Name = rnd(),
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn = false,
         IgnoreGuiInset = false,
         DisplayOrder = 999999997,
         Parent = lp.PlayerGui
     })
+    gui:SetAttribute("kyri", true)
+    if getgenv then getgenv().__kyri_island = gui end
     isl.gui = gui
+
+    local ipos = opts.position or UDim2.new(0.5, 0, 0, opts.y or 10)
+    local ianc = opts.position and Vector2.new(0, 0) or Vector2.new(0.5, 0)
+
+    if opts.remember ~= false and isfile then
+        pcall(function()
+            if isfile(ISLAND_FILE) then
+                local d = kyri.svc.http:JSONDecode(readfile(ISLAND_FILE))
+                if d and d.ox then
+                    ipos = UDim2.new(d.sx, d.ox, d.sy, d.oy)
+                    ianc = Vector2.new(d.ax, d.ay)
+                end
+            end
+        end)
+    end
 
     local root = make("Frame", {
         Size = UDim2.fromOffset(cw, ch),
-        Position = opts.position or UDim2.new(0.5, 0, 0, opts.y or 10),
-        AnchorPoint = opts.position and Vector2.new(0, 0) or Vector2.new(0.5, 0),
+        Position = ipos,
+        AnchorPoint = ianc,
         BackgroundColor3 = opts.color or Color3.fromRGB(7, 7, 9),
         ClipsDescendants = true,
         Parent = gui
@@ -637,6 +681,7 @@ function kyri.island(opts)
                     set_expanded(true)
                 else
                     kyri.svc.tw:Create(root, TweenInfo.new(0.15), {Size = UDim2.fromOffset(cw, ch)}):Play()
+                    if opts.remember ~= false then save_island_pos(root) end
                 end
             end
         end))
@@ -770,6 +815,12 @@ function kyri.island(opts)
     end
 
     function isl:visible(v) root.Visible = v end
+
+    function isl:resetpos()
+        if isfile and isfile(ISLAND_FILE) then pcall(function() delfile(ISLAND_FILE) end) end
+        root.AnchorPoint = opts.position and Vector2.new(0, 0) or Vector2.new(0.5, 0)
+        root.Position = opts.position or UDim2.new(0.5, 0, 0, opts.y or 10)
+    end
     function isl:onseek(fn) isl.on_seek = fn end
     function isl:onvolume(fn) isl.on_volume = fn end
 
@@ -1483,17 +1534,20 @@ function kyri.new(title, options)
 
     local localPlayer = kyri.svc.plr.LocalPlayer
 
-    local existing = localPlayer.PlayerGui:FindFirstChild("Kyri")
-    if existing then existing:Destroy() end
+    -- gui names are randomised, so stale instances are found by attribute
+    for i,g in pairs(localPlayer.PlayerGui:GetChildren()) do
+        if g:IsA("ScreenGui") and g:GetAttribute("kyri") then g:Destroy() end
+    end
 
     local load_gui = make("ScreenGui", {
-        Name = "KyriLoad",
+        Name = rnd(),
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn = false,
         IgnoreGuiInset = true,
         DisplayOrder = 999999999,
         Parent = localPlayer.PlayerGui
     })
+    load_gui:SetAttribute("kyri", true)
 
     local logo = make("ImageLabel", {
         Size = UDim2.fromOffset(300, 300),
@@ -1554,7 +1608,7 @@ function kyri.new(title, options)
 
         if not savedKeyValid then
             local keyGui = make("ScreenGui", {
-                Name = "KyriKey",
+                Name = rnd(),
                 ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
                 ResetOnSpawn = false,
                 IgnoreGuiInset = true,
@@ -1720,7 +1774,7 @@ function kyri.new(title, options)
 
         -- Success splash
         local splashGui = make("ScreenGui", {
-            Name = "KyriKeySplash",
+            Name = rnd(),
             ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
             ResetOnSpawn = false,
             IgnoreGuiInset = true,
@@ -1832,7 +1886,7 @@ function kyri.new(title, options)
     }
 
     w.gui = make("ScreenGui", {
-        Name = "Kyri",
+        Name = rnd(),
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn = false,
         IgnoreGuiInset = true,
@@ -1858,25 +1912,35 @@ function kyri.new(title, options)
         if w.sounds[name] then w.sounds[name]:Play() end
     end
 
+    local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1280, 720)
+    local win_w, win_h = 520, 400
+    if w.is_mobile then
+        win_w = math.clamp(math.floor(vp.X * 0.88), 270, 480)
+        win_h = math.clamp(math.floor(vp.Y * 0.6), 240, 400)
+    end
+    local side_w = w.is_mobile and 104 or 140
+
     local main = make("Frame", {
-        Name = "Main",
-        Size = UDim2.fromOffset(520, 400),
-        Position = UDim2.new(0.5, -260, 0.5, -200),
+        Name = rnd(),
+        Size = UDim2.fromOffset(win_w, win_h),
+        Position = UDim2.new(0.5, -win_w / 2, 0.5, -win_h / 2),
         BackgroundColor3 = t.bg,
         ClipsDescendants = true,
-        Visible = not w.is_mobile,
         Parent = w.gui
     })
 
     make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = main})
 
+    -- inset from the corner: main clips to a 12px radius, so a flush handle
+    -- gets sliced diagonally by the rounding
     local resize_handle = make("ImageButton", {
-        Size = UDim2.fromOffset(20, 20),
-        Position = UDim2.fromScale(1, 1),
+        Size = UDim2.fromOffset(14, 14),
+        Position = UDim2.new(1, -8, 1, -8),
         AnchorPoint = Vector2.new(1, 1),
         BackgroundTransparency = 1,
         Image = "rbxassetid://6023426962",
         ImageColor3 = t.subtext,
+        ImageTransparency = 0.5,
         ZIndex = 100,
         Visible = not w.is_mobile,
         Parent = main
@@ -1917,27 +1981,38 @@ function kyri.new(title, options)
         end))
 
         resize_handle.MouseEnter:Connect(function()
-            kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.text}):Play()
+            kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.text, ImageTransparency = 0}):Play()
         end)
         resize_handle.MouseLeave:Connect(function()
-            kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.subtext}):Play()
+            kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.subtext, ImageTransparency = 0.5}):Play()
         end)
     end
 
-    local glow = make("ImageLabel", {
-        Size = UDim2.fromScale(1, 1),
-        Position = UDim2.fromScale(0.5, 0.5),
-        AnchorPoint = Vector2.new(0.5, 0.5),
+    make("UIStroke", {Color = t.border, Thickness = 1, Transparency = 0.35, Parent = main})
+
+    -- drop shadow sits outside main, so it is a sibling: main clips its children
+    local shadow = make("ImageLabel", {
         BackgroundTransparency = 1,
         Image = "rbxassetid://5028857084",
-        ImageColor3 = t.accent,
-        ImageTransparency = 0.85,
+        ImageColor3 = Color3.new(0, 0, 0),
+        ImageTransparency = 0.5,
         ScaleType = Enum.ScaleType.Slice,
         SliceCenter = Rect.new(24, 24, 276, 276),
-        Parent = main
+        ZIndex = 0,
+        Parent = w.gui
     })
 
-    table.insert(w.accents, {obj = glow, prop = "ImageColor3"})
+    local function sync_shadow()
+        local p, s = main.Position, main.Size
+        shadow.Position = UDim2.new(p.X.Scale, p.X.Offset - 18, p.Y.Scale, p.Y.Offset - 18)
+        shadow.Size = UDim2.new(s.X.Scale, s.X.Offset + 36, s.Y.Scale, s.Y.Offset + 36)
+        shadow.Visible = main.Visible
+    end
+
+    main:GetPropertyChangedSignal("Position"):Connect(sync_shadow)
+    main:GetPropertyChangedSignal("Size"):Connect(sync_shadow)
+    main:GetPropertyChangedSignal("Visible"):Connect(sync_shadow)
+    sync_shadow()
 
     local top = make("Frame", {
         Size = UDim2.new(1, 0, 0, 52),
@@ -1947,7 +2022,9 @@ function kyri.new(title, options)
 
     make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = top})
 
-    make("Frame", {
+    -- squares off the topbar's lower corners so it flows into the body;
+    -- hidden while minimised, otherwise the collapsed pill gets square corners
+    local top_fill = make("Frame", {
         Size = UDim2.new(1, 0, 0, 12),
         Position = UDim2.new(0, 0, 1, -12),
         BackgroundColor3 = t.container,
@@ -1955,28 +2032,39 @@ function kyri.new(title, options)
         Parent = top
     })
 
-    make("TextLabel", {
-        Size = UDim2.new(1, -80, 1, 0),
-        Position = UDim2.fromOffset(20, 0),
+    local badge = make("Frame", {
+        Size = UDim2.fromOffset(26, 26),
+        Position = UDim2.fromOffset(14, 13),
+        BackgroundColor3 = t.accent,
+        BackgroundTransparency = 0.84,
+        Parent = top
+    })
+    make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = badge})
+    table.insert(w.accents, {obj = badge, prop = "BackgroundColor3"})
+
+    local badge_txt = make("TextLabel", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Text = (w.title or "k"):sub(1, 1):upper(),
+        TextColor3 = t.accent,
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+        Parent = badge
+    })
+    table.insert(w.accents, {obj = badge_txt, prop = "TextColor3"})
+
+    local title_lbl = make("TextLabel", {
+        Size = UDim2.new(1, -110, 1, 0),
+        Position = UDim2.fromOffset(50, 0),
         BackgroundTransparency = 1,
         Text = w.title,
         TextColor3 = t.text,
         Font = Enum.Font.GothamBold,
         TextSize = 17,
+        TextTruncate = Enum.TextTruncate.AtEnd,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = top
     })
-
-    local accent_bar = make("Frame", {
-        Size = UDim2.new(0, 3, 0, 24),
-        Position = UDim2.fromOffset(8, 14),
-        BackgroundColor3 = t.accent,
-        BorderSizePixel = 0,
-        Parent = top
-    })
-
-    table.insert(w.accents, {obj = accent_bar, prop = "BackgroundColor3"})
-    make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = accent_bar})
 
     local minimize = make("ImageButton", {
         Size = UDim2.fromOffset(18, 18),
@@ -2004,17 +2092,22 @@ function kyri.new(title, options)
             pre_min_size = main.Size
             sidebar.Visible = false
             content.Visible = false
-            kyri.svc.tw:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
-                Size = UDim2.new(0, main.Size.X.Offset, 0, 52)
+            resize_handle.Visible = false
+            top_fill.Visible = false
+            local pill = math.clamp(math.floor(title_lbl.TextBounds.X) + 112, 190, 330)
+            kyri.svc.tw:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                Size = UDim2.fromOffset(pill, 52)
             }):Play()
         else
-            kyri.svc.tw:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
+            top_fill.Visible = true
+            kyri.svc.tw:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
                 Size = pre_min_size
             }):Play()
-            task.delay(0.25, function()
+            task.delay(0.3, function()
                 if not minimized then
                     sidebar.Visible = true
                     content.Visible = true
+                    resize_handle.Visible = not w.is_mobile
                 end
             end)
         end
@@ -2025,7 +2118,7 @@ function kyri.new(title, options)
     end)
 
     sidebar = make("Frame", {
-        Size = UDim2.new(0, 140, 1, -64),
+        Size = UDim2.new(0, side_w, 1, -64),
         Position = UDim2.fromOffset(12, 58),
         BackgroundTransparency = 1,
         Parent = main
@@ -2051,8 +2144,8 @@ function kyri.new(title, options)
     end)
 
     content = make("Frame", {
-        Size = UDim2.new(1, -168, 1, -70),
-        Position = UDim2.fromOffset(158, 58),
+        Size = UDim2.new(1, -(side_w + 28), 1, -70),
+        Position = UDim2.fromOffset(side_w + 18, 58),
         BackgroundTransparency = 1,
         ClipsDescendants = true,
         Parent = main
@@ -2098,6 +2191,7 @@ function kyri.new(title, options)
         if drag and drag_input then update_input(drag_input) end
     end))
 
+    w.gui:SetAttribute("kyri", true)
     w.gui.Parent = localPlayer.PlayerGui
     w.localPlayer = localPlayer
 
@@ -2106,11 +2200,12 @@ function kyri.new(title, options)
     end
 
     if w.is_mobile then
-        kyri.svc.cas:BindAction("KyriToggle", function(name, state, input)
+        w.action = rnd()
+        kyri.svc.cas:BindAction(w.action, function(name, state, input)
             if state == Enum.UserInputState.Begin then toggle_gui() end
         end, true, Enum.KeyCode.ButtonR3)
-        kyri.svc.cas:SetTitle("KyriToggle", "Kyri")
-        kyri.svc.cas:SetPosition("KyriToggle", UDim2.new(1, -70, 1, -70))
+        kyri.svc.cas:SetTitle(w.action, (w.title or "k"):sub(1, 1):upper())
+        kyri.svc.cas:SetPosition(w.action, UDim2.new(1, -78, 1, -78))
     else
         table.insert(conns, kyri.svc.inp.InputBegan:Connect(function(input, gpe)
             if gpe then return end
@@ -2120,7 +2215,7 @@ function kyri.new(title, options)
 
     local function make_colorpicker_popup(current, on_change)
         local popup_gui = make("ScreenGui", {
-            Name = "KyriColorPicker",
+            Name = rnd(),
             ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
             ResetOnSpawn = false,
             IgnoreGuiInset = true,
@@ -3854,7 +3949,7 @@ function kyri.new(title, options)
 
         local function create_popup(ptitle, message, on_yes)
             local popup_gui = make("ScreenGui", {
-                Name = "KyriPopup",
+                Name = rnd(),
                 ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
                 ResetOnSpawn = false,
                 IgnoreGuiInset = true,
@@ -3947,9 +4042,11 @@ function kyri.new(title, options)
             create_btn("no", false)
         end
 
+        local cfg_row = rnd()
+
         local function refresh_configs()
             for _, child in ipairs(settings.page:GetChildren()) do
-                if child.Name == "KyriConfigRow" then
+                if child.Name == cfg_row then
                     child:Destroy()
                 end
             end
@@ -3957,7 +4054,7 @@ function kyri.new(title, options)
             local configs = list_configs(w.game_name)
             for _, cfg_name in ipairs(configs) do
                 local cfg_btn = make("Frame", {
-                    Name = "KyriConfigRow",
+                    Name = cfg_row,
                     Size = UDim2.new(1, 0, 0, 42),
                     BackgroundColor3 = t.element,
                     Parent = settings.page
@@ -4141,16 +4238,18 @@ function kyri.new(title, options)
     function w:notify(title, text, duration)
         duration = duration or 3
 
-        local notif_gui = w.localPlayer.PlayerGui:FindFirstChild("KyriNotifications")
-        if not notif_gui then
+        local notif_gui = w.notif_gui
+        if not notif_gui or not notif_gui.Parent then
             notif_gui = make("ScreenGui", {
-                Name = "KyriNotifications",
+                Name = rnd(),
                 ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
                 ResetOnSpawn = false,
                 IgnoreGuiInset = true,
                 DisplayOrder = 999999998,
                 Parent = w.localPlayer.PlayerGui
             })
+            notif_gui:SetAttribute("kyri", true)
+            w.notif_gui = notif_gui
 
             local container = make("Frame", {
                 Name = "Container",
@@ -4331,10 +4430,9 @@ function kyri.new(title, options)
         if w.sp then pcall(function() w.sp:destroy() end) end
         if w.isl then pcall(function() w.isl:destroy() end) end
         if w.gui and w.gui.Parent then w.gui:Destroy() end
-        local ng = w.localPlayer.PlayerGui:FindFirstChild("KyriNotifications")
-        if ng then ng:Destroy() end
+        if w.notif_gui then pcall(function() w.notif_gui:Destroy() end) end
         if w.is_mobile then
-            pcall(function() kyri.svc.cas:UnbindAction("KyriToggle") end)
+            pcall(function() kyri.svc.cas:UnbindAction(w.action) end)
         end
     end
 
