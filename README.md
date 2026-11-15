@@ -155,7 +155,7 @@ Full docs: [https://justanewplayer19.github.io/KyriLib](https://justanewplayer19
 | `Remember` | bool | `true`. persist position (and window size) to `KyriLib/window.json` |
 | `Shadow` | bool | `false`. set `true` for a drop shadow under the frame |
 | `Splash` | bool | `true`. the logo screen. skipped automatically when the logo cannot load |
-| `SplashTime` | number | `3`. seconds the logo holds before fading |
+| `SplashTime` | number | `1.5`. seconds the logo holds before fading |
 
 ### Window methods
 
@@ -503,8 +503,12 @@ if not w then return end  -- user closed dialog without a valid key
 | `Subtitle` | string | dialog subtitle |
 | `Note` | string | text shown on right side of dialog |
 | `Creator` | string | shown on success splash as "by Creator" |
-| `Key` | table | list of valid key strings |
+| `Key` | table or string | valid key(s). a single key can be a plain string |
+| `Link` | string | adds a `get key` button that copies this link |
 | `FileName` | string | filename for saved key (`Once` mode) |
+
+The key box submits on Enter as well as the button, the key is trimmed before comparing, and a
+correct key turns the button green for a moment so you can see it took.
 
 If the user closes the dialog without entering a valid key, `kyri.new` returns `nil`. Always guard your code:
 
