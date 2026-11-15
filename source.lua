@@ -397,6 +397,24 @@ local function tip(obj, text)
     end
 end
 
+local function remote_icon(obj, url)
+    if type(url) ~= "string" or not url:find("^https://") then return end
+    task.spawn(function()
+        pcall(function()
+            local http = request or http_request or (syn and syn.request)
+            if not http or not getcustomasset or not writefile then return end
+            if isfolder and not isfolder("kyrilib_icons") then makefolder("kyrilib_icons") end
+            local f = "kyrilib_icons/" .. url:gsub("[^%w]", "_"):sub(1, 64) .. ".png"
+            if not isfile(f) then
+                local res = http({Url = url, Method = "GET"})
+                if not res or res.StatusCode ~= 200 or not res.Body then return end
+                writefile(f, res.Body)
+            end
+            obj.Image = getcustomasset(f)
+        end)
+    end)
+end
+
 local function layer(p, vis)
     return make(has_cg and "CanvasGroup" or "Frame", {
         Size = UDim2.fromScale(1, 1),
@@ -1054,6 +1072,228 @@ function kyri.island(opts)
         return api
     end
 
+    function isl:input(ph, cb)
+        local box = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 30),
+            BackgroundColor3 = t.element,
+            Visible = false,
+            LayoutOrder = 6,
+            Parent = ev
+        })
+        make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = box})
+
+        make("ImageLabel", {
+            Size = UDim2.fromOffset(14, 14),
+            Position = UDim2.fromOffset(10, 8),
+            BackgroundTransparency = 1,
+            Image = ico("search") or "",
+            ImageColor3 = t.subtext,
+            Parent = box
+        })
+
+        local tb = make("TextBox", {
+            Size = UDim2.new(1, -124, 1, 0),
+            Position = UDim2.fromOffset(32, 0),
+            BackgroundTransparency = 1,
+            Text = "",
+            PlaceholderText = ph or "search",
+            PlaceholderColor3 = t.subtext,
+            TextColor3 = t.text,
+            Font = Enum.Font.Gotham,
+            TextSize = 12,
+            ClearTextOnFocus = false,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = box
+        })
+
+        local mode = "track"
+        local tabs = {}
+
+        local function paint()
+            for k,b in pairs(tabs) do
+                local on = k == mode
+                kyri.svc.tw:Create(b, TweenInfo.new(0.15), {
+                    BackgroundColor3 = on and t.accent or t.container,
+                    TextColor3 = on and Color3.new(1, 1, 1) or t.subtext
+                }):Play()
+            end
+        end
+
+        local kinds = {{"track", "songs"}, {"playlist", "lists"}}
+        for i,v in pairs(kinds) do
+            local b = make("TextButton", {
+                Size = UDim2.fromOffset(42, 20),
+                Position = UDim2.new(1, -88 + (i - 1) * 44, 0.5, -10),
+                BackgroundColor3 = t.container,
+                Text = v[2],
+                TextColor3 = t.subtext,
+                Font = Enum.Font.GothamMedium,
+                TextSize = 11,
+                AutoButtonColor = false,
+                Parent = box
+            })
+            make("UICorner", {CornerRadius = UDim.new(0, 6), Parent = b})
+            tabs[v[1]] = b
+            b.MouseButton1Click:Connect(function()
+                mode = v[1]
+                paint()
+                if tb.Text ~= "" and cb then cb(tb.Text, mode) end
+            end)
+        end
+        paint()
+
+        tb.FocusLost:Connect(function(enter)
+            if enter and cb then cb(tb.Text, mode) end
+        end)
+
+        local api = {box = box, input = tb}
+        function api:show(v)
+            box.Visible = v ~= false
+            isl:relayout()
+        end
+        function api:visible() return box.Visible end
+        function api:get() return tb.Text, mode end
+        function api:set(v) tb.Text = v or "" end
+        function api:focus() pcall(function() tb:CaptureFocus() end) end
+        return api
+    end
+
+    function isl:list(max)
+        max = max or 5
+        local holder = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 0),
+            BackgroundTransparency = 1,
+            Visible = false,
+            LayoutOrder = 7,
+            Parent = ev
+        })
+        make("UIListLayout", {
+            Padding = UDim.new(0, 4),
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Parent = holder
+        })
+
+        local api = {box = holder}
+
+        function api:set(items)
+            for i,c in pairs(holder:GetChildren()) do
+                if c:IsA("GuiObject") then c:Destroy() end
+            end
+
+            local n = 0
+            for i,it in pairs(items or {}) do
+                if n >= max then break end
+                n = n + 1
+
+                local b = make("TextButton", {
+                    Size = UDim2.new(1, 0, 0, 28),
+                    BackgroundColor3 = t.element,
+                    Text = "",
+                    AutoButtonColor = false,
+                    LayoutOrder = i,
+                    Parent = holder
+                })
+                make("UICorner", {CornerRadius = UDim.new(0, 6), Parent = b})
+
+                local x = 10
+                if it.icon then
+                    local im = make("ImageLabel", {
+                        Size = UDim2.fromOffset(18, 18),
+                        Position = UDim2.fromOffset(6, 5),
+                        BackgroundColor3 = t.container,
+                        Image = ico(it.icon) or (type(it.icon) == "string" and it.icon:find("^rbxassetid://") and it.icon) or "",
+                        Parent = b
+                    })
+                    make("UICorner", {CornerRadius = UDim.new(0, 4), Parent = im})
+                    remote_icon(im, it.icon)
+                    x = 30
+                end
+
+                make("TextLabel", {
+                    Size = UDim2.new(1, -x - 10, 1, 0),
+                    Position = UDim2.fromOffset(x, 0),
+                    BackgroundTransparency = 1,
+                    Text = it.text or "",
+                    TextColor3 = t.text,
+                    Font = Enum.Font.Gotham,
+                    TextSize = 12,
+                    TextTruncate = Enum.TextTruncate.AtEnd,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = b
+                })
+
+                b.MouseEnter:Connect(function()
+                    kyri.svc.tw:Create(b, TweenInfo.new(0.12), {BackgroundColor3 = t.hover}):Play()
+                end)
+                b.MouseLeave:Connect(function()
+                    kyri.svc.tw:Create(b, TweenInfo.new(0.12), {BackgroundColor3 = t.element}):Play()
+                end)
+                b.MouseButton1Click:Connect(function()
+                    if it.cb then pcall(it.cb) end
+                end)
+            end
+
+            holder.Size = UDim2.new(1, 0, 0, n == 0 and 0 or (n * 28 + (n - 1) * 4))
+            holder.Visible = n > 0
+            isl:relayout()
+        end
+
+        function api:clear() api:set({}) end
+        function api:count()
+            local n = 0
+            for i,c in pairs(holder:GetChildren()) do
+                if c:IsA("GuiObject") then n = n + 1 end
+            end
+            return n
+        end
+        return api
+    end
+
+    function isl:lyrics()
+        local box = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 52),
+            BackgroundTransparency = 1,
+            Visible = false,
+            LayoutOrder = 8,
+            Parent = ev
+        })
+
+        local function line(y, h, size, col, tr)
+            return make("TextLabel", {
+                Size = UDim2.new(1, 0, 0, h),
+                Position = UDim2.fromOffset(0, y),
+                BackgroundTransparency = 1,
+                Text = "",
+                TextColor3 = col,
+                TextTransparency = tr,
+                Font = Enum.Font.GothamMedium,
+                TextSize = size,
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = box
+            })
+        end
+
+        local prev = line(0, 14, 11, t.subtext, 0.55)
+        local cur = line(16, 20, 14, t.text, 0)
+        local nxt = line(38, 14, 11, t.subtext, 0.55)
+
+        local api = {box = box}
+        function api:set(a, b, c)
+            prev.Text = a or ""
+            cur.Text = b or ""
+            nxt.Text = c or ""
+        end
+        function api:show(v)
+            local want = v and true or false
+            if box.Visible == want then return end
+            box.Visible = want
+            isl:relayout()
+        end
+        function api:visible() return box.Visible end
+        return api
+    end
+
     function isl:set(d)
         if not d then return end
         if d.title then
@@ -1506,13 +1746,36 @@ function kyri.spotify(opts)
         return report(api("PUT", "/me/tracks?ids=" .. sp.track.id), "like")
     end
 
-    function sp:search(q, limit)
+    function sp:search(q, limit, kind)
         if not q or q == "" then return {} end
-        local r = api("GET", "/search?q=" .. hs:UrlEncode(q) .. "&type=track&limit=" .. (limit or 8))
+        kind = kind or "track"
+        local r = api("GET", "/search?q=" .. hs:UrlEncode(q) .. "&type=" .. kind .. "&limit=" .. (limit or 8))
         if not r or r.StatusCode ~= 200 then return {} end
-        local d = hs:JSONDecode(r.Body)
+        local ok, d = pcall(function() return hs:JSONDecode(r.Body) end)
+        if not ok or not d then return {} end
         sp.results = (d.tracks and d.tracks.items) or {}
+        sp.playlist_results = (d.playlists and d.playlists.items) or {}
+        sp.album_results = (d.albums and d.albums.items) or {}
+        if kind == "playlist" then return sp.playlist_results end
+        if kind == "album" then return sp.album_results end
         return sp.results
+    end
+
+    function sp:playlists(limit)
+        local r = api("GET", "/me/playlists?limit=" .. (limit or 20))
+        if not r or r.StatusCode ~= 200 then return {} end
+        local ok, d = pcall(function() return hs:JSONDecode(r.Body) end)
+        if not ok or not d then return {} end
+        sp.my_playlists = d.items or {}
+        return sp.my_playlists
+    end
+
+    function sp:playcontext(uri)
+        if not uri then return false end
+        local r = api("PUT", "/me/player/play", {context_uri = uri})
+        cur_id = ""
+        task.delay(0.4, function() sp:sync() end)
+        return report(r, "play")
     end
 
     function sp:playuri(uri)
@@ -1538,6 +1801,60 @@ function kyri.spotify(opts)
         local r = api("GET", "/me/player/devices")
         if not r or r.StatusCode ~= 200 then return {} end
         return hs:JSONDecode(r.Body).devices or {}
+    end
+
+    local function parse_lrc(text)
+        local out = {}
+        for line in tostring(text):gmatch("[^\r\n]+") do
+            local mm, ss, rest = line:match("^%[(%d+):([%d%.]+)%](.*)$")
+            if mm and ss then
+                local body = rest:gsub("^%s+", ""):gsub("%s+$", "")
+                out[#out + 1] = {t = tonumber(mm) * 60 + tonumber(ss), text = body}
+            end
+        end
+        table.sort(out, function(a, b) return a.t < b.t end)
+        return out
+    end
+
+    local lyric_cache = {}
+
+    function sp:lyrics()
+        if not sp.track or not sp.track.name then return nil end
+        local id = sp.track.id or sp.track.name
+        if lyric_cache[id] ~= nil then return lyric_cache[id] or nil end
+        if not req then return nil end
+
+        local alb = (sp.track.album and sp.track.album.name) or ""
+        local url = "https://lrclib.net/api/get"
+            .. "?artist_name=" .. hs:UrlEncode(sp:artists())
+            .. "&track_name=" .. hs:UrlEncode(sp.track.name)
+            .. "&album_name=" .. hs:UrlEncode(alb)
+            .. "&duration=" .. tostring(math.floor(sp.dur or 0))
+
+        local ok, res = pcall(req, {Url = url, Method = "GET"})
+        if not ok or not res or res.StatusCode ~= 200 or not res.Body then
+            lyric_cache[id] = false
+            return nil
+        end
+
+        local okd, d = pcall(function() return hs:JSONDecode(res.Body) end)
+        if not okd or type(d) ~= "table" then
+            lyric_cache[id] = false
+            return nil
+        end
+
+        local out = {
+            plain = d.plainLyrics,
+            synced = nil,
+            instrumental = d.instrumental and true or false
+        }
+        if type(d.syncedLyrics) == "string" and d.syncedLyrics ~= "" then
+            local lines = parse_lrc(d.syncedLyrics)
+            if #lines > 0 then out.synced = lines end
+        end
+
+        lyric_cache[id] = out
+        return out
     end
 
     function sp:artists()
@@ -1684,6 +2001,183 @@ function kyri.spotify(opts)
         isl:button("heart", function()
             if sp:like() then isl:notify("added to liked", 1.5) end
         end, "like")
+
+        local results = isl:list(opts.island_results or 5)
+        local finder
+        local pasting = false
+        local standalone = not opts.window and opts.tabs == false
+
+        local function show_tracks(items)
+            local rows = {}
+            for i,tr in pairs(items) do
+                local a = {}
+                for j,v in pairs(tr.artists or {}) do a[#a + 1] = v.name end
+                local cover
+                if tr.album and tr.album.images and #tr.album.images > 0 then
+                    cover = tr.album.images[#tr.album.images].url
+                end
+                rows[#rows + 1] = {
+                    text = tr.name .. "  -  " .. table.concat(a, ", "),
+                    icon = cover,
+                    cb = function()
+                        if sp:playuri(tr.uri) then isl:notify(tr.name, 2.5) end
+                        results:clear()
+                    end
+                }
+            end
+            results:set(rows)
+        end
+
+        local function show_lists(items)
+            local rows = {}
+            for i,pl in pairs(items) do
+                local cover
+                if pl.images and #pl.images > 0 then cover = pl.images[#pl.images].url end
+                local owner = (pl.owner and pl.owner.display_name) or ""
+                rows[#rows + 1] = {
+                    text = pl.name .. (owner ~= "" and ("  -  " .. owner) or ""),
+                    icon = cover,
+                    cb = function()
+                        if sp:playcontext(pl.uri) then isl:notify(pl.name, 2.5) end
+                        results:clear()
+                    end
+                }
+            end
+            results:set(rows)
+        end
+
+        finder = isl:input("search spotify", function(q, kind)
+            if pasting then
+                pasting = false
+                finder:set("")
+                finder:show(false)
+                local ok = sp:submit(q)
+                if ok then
+                    results:clear()
+                    isl:notify("connected to spotify", 3)
+                    sp:sync()
+                else
+                    isl:notify("that url did not work, copy it again", 4)
+                end
+                return
+            end
+
+            if q == "" then
+                if kind == "playlist" then
+                    show_lists(sp:playlists(opts.island_results or 5))
+                else
+                    results:clear()
+                end
+                return
+            end
+            local items = sp:search(q, opts.island_results or 5, kind)
+            if #items == 0 then
+                isl:notify("no results", 2)
+                results:clear()
+                return
+            end
+            if kind == "playlist" then show_lists(items) else show_tracks(items) end
+        end)
+
+        isl:button("search", function()
+            local on = not finder:visible()
+            finder:show(on)
+            if not on then results:clear() end
+            if on then finder:focus() end
+        end, "search")
+
+        local function auth_rows()
+            results:set({
+                {
+                    text = "1. copy the spotify sign in url",
+                    icon = "link",
+                    cb = function()
+                        local u = sp:authurl()
+                        if setclipboard then
+                            pcall(setclipboard, u)
+                            isl:notify("copied, approve it in your browser", 4)
+                        else
+                            kyri.copybox(u, "spotify sign in url")
+                        end
+                    end
+                },
+                {
+                    text = "2. paste the url you land on",
+                    icon = "clipboard",
+                    cb = function()
+                        pasting = true
+                        finder:set("")
+                        finder:show(true)
+                        finder:focus()
+                        isl:notify("paste the whole url, then press enter", 5)
+                    end
+                }
+            })
+        end
+
+        if standalone and not sp.ready then
+            auth_rows()
+            isl:notify("tap to open, then sign in", 5)
+        end
+
+        local words = opts.lyrics ~= false and isl:lyrics() or nil
+        local cued, at_pos, at_clock = nil, 0, os.clock()
+
+        if words then
+            local base_sync = sp.sync
+            sp.sync = function(self, ...)
+                local r = base_sync(self, ...)
+                at_pos, at_clock = sp.pos or 0, os.clock()
+                return r
+            end
+
+            task.spawn(function()
+                local for_id
+                while alive and task.wait(0.25) do
+                    if not sp.ready or not sp.track then
+                        words:show(false)
+                    else
+                        local id = sp.track.id or sp.track.name
+                        if id ~= for_id then
+                            for_id = id
+                            cued = nil
+                            words:show(false)
+                            task.spawn(function()
+                                local got = sp:lyrics()
+                                if sp.track and (sp.track.id or sp.track.name) == for_id then
+                                    cued = got and got.synced or nil
+                                end
+                            end)
+                        end
+
+                        if cued then
+                            local now = at_pos + (sp.playing and (os.clock() - at_clock) or 0)
+                            local k = 0
+                            for i,ln in pairs(cued) do
+                                if ln.t <= now then k = i else break end
+                            end
+                            if k > 0 then
+                                words:set(
+                                    cued[k - 1] and cued[k - 1].text or "",
+                                    cued[k].text,
+                                    cued[k + 1] and cued[k + 1].text or ""
+                                )
+                                words:show(true)
+                            else
+                                words:set("", cued[1] and cued[1].text or "", "")
+                                words:show(true)
+                            end
+                        else
+                            words:show(false)
+                        end
+                    end
+                end
+            end)
+        end
+
+        sp.finder = finder
+        sp.island_results = results
+        sp.words = words
 
         local base_push = push
         push = function(d)

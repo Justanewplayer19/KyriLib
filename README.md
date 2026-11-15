@@ -401,6 +401,9 @@ isl:notify("saved", 2)
 isl:set(data)                  -- title, subtitle, image, icon, progress, left, right, volume, playing
 isl:button(icon, callback)     -- adds a round button to the transport row, returns {icon, tint, setcallback}
 isl:row(text)                  -- adds a text row, returns {set}
+isl:input(placeholder, cb)     -- search field with songs/lists toggle, returns {show, visible, get, set, focus}
+isl:list(max)                  -- replaceable rows of clickable results, returns {set, clear, count}
+isl:lyrics()                   -- three line synced lyric view, returns {set, show, visible}
 isl:notify(text, duration)     -- morph the pill to show a message, then revert
 isl:expand() / isl:collapse() / isl:toggle()
 isl:relayout()                 -- re-measure after adding rows
@@ -425,6 +428,31 @@ The three tabs it builds cover the lot:
 Failures are reported rather than swallowed. A missing device, an expired session, a non-premium
 account or a rate limit each produce a readable notification, deduplicated so a stuck control
 cannot spam you. The last one is on `sp.last_error`.
+
+### On the island
+
+The island is a full client on its own, not just transport buttons.
+
+- **Search.** The magnifier opens a field with a `songs` / `lists` toggle. Songs show their album
+  art and play on click; lists show playlists and play the whole context. Submitting an empty
+  query in `lists` mode shows your own playlists.
+- **Lyrics.** Each track is looked up on [lrclib.net](https://lrclib.net). If it has *synced*
+  lyrics, the island shows the previous, current and next line and follows along. Plain-only
+  lyrics are returned by `sp:lyrics()` but not displayed, since there is nothing to sync to.
+  Pass `lyrics = false` to turn it off.
+- `island_results` sets how many rows a search shows, default 5.
+
+### Island only
+
+Skip the window entirely:
+
+```lua
+local sp = kyri.spotify({ tabs = false })
+```
+
+There is no Auth tab in that mode, so the island grows its own sign in: two rows that copy the
+PKCE url and let you paste the redirect back into the search field. Everything else, search,
+playlists, lyrics, devices and transport, works the same.
 
 [`examples/spotify_test.lua`](examples/spotify_test.lua) exercises the whole surface: status,
 transport, search with artwork, devices and transfer, the island, and a deliberate bad request to
@@ -479,6 +507,9 @@ sp:search(query, limit)   -- returns a list of track objects
 sp:playuri(uri) / sp:queue(uri)
 sp:devices()                   -- list of connected devices
 sp:transfer(id, play)          -- move playback to a device id
+sp:playlists(limit)            -- your playlists
+sp:playcontext(uri)            -- play a playlist or album uri
+sp:lyrics()                    -- lrclib lookup, {plain, synced, instrumental} or nil
 sp:sync()                 -- force a refresh now
 sp:authed()
 sp:artists()              -- current track artists as a string

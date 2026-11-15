@@ -1147,6 +1147,9 @@ isl:notify("saved", 2)</code></pre>
 				<pre><code>isl:set(data)               -- title, subtitle, image, icon, progress, left, right, volume, playing
 isl:button(icon, callback)  -- round button on the transport row, returns {icon, tint, setcallback}
 isl:row(text)               -- text row, returns {set}
+isl:input(placeholder, cb)  -- search field with songs/lists toggle
+isl:list(max)               -- replaceable rows of clickable results
+isl:lyrics()                -- three line synced lyric view
 isl:notify(text, duration)  -- morph the pill to show a message, then revert
 isl:expand()
 isl:collapse()
@@ -1263,6 +1266,19 @@ w.flags.ws_set(100, true)</code></pre>
 
 				<p>the three tabs it builds cover the lot. <strong>now playing</strong> has artwork, seek, transport, volume, shuffle, repeat, like and a device list, where <code>find devices</code> lists everything your account has open and clicking one moves playback to it. <strong>search</strong> returns tracks with their album art as the row icon, and a <code>queue instead of play</code> toggle switches what clicking a result does. <strong>auth</strong> is the PKCE flow.</p>
 				<p>failures are reported rather than swallowed. a missing device, an expired session, a non-premium account or a rate limit each produce a readable notification, deduplicated so a stuck control cannot spam you. the last one is on <code>sp.last_error</code>.</p>
+				<h3>on the island</h3>
+				<p>the island is a full client on its own, not just transport buttons.</p>
+				<ul>
+					<li><strong>search.</strong> the magnifier opens a field with a <code>songs</code> / <code>lists</code> toggle. songs show their album art and play on click, lists show playlists and play the whole context. submitting an empty query in <code>lists</code> mode shows your own playlists.</li>
+					<li><strong>lyrics.</strong> each track is looked up on <a href="https://lrclib.net" target="_blank" rel="noopener">lrclib.net</a>. if it has <em>synced</em> lyrics the island shows the previous, current and next line and follows along. plain-only lyrics come back from <code>sp:lyrics()</code> but are not displayed, since there is nothing to sync to. pass <code>lyrics = false</code> to turn it off.</li>
+					<li><code>island_results</code> sets how many rows a search shows, default 5.</li>
+				</ul>
+
+				<h3>island only</h3>
+				<p>skip the window entirely.</p>
+				<pre><code>local sp = kyri.spotify({ tabs = false })</code></pre>
+				<p>there is no auth tab in that mode, so the island grows its own sign in: two rows that copy the PKCE url and let you paste the redirect back into the search field. everything else, search, playlists, lyrics, devices and transport, works the same.</p>
+
 				<p><a href="https://github.com/Justanewplayer19/KyriLib/blob/main/examples/spotify_test.lua" target="_blank" rel="noopener">examples/spotify_test.lua</a> exercises the whole surface: status, transport, search with artwork, devices and transfer, the island, and a deliberate bad request to check the error path. <code>run all</code> does a pass and prints the results into the tab and the console.</p>
 				<p>control real Spotify playback from in-game. one call wires up the island, the tabs, the auth flow and the polling loop - you do not write any of it:</p>
 
@@ -1322,6 +1338,9 @@ sp:playuri(uri)
 sp:queue(uri)
 sp:devices()                   -- list of connected devices
 sp:transfer(id, play)          -- move playback to a device id
+sp:playlists(limit)            -- your playlists
+sp:playcontext(uri)            -- play a playlist or album uri
+sp:lyrics()                    -- lrclib lookup, {plain, synced, instrumental} or nil
 sp:sync()                 -- force a refresh now
 sp:authed()
 sp:artists()              -- current track artists as one string
