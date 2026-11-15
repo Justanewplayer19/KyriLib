@@ -818,7 +818,7 @@ body {
 local w = kyri.new("my hub")
 w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")</code></pre>
 				<p>everything past that line is the same. <code>kyri.studio</code> is <code>true</code> so you can branch if you need to.</p>
-				<p>the logo splash is skipped in studio, because the logo needs <code>getcustomasset</code> to load and studio has none, so it would be four seconds of an empty screen. <code>kyri.new</code> returns in about 0.01s there.</p>
+				<p>the logo splash still shows in studio. the png needs <code>getcustomasset</code>, which studio does not have, so it falls back to drawing the KyriLib wordmark as text in Merriweather. no asset and no network needed, and it is the same mark either way.</p>
 				<p><a href="https://github.com/Justanewplayer19/KyriLib/blob/main/examples/studio_demo.lua" target="_blank" rel="noopener">examples/studio_demo.lua</a> is a working demo you can drop into a LocalScript: real fly, walkspeed and jump, plus one of every element. teleport destinations are placeholders, since an empty baseplate has nowhere to go.</p>
 
 				<h3>where everything goes</h3>
@@ -928,7 +928,7 @@ end, "ws")</code></pre>
 						<tr><td>Remember</td><td>bool</td><td><code>true</code>. persists position and size to <code>KyriLib/window.json</code></td></tr>
 						<tr><td>Shadow</td><td>bool</td><td><code>false</code>. set <code>true</code> for a drop shadow under the frame</td></tr>
 						<tr><td>Splash</td><td>bool</td><td><code>true</code>. the logo screen. skipped automatically when the logo cannot load</td></tr>
-						<tr><td>SplashTime</td><td>number</td><td><code>3</code>. seconds the logo holds before fading</td></tr>
+						<tr><td>SplashTime</td><td>number</td><td><code>1.5</code>. seconds the logo holds before fading</td></tr>
 					</tbody>
 				</table>
 
@@ -1373,10 +1373,12 @@ if not w then return end</code></pre>
 						<tr><td>Subtitle</td><td>string</td><td>dialog subtitle line</td></tr>
 						<tr><td>Note</td><td>string</td><td>text shown on the right side of the dialog</td></tr>
 						<tr><td>Creator</td><td>string</td><td>shown on success splash as "by Creator"</td></tr>
-						<tr><td>Key</td><td>table</td><td>list of valid key strings</td></tr>
+						<tr><td>Key</td><td>table or string</td><td>valid key(s). a single key can be a plain string</td></tr>
+						<tr><td>Link</td><td>string</td><td>adds a <code>get key</code> button that copies this link</td></tr>
 						<tr><td>FileName</td><td>string</td><td>filename used to save the key in <code>"Once"</code> mode</td></tr>
 					</tbody>
 				</table>
+				<p>the key box submits on Enter as well as the button, the key is trimmed before comparing, and a correct key turns the button green for a moment so you can see it took.</p>
 
 				<div class="admonition admonition-info">
 					<div class="admonition-title">key expiry</div>
