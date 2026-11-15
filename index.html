@@ -802,6 +802,9 @@ w:island(opts)                 -- attach an island, inherits the window title
 w:spotify(opts)                -- attach spotify, builds tabs on this window
 w:destroy()                    -- destroy the window, island and spotify loop</code></pre>
 
+				<h3>randomised names</h3>
+				<p>every ScreenGui the library creates is given a random name per run, as is the mobile toggle action. stale instances from a previous execute are found by a <code>kyri</code> attribute rather than a fixed name, so nothing needs to look for <code>"Kyri"</code> in PlayerGui.</p>
+
 				<h3>toggle visibility</h3>
 				<p>press <code>RightControl</code> to show/hide the window.</p>
 			</section>
@@ -939,6 +942,7 @@ isl:notify("saved", 2)</code></pre>
 						<tr><td>on_seek</td><td>function</td><td>—</td><td><code>fn(pct)</code> where pct is 0-1</td></tr>
 						<tr><td>on_volume</td><td>function</td><td>—</td><td><code>fn(percent)</code> where percent is 0-100</td></tr>
 						<tr><td>on_toggle</td><td>function</td><td>—</td><td><code>fn(expanded)</code></td></tr>
+						<tr><td>remember</td><td>bool</td><td><code>true</code></td><td>restore the position you last dragged it to</td></tr>
 					</tbody>
 				</table>
 
@@ -952,6 +956,7 @@ isl:collapse()
 isl:toggle()
 isl:relayout()              -- re-measure after adding rows
 isl:visible(bool)
+isl:resetpos()              -- forget the dragged position
 isl:destroy()</code></pre>
 
 				<div class="admonition admonition-info">

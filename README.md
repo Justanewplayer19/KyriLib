@@ -194,6 +194,7 @@ isl:notify("saved", 2)
 | `on_seek` | function | — | `fn(pct)` where pct is 0-1 |
 | `on_volume` | function | — | `fn(percent)` where percent is 0-100 |
 | `on_toggle` | function | — | `fn(expanded)` |
+| `remember` | bool | `true` | restore the position you last dragged it to |
 
 **Methods:**
 ```lua
@@ -204,6 +205,7 @@ isl:notify(text, duration)     -- morph the pill to show a message, then revert
 isl:expand() / isl:collapse() / isl:toggle()
 isl:relayout()                 -- re-measure after adding rows
 isl:visible(bool)
+isl:resetpos()                 -- forget the dragged position, back to top-center
 isl:destroy()
 ```
 
@@ -329,6 +331,12 @@ If the user closes the dialog without entering a valid key, `kyri.new` returns `
 ```lua
 if not w then return end
 ```
+
+### Randomised names
+
+Every ScreenGui the library creates gets a random name per run, as does the mobile toggle
+action. Stale instances from a previous execute are found by a `kyri` attribute rather than a
+fixed name, so nothing has to scan PlayerGui for `"Kyri"`.
 
 ### Toggle visibility
 
