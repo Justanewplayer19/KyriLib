@@ -253,7 +253,8 @@ kyri.svc = {
     run = svc("RunService"),
     http = svc("HttpService"),
     cas = svc("ContextActionService"),
-    txt = svc("TextChatService")
+    txt = svc("TextChatService"),
+    cp = svc("ContentProvider")
 }
 
 kyri.studio = KYRI_STUDIO == true or (kyri.svc.run:IsStudio() and not (identifyexecutor or getgenv or gethui))
@@ -1459,16 +1460,28 @@ function kyri.new(title, options)
         local path = "kyrilib_logo.png"
         local shown = false
 
-        if isfile and writefile and not isfile(path) then
+        local function try(img)
+            if not img or img == "" then return false end
+            logo.Image = img
+            pcall(function() kyri.svc.cp:PreloadAsync({logo}) end)
+            return logo.IsLoaded
+        end
+
+        if options.Logo then
+            shown = try(options.Logo)
+        end
+
+        if not shown and isfile and writefile and not isfile(path) then
             local data = http_get(url)
             if data then pcall(function() writefile(path, data) end) end
         end
 
-        if isfile and getcustomasset and isfile(path) then
-            pcall(function()
-                logo.Image = getcustomasset(path)
-                shown = logo.Image ~= ""
-            end)
+        if not shown and isfile and getcustomasset and isfile(path) then
+            pcall(function() shown = try(getcustomasset(path)) end)
+        end
+
+        if not shown then
+            shown = try("rbxassetid://88259917092947")
         end
 
         local mark = logo
