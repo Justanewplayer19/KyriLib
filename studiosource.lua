@@ -3797,6 +3797,7 @@ function kyri.new(title, options)
         end
 
         function tab:keybind(text, default, hold_to_interact, callback, flag)
+            if typeof(default) == "EnumItem" then default = default.Name end
             local current_key = default or "None"
             local listening = false
             local holding = false

@@ -26,6 +26,10 @@ w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")
 
 Everything past that line is the same. `kyri.studio` is `true` so you can branch if you need to.
 
+[`examples/studio_demo.lua`](examples/studio_demo.lua) is a working demo you can drop into a
+LocalScript: real fly, walkspeed and jump, plus one of every element. Teleport destinations are
+placeholders, since an empty baseplate has nowhere to go.
+
 ### Where everything goes
 
 Three places in the explorer. Only the first is required.
