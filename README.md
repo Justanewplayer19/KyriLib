@@ -454,6 +454,9 @@ There is no Auth tab in that mode, so the island grows its own sign in: two rows
 PKCE url and let you paste the redirect back into the search field. Everything else, search,
 playlists, lyrics, devices and transport, works the same.
 
+[`examples/spotify_island.lua`](examples/spotify_island.lua) is the island on its own, two lines of
+setup plus a status row, and prints devices, playlists and search counts to the console.
+
 [`examples/spotify_test.lua`](examples/spotify_test.lua) exercises the whole surface: status,
 transport, search with artwork, devices and transfer, the island, and a deliberate bad request to
 check the error path. `run all` does a pass and prints the results into the tab and the console.

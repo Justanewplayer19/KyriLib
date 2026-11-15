@@ -112,6 +112,55 @@ t:button("queue first result", function()
     mark("queue", sp:queue(last_uri))
 end, "list")
 
+t:section("playlists and lyrics")
+
+local last_ctx
+
+t:button("my playlists", function()
+    local mine = sp:playlists(10)
+    say("playlists   " .. #mine)
+    for i, pl in pairs(mine) do
+        say(i .. ". " .. pl.name .. "  " .. tostring(pl.tracks and pl.tracks.total or "?") .. " tracks")
+        last_ctx = last_ctx or pl.uri
+    end
+    if #mine == 0 then say("none, or not authed") end
+end, "library")
+
+t:button("search playlists", function()
+    local lists = sp:search("chill", 5, "playlist")
+    say("found       " .. #lists)
+    for i, pl in pairs(lists) do
+        local art = pl.images and #pl.images > 0
+        say(i .. ". " .. pl.name .. (art and "  [art]" or "  [no art]"))
+        last_ctx = last_ctx or pl.uri
+    end
+end, "search")
+
+t:button("play first playlist", function()
+    if not last_ctx then
+        say("list playlists first")
+        return
+    end
+    mark("playcontext", sp:playcontext(last_ctx))
+end, "play")
+
+t:button("lyrics for current", function()
+    local got = sp:lyrics()
+    if not got then
+        say("lyrics      none on lrclib")
+        return
+    end
+    if got.instrumental then say("lyrics      instrumental") end
+    say("synced      " .. (got.synced and (#got.synced .. " lines") or "no"))
+    say("plain       " .. (got.plain and "yes" or "no"))
+    if got.synced then
+        for i = 1, math.min(3, #got.synced) do
+            local l = got.synced[i]
+            say(string.format("  %6.2fs  %s", l.t, l.text))
+        end
+    end
+end, "activity")
+
 t:section("devices")
 
 local devs = {}
@@ -189,6 +238,12 @@ t:button("run all", function()
     local items = sp:search("daft punk", 3)
     say("search      " .. #items .. " results")
     if items[1] then last_uri = items[1].uri end
+
+    local mine = sp:playlists(5)
+    say("playlists   " .. #mine)
+
+    local got = sp:lyrics()
+    say("lyrics      " .. (got and (got.synced and "synced" or (got.plain and "plain only" or "none")) or "none"))
 
     mark("play", sp:play())
     task.wait(0.6)
