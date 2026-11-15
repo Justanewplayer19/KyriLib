@@ -86,11 +86,15 @@ Icons are not bundled in `source.lua`. They live in [`icons.json`](icons.json) a
 first icon lookup, then cached to `KyriLib/icons.json` so later runs read from disk.
 
 ```lua
-kyri.preload_icons()    -- optional: warm the cache in the background before you build UI
-kyri.icon_source = "https://.../my-icons.json"   -- optional: point at your own pack
+getgenv().kyri_icon_source = "https://.../my-icons.json"   -- set BEFORE loading the lib
+local kyri = loadstring(game:HttpGet(".../source.lua"))()
+
+kyri.reload_icons()    -- drop the cache and re-fetch
 ```
 
-If the fetch fails, elements fall back to a default glyph instead of erroring.
+The pack is loaded once while the library loads, not on first lookup: `HttpGet` yields, and yielding
+inside an `__index` metamethod throws, so a lazy proxy cannot work here. If the fetch fails,
+`kyri.icons` is empty and elements fall back to a default glyph instead of erroring.
 
 ### Elements
 

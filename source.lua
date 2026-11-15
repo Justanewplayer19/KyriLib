@@ -68,67 +68,52 @@ kyri.presets = {
 
 -- LucideBlox icon pack, fetched from icons.json and cached to KyriLib/icons.json
 -- Usage: w:tab("Name", "icon-name") -- e.g. "sword", "users", "settings-2"
--- Set kyri.icon_source before the first lookup to point at your own pack.
+-- Loaded once here, at require time. It cannot be deferred to first lookup:
+-- HttpGet yields, and yielding inside an __index metamethod throws.
+-- Set getgenv().kyri_icon_source before loading the lib to use your own pack.
 local ICON_URL = "https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/icons.json"
 local ICON_FILE = "KyriLib/icons.json"
 
-local icon_data, icon_busy
-
-local function decode(raw)
+local function decode_icons(raw)
     if type(raw) ~= "string" or #raw < 64 then return nil end
     local ok, tbl = pcall(function() return kyri.svc.http:JSONDecode(raw) end)
     if ok and type(tbl) == "table" and next(tbl) then return tbl end
     return nil
 end
 
-local function icon_pack()
-    if icon_data then return icon_data end
-    if icon_busy then
-        repeat task.wait() until icon_data
-        return icon_data
-    end
-    icon_busy = true
-
+local function fetch_icons()
     local tbl
+
     if isfile then
         pcall(function()
-            if isfile(ICON_FILE) then tbl = decode(readfile(ICON_FILE)) end
+            if isfile(ICON_FILE) then tbl = decode_icons(readfile(ICON_FILE)) end
         end)
     end
+    if tbl then return tbl end
 
-    if not tbl then
-        local raw
-        pcall(function() raw = game:HttpGet(kyri.icon_source or ICON_URL) end)
-        tbl = decode(raw)
-        if tbl and writefile then
-            pcall(function()
-                if isfolder and not isfolder("KyriLib") then makefolder("KyriLib") end
-                writefile(ICON_FILE, raw)
-            end)
-        end
+    local raw
+    pcall(function()
+        raw = game:HttpGet((getgenv and getgenv().kyri_icon_source) or ICON_URL)
+    end)
+    tbl = decode_icons(raw)
+
+    if tbl and writefile then
+        pcall(function()
+            if isfolder and not isfolder("KyriLib") then makefolder("KyriLib") end
+            writefile(ICON_FILE, raw)
+        end)
     end
-
-    icon_data = tbl or {}
-    icon_busy = false
-    return icon_data
+    return tbl
 end
 
-kyri.icons = setmetatable({}, {
-    __index = function(_, k)
-        return icon_pack()[k]
-    end,
-    __iter = function()
-        return next, icon_pack()
-    end,
-    __len = function()
-        local n = 0
-        for k,v in pairs(icon_pack()) do n = n + 1 end
-        return n
-    end
-})
+kyri.icons = fetch_icons() or {}
 
-function kyri.preload_icons()
-    task.spawn(icon_pack)
+function kyri.reload_icons()
+    if isfile and isfile(ICON_FILE) then
+        pcall(function() delfile(ICON_FILE) end)
+    end
+    kyri.icons = fetch_icons() or kyri.icons
+    return kyri.icons
 end
 
 local function make(c, p)

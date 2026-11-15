@@ -827,10 +827,12 @@ w:tab("Web",      "https://example.com/icon.png") -- https url (see note below)<
 
 				<div class="admonition admonition-info">
 					<div class="admonition-title">where icons come from</div>
-					<p>The icon pack is <strong>not</strong> bundled in <code>source.lua</code>. It lives in <code>icons.json</code> and is fetched on the first icon lookup, then cached to <code>KyriLib/icons.json</code> so later runs read it from disk.</p>
-					<pre><code>kyri.preload_icons()   -- optional: warm the cache before you build UI
-kyri.icon_source = "https://.../my-icons.json"   -- optional: use your own pack</code></pre>
-					<p>If the fetch fails, elements fall back to a default glyph instead of erroring.</p>
+					<p>The icon pack is <strong>not</strong> bundled in <code>source.lua</code>. It lives in <code>icons.json</code>, is fetched once while the library loads, and is cached to <code>KyriLib/icons.json</code> so later runs read it from disk with no request at all.</p>
+					<pre><code>getgenv().kyri_icon_source = "https://.../my-icons.json"   -- set BEFORE loading the lib
+local kyri = loadstring(game:HttpGet(".../source.lua"))()
+
+kyri.reload_icons()   -- drop the cache and re-fetch</code></pre>
+					<p>It is loaded eagerly rather than on first lookup on purpose: <code>HttpGet</code> yields, and yielding inside an <code>__index</code> metamethod throws, so a lazy proxy cannot work. If the fetch fails, <code>kyri.icons</code> is empty and elements fall back to a default glyph instead of erroring.</p>
 				</div>
 
 				<div class="admonition admonition-info">
