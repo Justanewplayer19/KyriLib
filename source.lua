@@ -1404,6 +1404,34 @@ function kyri.spotify(opts)
         return r and (r.StatusCode == 200 or r.StatusCode == 202 or r.StatusCode == 204)
     end
 
+    local function why(r)
+        if not r then return "no response from spotify, check your connection" end
+        local c = r.StatusCode
+        if c == 401 then return "session expired, reconnect on the auth tab" end
+        if c == 403 then return "spotify premium is required for playback control" end
+        if c == 404 then return "no active device, play something on spotify first" end
+        if c == 429 then return "rate limited by spotify, give it a moment" end
+        if c == 500 or c == 502 or c == 503 then return "spotify is having a moment, try again" end
+        return "spotify returned " .. tostring(c)
+    end
+
+    local last_msg, last_at = "", 0
+
+    local function report(r, what)
+        if good(r) then return true end
+        local msg = why(r)
+        sp.last_error = msg
+        if msg ~= last_msg or os.clock() - last_at > 5 then
+            last_msg, last_at = msg, os.clock()
+            if sp.window then
+                pcall(function() sp.window:notify(what or "spotify", msg, 4, "alert-triangle") end)
+            elseif isl then
+                pcall(function() isl:notify(msg, 3) end)
+            end
+        end
+        return false
+    end
+
     sp.request = api
 
     function sp:authed() return sp.ready end
@@ -1411,13 +1439,13 @@ function kyri.spotify(opts)
     function sp:play()
         local r = api("PUT", "/me/player/play")
         if good(r) then sp.playing = true end
-        return good(r)
+        return report(r, "play")
     end
 
     function sp:pause()
         local r = api("PUT", "/me/player/pause")
         if good(r) then sp.playing = false end
-        return good(r)
+        return report(r, "pause")
     end
 
     function sp:toggle()
@@ -1429,14 +1457,14 @@ function kyri.spotify(opts)
         local r = api("POST", "/me/player/next")
         cur_id = ""
         task.delay(0.4, function() sp:sync() end)
-        return good(r)
+        return report(r, "next")
     end
 
     function sp:prev()
         local r = api("POST", "/me/player/previous")
         cur_id = ""
         task.delay(0.4, function() sp:sync() end)
-        return good(r)
+        return report(r, "prev")
     end
 
     function sp:seek(pct)
@@ -1461,7 +1489,7 @@ function kyri.spotify(opts)
     function sp:setshuffle(state)
         local r = api("PUT", "/me/player/shuffle?state=" .. (state and "true" or "false"))
         if good(r) then sp.shuffle = state end
-        return good(r)
+        return report(r, "shuffle")
     end
 
     function sp:setloop(mode)
@@ -1470,12 +1498,12 @@ function kyri.spotify(opts)
         end
         local r = api("PUT", "/me/player/repeat?state=" .. mode)
         if good(r) then sp.loop = mode end
-        return good(r), sp.loop
+        return report(r, "repeat"), sp.loop
     end
 
     function sp:like()
         if not sp.track or not sp.track.id then return false end
-        return good(api("PUT", "/me/tracks?ids=" .. sp.track.id))
+        return report(api("PUT", "/me/tracks?ids=" .. sp.track.id), "like")
     end
 
     function sp:search(q, limit)
@@ -1491,11 +1519,19 @@ function kyri.spotify(opts)
         local r = api("PUT", "/me/player/play", {uris = {uri}})
         cur_id = ""
         task.delay(0.4, function() sp:sync() end)
-        return good(r)
+        return report(r, "play")
     end
 
     function sp:queue(uri)
-        return good(api("POST", "/me/player/queue?uri=" .. hs:UrlEncode(uri)))
+        return report(api("POST", "/me/player/queue?uri=" .. hs:UrlEncode(uri)), "queue")
+    end
+
+    function sp:transfer(id, play)
+        if not id then return false end
+        local r = api("PUT", "/me/player", {device_ids = {id}, play = play ~= false})
+        cur_id = ""
+        task.delay(0.6, function() sp:sync() end)
+        return report(r, "device")
     end
 
     function sp:devices()
@@ -1691,8 +1727,45 @@ function kyri.spotify(opts)
             if sp:like() then w:notify("spotify", "added to liked songs", 2) end
         end, "heart")
 
+        np:space()
+        np:section("device")
+
+        local dev_row = rnd()
+
+        local function list_devices()
+            for i,c in pairs(np.page:GetChildren()) do
+                if c.Name == dev_row then c:Destroy() end
+            end
+
+            local found = sp:devices()
+            if #found == 0 then
+                local none = np:label("no devices, open spotify somewhere first")
+                none.lbl.Name = dev_row
+                return
+            end
+
+            for i,d in pairs(found) do
+                local tag = d.name .. (d.is_active and "   playing here" or "")
+                local b = np:button(tag, function()
+                    if sp:transfer(d.id) then
+                        w:notify("spotify", "moved to " .. d.name, 3, "check")
+                        task.delay(0.8, list_devices)
+                    end
+                end, d.is_active and "volume-2" or "monitor")
+                b.box.Name = dev_row
+            end
+        end
+
+        np:button("find devices", list_devices, "refresh-cw")
+
         local srch = w:tab("Search", "search")
         srch:label("type a song name and press enter")
+
+        local queue_mode = false
+        srch:toggle("queue instead of play", false, function(v)
+            queue_mode = v
+        end, "sp_queue_mode")
+
         srch:space()
         srch:input("search", "song name...", function(q)
             for i,c in pairs(srch.page:GetChildren()) do
@@ -1707,12 +1780,21 @@ function kyri.spotify(opts)
                 if tr and tr.name and tr.uri then
                     local a = {}
                     for j,v in pairs(tr.artists or {}) do a[#a + 1] = v.name end
-                    local rb = srch:button(i .. ".  " .. tr.name .. "  -  " .. table.concat(a, ", "), function()
-                        if sp:playuri(tr.uri) then
+                    local cover
+                    if tr.album and tr.album.images and #tr.album.images > 0 then
+                        cover = tr.album.images[#tr.album.images].url
+                    end
+
+                    local rb = srch:button(tr.name .. "  -  " .. table.concat(a, ", "), function()
+                        if queue_mode then
+                            if sp:queue(tr.uri) then
+                                w:notify("queued", tr.name, 3, "list")
+                            end
+                        elseif sp:playuri(tr.uri) then
                             w:notify("playing", tr.name, 3)
                             if isl then isl:notify(tr.name, 2.5) end
                         end
-                    end)
+                    end, cover)
                     rb.box.Name = "SpotifyResult"
                 end
             end

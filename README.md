@@ -414,6 +414,18 @@ the drag. From a window, `w:island(opts)` does the same thing and inherits the w
 
 ### Spotify
 
+The three tabs it builds cover the lot:
+
+- **Now Playing** has artwork, seek, transport, volume, shuffle, repeat, like, and a device list.
+  `find devices` lists everything your account has open and clicking one moves playback to it.
+- **Search** returns tracks with their album art as the row icon. A `queue instead of play` toggle
+  switches what clicking a result does.
+- **Auth** is the PKCE flow.
+
+Failures are reported rather than swallowed. A missing device, an expired session, a non-premium
+account or a rate limit each produce a readable notification, deduplicated so a stuck control
+cannot spam you. The last one is on `sp.last_error`.
+
 Control real Spotify playback. One call wires up the island, the tabs, the auth flow and the polling
 loop - you do not write any of it:
 
@@ -461,7 +473,8 @@ sp:setloop(mode)          -- "off" / "context" / "track", or nil to cycle; retur
 sp:like()                 -- save the current track
 sp:search(query, limit)   -- returns a list of track objects
 sp:playuri(uri) / sp:queue(uri)
-sp:devices()
+sp:devices()                   -- list of connected devices
+sp:transfer(id, play)          -- move playback to a device id
 sp:sync()                 -- force a refresh now
 sp:authed()
 sp:artists()              -- current track artists as a string
