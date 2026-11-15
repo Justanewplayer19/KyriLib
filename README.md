@@ -26,31 +26,63 @@ w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")
 
 Everything past that line is the same. `kyri.studio` is `true` so you can branch if you need to.
 
-### Saving
+### Where everything goes
 
-Nothing persists until you name a DataStore:
+Three places in the explorer. Only the first is required.
 
-```lua
-kyri.persist("MyHubSaves")
+```
+ReplicatedStorage
+  KyriLib                  ModuleScript   <- paste studiosource.lua in here
+ServerScriptService
+  KyriStoreServer          Script         <- only for saving, see below
+StarterPlayer
+  StarterPlayerScripts
+    MyHub                  LocalScript    <- your code goes here
 ```
 
-Configs, window position and island position then load from it on startup, and batch back every
-7 seconds plus on `BindToClose`. The name is yours to pick, and two scripts with different names
-never see each other's saves.
+The ModuleScript has to be somewhere the client can see, which is why it is in
+ReplicatedStorage. The LocalScript can live in StarterPlayerScripts or StarterGui, either works.
 
-`DataStoreService` only answers the server, so from a LocalScript this needs a bridge: drop
-`tools/KyriStoreServer.lua` into ServerScriptService as a Script. It creates a `KyriStore`
-RemoteFunction and does the reads and writes on the server. Also tick **Studio Access to API
-Services** in Game Settings > Security.
+### Saving, step by step
 
-`kyri.persist` returns `false` and a reason when it cannot save, so you can check:
+Nothing persists until you set this up. Skip it and configs still work, they just die when you
+stop the playtest.
+
+**1. Turn DataStores on.** Studio cannot touch them otherwise.
+**Game Settings > Security > Enable Studio Access to API Services**, then save and restart the
+playtest. It is a published-place setting, so the place has to be published first.
+
+**2. Add the bridge.** `DataStoreService` only answers the server and KyriLib runs on the
+client, so the two need something in between. Make a **Script** (not a LocalScript, not a
+ModuleScript) in ServerScriptService called `KyriStoreServer` and paste
+[tools/KyriStoreServer.lua](tools/KyriStoreServer.lua) into it.
+
+It creates a `KyriStore` RemoteFunction and does the reads and writes server side. It checks
+what the client sends, since any client can reach a RemoteFunction: strings only, 64 keys,
+200KB a value.
+
+**3. Name your store.** Pick anything. Two scripts with different names never see each other's
+saves.
 
 ```lua
+local kyri = require(game.ReplicatedStorage.KyriLib)
+
 local ok, why = kyri.persist("MyHubSaves")
 if not ok then warn(why) end
 ```
 
-Without it, saves stay in memory and die with the playtest. `kyri.flush()` forces a write.
+Configs, window position and island position load from it on startup, then batch back every 7
+seconds and on `BindToClose`. `kyri.flush()` forces a write now.
+
+If a step is missing, `kyri.persist` returns `false` and tells you which one:
+
+| what comes back | what to do |
+|-----------------|------------|
+| `datastores are off, tick Studio Access to API Services...` | step 1 |
+| `no KyriStore RemoteFunction, add tools/KyriStoreServer.lua...` | step 2 |
+
+Running from a server Script instead? Then it talks to `DataStoreService` directly and step 2 is
+unnecessary. `kyri.new` is client only though, so that is rare.
 
 ### What else differs
 

@@ -172,6 +172,52 @@ body {
 			background: #2d2d2f;
 		}
 
+		/* studio explorer mockup */
+		.rx {
+			border: 1px solid #e3e3e3;
+			border-radius: 8px;
+			padding: 10px 6px;
+			margin: 18px 0;
+			font-size: 13.5px;
+			line-height: 1.5;
+			background: #fbfbfb;
+			overflow-x: auto;
+			transition: background .3s, border-color .3s;
+		}
+		body.dark .rx { background: #121214; border-color: #2d2d2f; }
+		.rx-row {
+			display: flex;
+			align-items: center;
+			gap: 7px;
+			padding: 3px 10px;
+			white-space: nowrap;
+			border-radius: 4px;
+		}
+		.rx-row.hit { background: rgba(138,116,249,.10); }
+		.rx-1 { padding-left: 32px; }
+		.rx-2 { padding-left: 54px; }
+		.rx-ic { width: 16px; height: 16px; flex-shrink: 0; }
+		.rx-ic.d { display: none; }
+		body.dark .rx-ic.d { display: inline-block; }
+		body.dark .rx-ic.l { display: none; }
+		.rx-n { font-weight: 600; }
+		.rx-t {
+			font-size: 11.5px;
+			opacity: .55;
+			font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		}
+		.rx-c {
+			font-size: 12px;
+			color: #8a74f9;
+			margin-left: 6px;
+		}
+		.rx-c.opt { color: #8a8a93; }
+		.rx-credit { font-size: 12px; opacity: .55; margin-top: -8px; }
+		@media (max-width: 620px) {
+			.rx { font-size: 12.5px; }
+			.rx-c { display: none; }
+		}
+
 		.container {
 			display: flex;
 			margin-top: 60px;
@@ -755,14 +801,55 @@ local w = kyri.new("my hub")
 w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")</code></pre>
 				<p>everything past that line is the same. <code>kyri.studio</code> is <code>true</code> so you can branch if you need to.</p>
 
-				<h3>saving</h3>
-				<p>nothing persists until you name a datastore.</p>
-				<pre><code>kyri.persist("MyHubSaves")</code></pre>
-				<p>configs, window position and island position then load from it on startup, and batch back every 7 seconds plus on <code>BindToClose</code>. the name is yours to pick, and two scripts with different names never see each other's saves.</p>
-				<p><code>DataStoreService</code> only answers the server, so from a LocalScript this needs a bridge: drop <code>tools/KyriStoreServer.lua</code> into ServerScriptService as a Script. it creates a <code>KyriStore</code> RemoteFunction and does the reads and writes on the server. also tick <strong>Studio Access to API Services</strong> in Game Settings &gt; Security.</p>
-				<pre><code>local ok, why = kyri.persist("MyHubSaves")
+				<h3>where everything goes</h3>
+				<p>three places in the explorer. only the first one is required.</p>
+
+				<div class="rx">
+					<div class="rx-row rx-0"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/folder_type_ReplicatedStorage-light_opened.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/folder_type_ReplicatedStorage-dark_opened.png"><span class="rx-n">ReplicatedStorage</span></div>
+					<div class="rx-row rx-1 hit"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_ModuleScript-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_ModuleScript-dark.png"><span class="rx-n">KyriLib</span><span class="rx-t">ModuleScript</span><span class="rx-c">paste studiosource.lua in here</span></div>
+
+					<div class="rx-row rx-0"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/folder_type_ServerScriptService-light_opened.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/folder_type_ServerScriptService-dark_opened.png"><span class="rx-n">ServerScriptService</span></div>
+					<div class="rx-row rx-1 hit"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_Script-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_Script-dark.png"><span class="rx-n">KyriStoreServer</span><span class="rx-t">Script</span><span class="rx-c opt">only for saving, see below</span></div>
+
+					<div class="rx-row rx-0"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/folder_type_StarterPlayer-light_opened.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/folder_type_StarterPlayer-dark_opened.png"><span class="rx-n">StarterPlayer</span></div>
+					<div class="rx-row rx-1"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/folder_type_StarterPlayerScripts-light_opened.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/folder_type_StarterPlayerScripts-dark_opened.png"><span class="rx-n">StarterPlayerScripts</span></div>
+					<div class="rx-row rx-2 hit"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_LocalScript-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_LocalScript-dark.png"><span class="rx-n">MyHub</span><span class="rx-t">LocalScript</span><span class="rx-c">your code goes here</span></div>
+				</div>
+				<p class="rx-credit">explorer icons from <a href="https://github.com/charleskimbac/roblox-vscode-icons" target="_blank" rel="noopener">charleskimbac/roblox-vscode-icons</a>, owned by Roblox Corporation.</p>
+
+				<p>the ModuleScript has to be somewhere the client can see, which is why it is in ReplicatedStorage. the LocalScript can live in StarterPlayerScripts or StarterGui, either is fine.</p>
+
+
+				<h3>saving, step by step</h3>
+				<p>nothing persists until you set this up. skip it and configs still work, they just die when you stop the playtest.</p>
+
+				<p><strong>1. turn datastores on.</strong> Studio cannot touch them otherwise. <strong>Game Settings &gt; Security &gt; Enable Studio Access to API Services</strong>, then save and restart the playtest. this is a published-place setting, so the place has to be published first.</p>
+
+				<p><strong>2. add the bridge.</strong> <code>DataStoreService</code> only answers the server, and KyriLib runs on the client, so the two need something in between. make a <strong>Script</strong> in ServerScriptService called <code>KyriStoreServer</code> and paste <a href="https://github.com/Justanewplayer19/KyriLib/blob/main/tools/KyriStoreServer.lua" target="_blank" rel="noopener">tools/KyriStoreServer.lua</a> into it.</p>
+
+				<div class="rx">
+					<div class="rx-row rx-0"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/folder_type_ServerScriptService-light_opened.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/folder_type_ServerScriptService-dark_opened.png"><span class="rx-n">ServerScriptService</span></div>
+					<div class="rx-row rx-1 hit"><img class="rx-ic l" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/light/vsicons-custom-icons/file_type_Script-light.png"><img class="rx-ic d" alt="" src="https://cdn.jsdelivr.net/gh/charleskimbac/roblox-vscode-icons@main/dark/vsicons-custom-icons/file_type_Script-dark.png"><span class="rx-n">KyriStoreServer</span><span class="rx-t">Script</span><span class="rx-c">not a LocalScript, not a ModuleScript</span></div>
+				</div>
+
+				<p>it makes a <code>KyriStore</code> RemoteFunction in ReplicatedStorage and does the reads and writes server side. it checks what the client sends it, since any client can reach a RemoteFunction: strings only, 64 keys, 200KB a value.</p>
+
+				<p><strong>3. name your store.</strong> pick anything. two scripts with different names never see each other's saves.</p>
+				<pre><code>local kyri = require(game.ReplicatedStorage.KyriLib)
+
+local ok, why = kyri.persist("MyHubSaves")
 if not ok then warn(why) end</code></pre>
-				<p>without it, saves stay in memory and die with the playtest. <code>kyri.flush()</code> forces a write.</p>
+
+				<p>configs, window position and island position load from it on startup, then batch back every 7 seconds and on <code>BindToClose</code>. <code>kyri.flush()</code> forces a write now.</p>
+				<p>if a step is missing, <code>kyri.persist</code> returns <code>false</code> and tells you which one:</p>
+				<table>
+					<thead><tr><th>what comes back</th><th>what to do</th></tr></thead>
+					<tbody>
+						<tr><td><code>datastores are off, tick Studio Access to API Services...</code></td><td>step 1</td></tr>
+						<tr><td><code>no KyriStore RemoteFunction, add tools/KyriStoreServer.lua...</code></td><td>step 2</td></tr>
+					</tbody>
+				</table>
+				<p>running from a server Script instead? then it talks to <code>DataStoreService</code> directly and step 2 is unnecessary. <code>kyri.new</code> is client only though, so that is rare.</p>
 
 				<h3>what else differs</h3>
 				<table>
