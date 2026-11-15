@@ -12,6 +12,7 @@ carry no comments at all.
     python tools/build_studio.py
 """
 
+import io
 import os
 import sys
 
@@ -20,6 +21,31 @@ ROOT = os.path.dirname(HERE)
 
 SRC = os.path.join(ROOT, 'source.lua')
 OUT = os.path.join(ROOT, 'studiosource.lua')
+
+def icon_table():
+    """icons.json inlined: a Studio client cannot reach HttpService at all,
+    so the pack has to ship inside the build or every icon falls back."""
+    import json
+    path = os.path.join(ROOT, 'icons.json')
+    with io.open(path, encoding='utf8') as fh:
+        data = json.load(fh)
+    rows = []
+    for k in sorted(data):
+        v = data[k]
+        if '"' in k or '"' in v or chr(92) in k or chr(92) in v:
+            continue
+        rows.append('["%s"]="%s"' % (k, v))
+    out, line = [], []
+    for r in rows:
+        line.append(r)
+        if len(line) >= 6:
+            out.append(','.join(line))
+            line = []
+    if line:
+        out.append(','.join(line))
+    nl = chr(10)
+    return 'KYRI_ICONS = {' + nl + (',' + nl).join(out) + nl + '}' + nl + nl
+
 
 SHIM = '''KYRI_STUDIO = true
 
@@ -228,7 +254,7 @@ def main():
         'return kyri\n'
     )
 
-    out = SHIM + body
+    out = icon_table() + SHIM + body
     open(OUT, 'wb').write(out.replace('\n', nl).encode('utf8'))
 
     print('wrote %s (%d lines, %d cut from source)'

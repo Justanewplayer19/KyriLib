@@ -87,6 +87,8 @@ local function decode_icons(raw)
 end
 
 local function fetch_icons()
+    if type(KYRI_ICONS) == "table" and next(KYRI_ICONS) then return KYRI_ICONS end
+
     local tbl
 
     if isfile then
@@ -4680,133 +4682,168 @@ function kyri.new(title, options)
         end
     end)
 
-    function w:notify(title, text, duration)
+    function w:notify(title, text, duration, icon)
         duration = duration or 3
+        text = text or ""
 
-        local notif_gui = w.notif_gui
-        if not notif_gui or not notif_gui.Parent then
-            notif_gui = make("ScreenGui", {
+        local gui = w.notif_gui
+        if not gui or not gui.Parent then
+            gui = make("ScreenGui", {
                 Name = rnd(),
                 ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
                 ResetOnSpawn = false,
-                IgnoreGuiInset = true,
+                IgnoreGuiInset = false,
                 DisplayOrder = 999999998,
                 Parent = w.localPlayer.PlayerGui
             })
-            notif_gui:SetAttribute("kyri", true)
-            w.notif_gui = notif_gui
+            gui:SetAttribute("kyri", true)
+            w.notif_gui = gui
 
-            local container = make("Frame", {
+            local vpx = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize.X or 1280
+            w.notif_w = math.clamp(math.floor(vpx - 40), 200, 300)
+
+            local holder = make("Frame", {
                 Name = "Container",
-                Size = UDim2.new(0, 320, 1, 0),
+                Size = UDim2.new(0, w.notif_w, 1, -40),
                 Position = UDim2.new(1, -20, 0, 20),
                 AnchorPoint = Vector2.new(1, 0),
                 BackgroundTransparency = 1,
-                Parent = notif_gui
+                Parent = gui
             })
-
             make("UIListLayout", {
                 Padding = UDim.new(0, 10),
                 SortOrder = Enum.SortOrder.LayoutOrder,
-                VerticalAlignment = Enum.VerticalAlignment.Top,
-                Parent = container
+                HorizontalAlignment = Enum.HorizontalAlignment.Right,
+                Parent = holder
             })
         end
 
-        local container = notif_gui.Container
+        local holder = gui.Container
+        local cw = w.notif_w or 300
+        local h = text ~= "" and 58 or 52
 
-        local wrapper = make("Frame", {
-            Size = UDim2.fromOffset(320, 77),
+        local slot = make("Frame", {
+            Size = UDim2.fromOffset(cw, h),
             BackgroundTransparency = 1,
-            Parent = container
+            Parent = holder
         })
 
-        local bar = make("Frame", {
-            Size = UDim2.fromOffset(13, 63),
-            Position = UDim2.fromOffset(-16, 4),
-            BackgroundColor3 = t.accent,
-            Parent = wrapper
-        })
-        make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = bar})
-
-        local notif = make("Frame", {
-            Size = UDim2.fromOffset(320, 70),
+        local card = make(has_cg and "CanvasGroup" or "Frame", {
+            Size = UDim2.fromOffset(cw, h),
+            Position = UDim2.fromOffset(44, 0),
             BackgroundColor3 = t.bg,
-            BackgroundTransparency = 0.2,
-            Parent = wrapper
+            GroupTransparency = has_cg and 1 or nil,
+            ClipsDescendants = true,
+            Parent = slot
         })
-        make("UICorner", {CornerRadius = UDim.new(0, 10), Parent = notif})
+        make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = card})
+        make("UIStroke", {Color = t.border, Thickness = 1, Transparency = 0.3, Parent = card})
 
-        local title_lbl = make("TextLabel", {
-            Size = UDim2.new(1, -24, 0, 20),
-            Position = UDim2.fromOffset(14, 10),
-            BackgroundTransparency = 1,
-            Text = title,
-            TextColor3 = t.text,
-            Font = Enum.Font.GothamBold,
-            TextSize = 15,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = notif
-        })
+        local gid = ico(icon) or ico("bell")
 
-        local text_lbl = make("TextLabel", {
-            Size = UDim2.new(1, -24, 0, 30),
-            Position = UDim2.fromOffset(14, 32),
-            BackgroundTransparency = 1,
-            Text = text,
-            TextColor3 = t.subtext,
-            Font = Enum.Font.Gotham,
-            TextSize = 13,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            TextYAlignment = Enum.TextYAlignment.Top,
-            TextWrapped = true,
-            Parent = notif
-        })
-
-        local prog_bg = make("Frame", {
-            Size = UDim2.fromOffset(320, 3),
-            Position = UDim2.fromOffset(0, 74),
-            BackgroundColor3 = t.container,
-            Parent = wrapper
-        })
-        local prog_fill = make("Frame", {
-            Size = UDim2.fromScale(1, 1),
+        local tile = make("Frame", {
+            Size = UDim2.fromOffset(28, 28),
+            Position = UDim2.fromOffset(12, (h - 28) / 2),
             BackgroundColor3 = t.accent,
-            Parent = prog_bg
+            BackgroundTransparency = 0.84,
+            Parent = card
         })
+        make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = tile})
 
-        local dismissed = false
-        local function dismiss()
-            if dismissed then return end
-            dismissed = true
-            kyri.svc.tw:Create(notif, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-            kyri.svc.tw:Create(bar, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-            kyri.svc.tw:Create(title_lbl, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-            kyri.svc.tw:Create(text_lbl, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-            kyri.svc.tw:Create(prog_fill, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-            kyri.svc.tw:Create(prog_bg, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-            task.wait(0.3)
-            if wrapper and wrapper.Parent then wrapper:Destroy() end
+        if gid then
+            make("ImageLabel", {
+                Size = UDim2.fromOffset(15, 15),
+                Position = UDim2.new(0.5, -7, 0.5, -7),
+                BackgroundTransparency = 1,
+                Image = gid,
+                ImageColor3 = t.accent,
+                Parent = tile
+            })
+        else
+            tile.Size = UDim2.fromOffset(8, 8)
+            tile.Position = UDim2.fromOffset(22, (h - 8) / 2)
+            tile.BackgroundTransparency = 0.15
         end
 
-        local click_btn = make("TextButton", {
+        local tl = make("TextLabel", {
+            Size = UDim2.new(1, -64, 0, 17),
+            Position = UDim2.fromOffset(52, 11),
+            BackgroundTransparency = 1,
+            Text = title or "",
+            TextColor3 = t.text,
+            Font = Enum.Font.GothamBold,
+            TextSize = 13,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = card
+        })
+
+        if text == "" then
+            tl.Position = UDim2.fromOffset(52, 0)
+            tl.Size = UDim2.new(1, -64, 1, 0)
+        else
+            make("TextLabel", {
+                Size = UDim2.new(1, -64, 0, 16),
+                Position = UDim2.fromOffset(52, 29),
+                BackgroundTransparency = 1,
+                Text = text,
+                TextColor3 = t.subtext,
+                Font = Enum.Font.Gotham,
+                TextSize = 12,
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = card
+            })
+        end
+
+        local prog = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 2),
+            Position = UDim2.new(0, 0, 1, -2),
+            BackgroundColor3 = t.accent,
+            BorderSizePixel = 0,
+            Parent = card
+        })
+
+        local hit = make("TextButton", {
             Size = UDim2.fromScale(1, 1),
             BackgroundTransparency = 1,
             Text = "",
             ZIndex = 5,
-            Parent = notif
+            Parent = card
         })
-        click_btn.MouseButton1Click:Connect(dismiss)
 
-        wrapper.Position = UDim2.new(0, 340, 0, 0)
-        kyri.svc.tw:Create(wrapper, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-            Position = UDim2.new(0, 0, 0, 0)
+        local gone = false
+        local function dismiss()
+            if gone then return end
+            gone = true
+            kyri.svc.tw:Create(card, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+                Position = UDim2.fromOffset(44, 0)
+            }):Play()
+            fade(card, 1, 0.2)
+            task.delay(0.26, function()
+                if slot and slot.Parent then slot:Destroy() end
+            end)
+        end
+
+        hit.MouseButton1Click:Connect(dismiss)
+        hit.MouseEnter:Connect(function()
+            kyri.svc.tw:Create(card, TweenInfo.new(0.15), {BackgroundColor3 = t.container}):Play()
+        end)
+        hit.MouseLeave:Connect(function()
+            kyri.svc.tw:Create(card, TweenInfo.new(0.15), {BackgroundColor3 = t.bg}):Play()
+        end)
+
+        kyri.svc.tw:Create(card, TweenInfo.new(0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Position = UDim2.fromOffset(0, 0)
         }):Play()
-        kyri.svc.tw:Create(prog_fill, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
-            Size = UDim2.fromScale(0, 1)
+        fade(card, 0, 0.26)
+
+        kyri.svc.tw:Create(prog, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+            Size = UDim2.new(0, 0, 0, 2)
         }):Play()
 
         task.delay(duration, dismiss)
+        return slot
     end
 
     function w:accent(color)
