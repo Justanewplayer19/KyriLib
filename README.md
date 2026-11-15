@@ -59,7 +59,7 @@ playtest. It is a published-place setting, so the place has to be published firs
 **2. Add the bridge.** `DataStoreService` only answers the server and KyriLib runs on the
 client, so the two need something in between. Make a **Script** (not a LocalScript, not a
 ModuleScript) in ServerScriptService called `KyriStoreServer` and paste
-[tools/KyriStoreServer.lua](tools/KyriStoreServer.lua) into it.
+[examples/KyriStoreServer.lua](examples/KyriStoreServer.lua) into it.
 
 It creates a `KyriStore` RemoteFunction and does the reads and writes server side. It checks
 what the client sends, since any client can reach a RemoteFunction: strings only, 64 keys,
@@ -83,7 +83,7 @@ If a step is missing, `kyri.persist` returns `false` and tells you which one:
 | what comes back | what to do |
 |-----------------|------------|
 | `datastores are off, tick Studio Access to API Services...` | step 1 |
-| `no KyriStore RemoteFunction, add tools/KyriStoreServer.lua...` | step 2 |
+| `no KyriStore RemoteFunction, add examples/KyriStoreServer.lua...` | step 2 |
 
 Running from a server Script instead? Then it talks to `DataStoreService` directly and step 2 is
 unnecessary. `kyri.new` is client only though, so that is rare.
@@ -102,11 +102,11 @@ which means a script written for the executor still runs here without erroring.
 
 Nothing throws. Each of those checks for the function it needs and skips if it is missing.
 
-`studiosource.lua` is generated: `source.lua` is the only file anyone edits, and
-`python tools/build_studio.py` rebuilds the Studio copy by prepending a compatibility shim.
-The library body is byte-identical in both, so the two cannot drift apart. Nothing in the Lua
-sources carries a comment, so the generated file has no header saying it is generated: treat
-`studiosource.lua` as output and never edit it directly.
+`studiosource.lua` is generated from `source.lua`, which is the only file anyone edits. A build
+step prepends the compatibility shim and inlines the icon pack; the library body is byte-identical
+in both, so the two cannot drift apart. Nothing in the Lua sources carries a comment, so the
+generated file has no header saying it is generated: treat `studiosource.lua` as output and never
+edit it directly.
 
 A Settings tab is built for you about 0.1s after `kyri.new`. `w:create_settings()` returns that
 same tab rather than adding a second one, so calling it yourself is safe.

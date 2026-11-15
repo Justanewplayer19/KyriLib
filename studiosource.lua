@@ -200,7 +200,7 @@ do
         else
             remote = ReplicatedStorage:FindFirstChild("KyriStore")
             if not remote then
-                return false, "no KyriStore RemoteFunction, add tools/KyriStoreServer.lua to ServerScriptService"
+                return false, "no KyriStore RemoteFunction, add examples/KyriStoreServer.lua to ServerScriptService"
             end
             local okp, alive = pcall(function() return remote:InvokeServer("ping", store_name) end)
             if not okp or alive ~= true then
