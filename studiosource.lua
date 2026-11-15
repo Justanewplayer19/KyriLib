@@ -2651,6 +2651,7 @@ function kyri.new(title, options)
             local box = make("Frame", {
                 Size = UDim2.new(1, 0, 0, 42),
                 BackgroundColor3 = t.element,
+                ClipsDescendants = true,
                 Parent = page
             })
             make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = box})
@@ -2720,10 +2721,11 @@ function kyri.new(title, options)
 
             click.MouseButton1Click:Connect(function()
                 play("click")
-                ripple.Size = UDim2.fromScale(0, 0)
-                ripple.ImageTransparency = 0.5
-                kyri.svc.tw:Create(ripple, TweenInfo.new(0.4), {
-                    Size = UDim2.fromScale(1.5, 1.5),
+                local d = math.max(box.AbsoluteSize.X, box.AbsoluteSize.Y) * 1.6
+                ripple.Size = UDim2.fromOffset(0, 0)
+                ripple.ImageTransparency = 0.62
+                kyri.svc.tw:Create(ripple, TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    Size = UDim2.fromOffset(d, d),
                     ImageTransparency = 1
                 }):Play()
                 if callback then callback() end
