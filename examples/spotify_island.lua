@@ -8,8 +8,6 @@ local sp = kyri.spotify({
 
 local isl = sp.island
 
-local words = isl:row("")
-
 local function tell(s)
     print("[island] " .. s)
 end
@@ -39,23 +37,25 @@ task.spawn(function()
             was_track = name
             if name == "" then
                 tell("nothing playing")
-                words:set("")
             else
                 tell(name .. "  by  " .. sp:artists())
                 task.spawn(function()
                     local got = sp:lyrics()
                     if not got then
-                        words:set("no lyrics on lrclib")
+                        tell("  no lyrics on lrclib")
                     elseif got.instrumental then
-                        words:set("instrumental")
+                        tell("  instrumental")
                     elseif got.synced then
-                        words:set("synced lyrics, " .. #got.synced .. " lines")
+                        tell("  synced, " .. #got.synced .. " lines")
+                        if got.drift and got.drift > 2 then
+                            tell("  lrclib duration is off by " .. string.format("%.0f", got.drift)
+                                .. "s, if the lines run early use: !sp sync 0.5")
+                        end
                     elseif got.plain then
-                        words:set("plain lyrics only, nothing to follow")
+                        tell("  plain only, nothing to follow")
                     else
-                        words:set("no lyrics")
+                        tell("  no lyrics")
                     end
-                    isl:relayout()
                 end)
             end
         end
