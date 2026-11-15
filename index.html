@@ -904,6 +904,7 @@ end, "ws")</code></pre>
 						<tr><td>KeySystem</td><td><code>"Once"</code> / <code>"Everytime"</code></td><td>enable key gate before window loads</td></tr>
 						<tr><td>KeySettings</td><td>table</td><td>key system config - see <a href="#key-system">key system</a></td></tr>
 						<tr><td>Mode</td><td><code>"window"</code> / <code>"island"</code></td><td>layout. defaults to island on touch, window otherwise</td></tr>
+						<tr><td>Island</td><td>bool</td><td><code>true</code> is the same as <code>Mode = "island"</code></td></tr>
 						<tr><td>Remember</td><td>bool</td><td><code>true</code>. persists position and size to <code>KyriLib/window.json</code></td></tr>
 						<tr><td>Shadow</td><td>bool</td><td><code>false</code>. set <code>true</code> for a drop shadow under the frame</td></tr>
 					</tbody>
@@ -933,6 +934,7 @@ w:destroy()                    -- destroy the window, island and spotify loop</c
 				<pre><code>local w = kyri.new("my hub", { Mode = "island" })
 local main = w:tab("Main", "sword")
 main:toggle("fly", false, function(s) end, "fly")</code></pre>
+				<p><code>{ Island = true }</code> is the same thing if you prefer it.</p>
 				<p><code>window</code> is the classic layout - a 520x400 frame with a tab sidebar, resizable from the bottom-right corner. <code>island</code> is a <code>kyri.island</code>, the same pill the spotify integration uses, with the tab strip and pages in its body - so it collapses to 230x38 and expands into a 370x430 panel.</p>
 				<p>because island mode <em>is</em> an island, <code>w:spotify()</code> shares it rather than adding a second pill: one pill holding the track, the transport buttons, the seek and volume rows and your own tabs. the panel grows to fit the extra rows.</p>
 

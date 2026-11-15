@@ -4361,7 +4361,9 @@ function kyri.new(title, options)
     end
 
     function w:create_settings()
+        if w.settings_tab then return w.settings_tab end
         local settings = self:tab("Settings")
+        w.settings_tab = settings
 
         settings:label("config management")
 

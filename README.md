@@ -100,7 +100,12 @@ Nothing throws. Each of those checks for the function it needs and skips if it i
 
 `studiosource.lua` is generated: `source.lua` is the only file anyone edits, and
 `python tools/build_studio.py` rebuilds the Studio copy by prepending a compatibility shim.
-The library body is byte-identical in both, so the two cannot drift apart.
+The library body is byte-identical in both, so the two cannot drift apart. Nothing in the Lua
+sources carries a comment, so the generated file has no header saying it is generated: treat
+`studiosource.lua` as output and never edit it directly.
+
+A Settings tab is built for you about 0.1s after `kyri.new`. `w:create_settings()` returns that
+same tab rather than adding a second one, so calling it yourself is safe.
 
 ## Quick Start
 
@@ -142,6 +147,7 @@ Full docs: [https://justanewplayer19.github.io/KyriLib](https://justanewplayer19
 | `KeySystem` | `"Once"` / `"Everytime"` | enable key gate before window loads |
 | `KeySettings` | table | key system config (see below) |
 | `Mode` | `"window"` / `"island"` | layout. defaults to `island` on touch devices, `window` otherwise |
+| `Island` | bool | `true` is the same as `Mode = "island"` |
 | `Remember` | bool | `true`. persist position (and window size) to `KyriLib/window.json` |
 | `Shadow` | bool | `false`. set `true` for a drop shadow under the frame |
 
@@ -168,6 +174,8 @@ local w = kyri.new("my hub", { Mode = "island" })
 local main = w:tab("Main", "sword")
 main:toggle("fly", false, function(s) end, "fly")
 ```
+
+`{ Island = true }` is the same thing if you prefer it.
 
 `window` is the classic layout: a 520x400 frame with a tab sidebar, resizable from the
 bottom-right corner. `island` is a `kyri.island`, the same pill the Spotify integration uses,
