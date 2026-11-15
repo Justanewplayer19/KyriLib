@@ -1527,7 +1527,7 @@ function kyri.island(opts)
                 TextTransparency = tr,
                 TextSize = 14,
                 TextWrapped = false,
-                TextTruncate = Enum.TextTruncate.AtEnd,
+                TextTruncate = Enum.TextTruncate.None,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = roll
             })
@@ -1588,6 +1588,9 @@ function kyri.island(opts)
                         local sz = math.max(8, math.floor(14 * room / wide))
                         base.TextSize = sz
                         hl.TextSize = sz
+                        local cut = (wide * sz / 14) > room
+                        base.TextTruncate = cut and Enum.TextTruncate.AtEnd or Enum.TextTruncate.None
+                        hl.TextTruncate = base.TextTruncate
                     end
                 end)
             end
