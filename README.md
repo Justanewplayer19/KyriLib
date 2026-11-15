@@ -173,6 +173,9 @@ hand. The Spotify auth tab falls back to it when `setclipboard` is missing.
 
 In island mode you also get `w.expand()`, `w.collapse()` and `w.expanded()`.
 
+The chrome buttons carry tooltips: minimise, close, collapse. Island transport buttons made with
+`isl:button(icon, cb, name)` use their `name` as the tooltip, so passing one is worth it.
+
 ### Layout modes
 
 ```lua

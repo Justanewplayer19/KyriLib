@@ -951,6 +951,7 @@ w:resetpos()                   -- forget the saved position and size
 w:destroy()                    -- destroy the window, island and spotify loop</code></pre>
 				<p><code>kyri.copybox(text, title)</code> puts text in a focused, pre-selected TextBox so it can be copied by hand. the spotify auth tab falls back to it when <code>setclipboard</code> is missing.</p>
 				<p>in island mode you also get <code>w.expand()</code>, <code>w.collapse()</code> and <code>w.expanded()</code>.</p>
+				<p>the chrome buttons carry tooltips: minimise, close, collapse. island transport buttons made with <code>isl:button(icon, cb, name)</code> use their <code>name</code> as the tooltip, so passing one is worth it.</p>
 
 				<h3>layout modes</h3>
 				<pre><code>local w = kyri.new("my hub", { Mode = "island" })

@@ -547,6 +547,95 @@ local has_cg = pcall(function()
     o:Destroy()
 end)
 
+local function tip(obj, text)
+    if not obj or not text or text == "" then return end
+
+    local box, lbl, stroke
+    local token = 0
+
+    local function build()
+        local gui = obj:FindFirstAncestorWhichIsA("ScreenGui")
+        if not gui then return false end
+
+        box = make("Frame", {
+            AutomaticSize = Enum.AutomaticSize.X,
+            Size = UDim2.fromOffset(0, 22),
+            BackgroundColor3 = kyri.theme.container,
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            Visible = false,
+            ZIndex = 120,
+            Parent = gui
+        })
+        make("UICorner", {CornerRadius = UDim.new(0, 6), Parent = box})
+        make("UIPadding", {
+            PaddingLeft = UDim.new(0, 8),
+            PaddingRight = UDim.new(0, 8),
+            Parent = box
+        })
+        stroke = make("UIStroke", {
+            Color = kyri.theme.border,
+            Thickness = 1,
+            Transparency = 1,
+            Parent = box
+        })
+        lbl = make("TextLabel", {
+            AutomaticSize = Enum.AutomaticSize.X,
+            Size = UDim2.fromOffset(0, 22),
+            BackgroundTransparency = 1,
+            Text = text,
+            TextColor3 = kyri.theme.text,
+            TextTransparency = 1,
+            Font = Enum.Font.Gotham,
+            TextSize = 11,
+            ZIndex = 121,
+            Parent = box
+        })
+        return true
+    end
+
+    local function place()
+        local gui = obj:FindFirstAncestorWhichIsA("ScreenGui")
+        if not gui then return end
+        local a, sz = obj.AbsolutePosition, obj.AbsoluteSize
+        local right = (a.X + sz.X / 2) > gui.AbsoluteSize.X / 2
+        box.AnchorPoint = Vector2.new(right and 1 or 0, 0)
+        box.Position = UDim2.fromOffset(right and (a.X + sz.X) or a.X, a.Y + sz.Y + 7)
+    end
+
+    obj.MouseEnter:Connect(function()
+        token = token + 1
+        local mine = token
+        task.delay(0.4, function()
+            if mine ~= token then return end
+            if not box and not build() then return end
+            place()
+            box.Visible = true
+            local ti = TweenInfo.new(0.12)
+            kyri.svc.tw:Create(box, ti, {BackgroundTransparency = 0}):Play()
+            kyri.svc.tw:Create(lbl, ti, {TextTransparency = 0}):Play()
+            kyri.svc.tw:Create(stroke, ti, {Transparency = 0.3}):Play()
+        end)
+    end)
+
+    local function hide()
+        token = token + 1
+        if not box then return end
+        local ti = TweenInfo.new(0.1)
+        kyri.svc.tw:Create(box, ti, {BackgroundTransparency = 1}):Play()
+        kyri.svc.tw:Create(lbl, ti, {TextTransparency = 1}):Play()
+        kyri.svc.tw:Create(stroke, ti, {Transparency = 1}):Play()
+        task.delay(0.12, function()
+            if box and token > 0 then box.Visible = false end
+        end)
+    end
+
+    obj.MouseLeave:Connect(hide)
+    if obj:IsA("GuiButton") then
+        obj.MouseButton1Down:Connect(hide)
+    end
+end
+
 local function layer(p, vis)
     return make(has_cg and "CanvasGroup" or "Frame", {
         Size = UDim2.fromScale(1, 1),
@@ -856,6 +945,8 @@ function kyri.island(opts)
         Parent = head
     })
 
+    tip(close, "collapse")
+
     local quit
     if opts.on_close then
         quit = make("ImageButton", {
@@ -866,6 +957,7 @@ function kyri.island(opts)
             ImageColor3 = t.subtext,
             Parent = head
         })
+        tip(quit, "close")
         quit.MouseButton1Click:Connect(function() pcall(opts.on_close) end)
         quit.MouseEnter:Connect(function()
             kyri.svc.tw:Create(quit, TweenInfo.new(0.15), {ImageColor3 = t.text}):Play()
@@ -1171,7 +1263,10 @@ function kyri.island(opts)
         b.MouseLeave:Connect(function()
             kyri.svc.tw:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = t.element}):Play()
         end)
-        if name then b.Name = name end
+        if name then
+            b.Name = name
+            tip(b, name)
+        end
 
         local api = {box = b, img = im}
         function api:icon(new) im.Image = ico(new) or im.Image end
@@ -2041,6 +2136,9 @@ function kyri.new(title, options)
             ImageColor3 = t.subtext,
             Parent = top
         })
+
+        tip(minimize, "minimise")
+        tip(close, "close")
 
         for i,b in pairs({minimize, close}) do
             b.MouseEnter:Connect(function()
