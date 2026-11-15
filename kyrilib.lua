@@ -2257,20 +2257,24 @@ function kyri.spotify(opts)
         if lyric_cache[id] ~= nil then return lyric_cache[id] or nil end
         if not req then return nil end
 
+        local spare = nil
+
         if sp.lyric_source ~= "lrclib" and sp.lyric_source ~= "lrc.red" then
             local hot = from_spicy()
-            if hot then
+            if hot and hot.synced then
                 lyric_cache[id] = hot
                 return hot
             end
+            spare = spare or hot
         end
 
         if sp.lyric_source ~= "lrclib" then
             local red = from_red()
-            if red then
+            if red and red.synced then
                 lyric_cache[id] = red
                 return red
             end
+            spare = spare or red
         end
 
         local alb = (sp.track.album and sp.track.album.name) or ""
@@ -2308,8 +2312,8 @@ function kyri.spotify(opts)
         end
 
         if type(d) ~= "table" then
-            lyric_cache[id] = false
-            return nil
+            lyric_cache[id] = spare or false
+            return spare
         end
 
         local out = {
@@ -2324,6 +2328,11 @@ function kyri.spotify(opts)
         if type(d.syncedLyrics) == "string" and d.syncedLyrics ~= "" then
             local lines = parse_lrc(d.syncedLyrics)
             if #lines > 0 then out.synced = lines end
+        end
+
+        if not out.synced and spare then
+            lyric_cache[id] = spare
+            return spare
         end
 
         lyric_cache[id] = out
