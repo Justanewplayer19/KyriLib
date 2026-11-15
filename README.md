@@ -91,8 +91,33 @@ w:spotify()
 ```
 
 That gives you one pill holding the track, the transport buttons, the seek and volume rows and
-your own tabs. The panel grows to fit the extra rows. Pass `island = true` to `w:spotify` if you
-really do want a separate music pill.
+your own tabs. The panel grows to fit the extra rows.
+
+### Keeping them separate
+
+All four combinations work. Pick by layout mode and the `island` flag:
+
+```lua
+-- window + its own spotify pill, kept apart (the default)
+local w = kyri.new("my hub")
+w:spotify()
+
+-- window, no pill at all, spotify lives in the tabs
+local w = kyri.new("my hub")
+w:spotify({ island = false })
+
+-- one pill holding spotify and your tabs
+local w = kyri.new("my hub", { Mode = "island" })
+w:spotify()
+
+-- a pill for your tabs and a second pill for spotify
+local w = kyri.new("my hub", { Mode = "island" })
+w:spotify({ island = true })
+```
+
+Islands created in the same run stack instead of replacing each other, so the second pill steps
+down a row rather than landing on the first. Each remembers its own position — `island.json` is
+keyed by `id`, with `"hub"` and `"spotify"` for the two built-in ones.
 
 In island mode `w:resetpos()` clears the island's saved position; in window mode it clears the
 window's position and size. Window mode has a close button in the topbar, island mode has one
@@ -238,6 +263,7 @@ isl:notify("saved", 2)
 | `body_height` | number | — | adds `isl.body`, a fixed-height frame you fill yourself |
 | `total_height` | number | — | sizes `isl.body` so the whole open island lands on this height |
 | `on_close` | function | — | adds a quit button beside the collapse X |
+| `id` | string | `"main"` | which slot in `island.json` holds this island's position |
 
 **Methods:**
 ```lua

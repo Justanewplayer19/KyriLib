@@ -812,7 +812,26 @@ w:destroy()                    -- destroy the window, island and spotify loop</c
 local main = w:tab("Main", "sword")
 main:toggle("fly", false, function(s) end, "fly")</code></pre>
 				<p><code>window</code> is the classic layout — a 520x400 frame with a tab sidebar, resizable from the bottom-right corner. <code>island</code> is a <code>kyri.island</code>, the same pill the spotify integration uses, with the tab strip and pages in its body — so it collapses to 230x38 and expands into a 370x430 panel.</p>
-				<p>because island mode <em>is</em> an island, <code>w:spotify()</code> shares it rather than adding a second pill: one pill holding the track, the transport buttons, the seek and volume rows and your own tabs. the panel grows to fit the extra rows. pass <code>island = true</code> to <code>w:spotify</code> if you really do want a separate music pill.</p>
+				<p>because island mode <em>is</em> an island, <code>w:spotify()</code> shares it rather than adding a second pill: one pill holding the track, the transport buttons, the seek and volume rows and your own tabs. the panel grows to fit the extra rows.</p>
+
+				<h3>keeping them separate</h3>
+				<p>all four combinations work — pick by layout mode and the <code>island</code> flag.</p>
+				<pre><code>-- window + its own spotify pill, kept apart (the default)
+local w = kyri.new("my hub")
+w:spotify()
+
+-- window, no pill at all, spotify lives in the tabs
+local w = kyri.new("my hub")
+w:spotify({ island = false })
+
+-- one pill holding spotify and your tabs
+local w = kyri.new("my hub", { Mode = "island" })
+w:spotify()
+
+-- a pill for your tabs and a second pill for spotify
+local w = kyri.new("my hub", { Mode = "island" })
+w:spotify({ island = true })</code></pre>
+				<p>islands created in the same run stack instead of replacing each other, so a second pill steps down a row rather than landing on the first. each remembers its own position — <code>island.json</code> is keyed by <code>id</code>, with <code>"hub"</code> and <code>"spotify"</code> for the two built-in ones.</p>
 				<p>every <code>w:tab</code> and element call is identical in both, so nothing in your script changes but the one option. touch devices default to the island because the sidebar leaves only ~190px of usable width on a phone — pass <code>Mode = "window"</code> to opt back out.</p>
 				<p>position is remembered between runs, as is the window's size. window mode has a close button in the topbar, island mode has one beside the collapse X — both call <code>w:destroy()</code>.</p>
 
@@ -962,6 +981,7 @@ isl:notify("saved", 2)</code></pre>
 						<tr><td>body_height</td><td>number</td><td>—</td><td>adds <code>isl.body</code>, a fixed-height frame you fill yourself</td></tr>
 						<tr><td>total_height</td><td>number</td><td>—</td><td>sizes <code>isl.body</code> so the whole open island lands on this height</td></tr>
 						<tr><td>on_close</td><td>function</td><td>—</td><td>adds a quit button beside the collapse X</td></tr>
+						<tr><td>id</td><td>string</td><td><code>"main"</code></td><td>which slot in <code>island.json</code> holds this island's position</td></tr>
 					</tbody>
 				</table>
 
