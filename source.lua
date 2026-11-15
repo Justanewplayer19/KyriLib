@@ -1480,7 +1480,7 @@ function kyri.spotify(opts)
                 if tr and tr.name and tr.uri then
                     local a = {}
                     for j,v in pairs(tr.artists or {}) do a[#a + 1] = v.name end
-                    local rb = srch:button(i .. ".  " .. tr.name .. "  —  " .. table.concat(a, ", "), function()
+                    local rb = srch:button(i .. ".  " .. tr.name .. "  -  " .. table.concat(a, ", "), function()
                         if sp:playuri(tr.uri) then
                             w:notify("playing", tr.name, 3)
                             if isl then isl:notify(tr.name, 2.5) end
@@ -1494,7 +1494,7 @@ function kyri.spotify(opts)
         local at = w:tab("Auth", "key")
         at:section("connect spotify")
         at:paragraph("how to authenticate",
-            "1. click 'copy auth url'\n2. open it in your browser and approve\n3. the page will fail to load — that is normal\n4. copy the whole url from the address bar\n5. paste it below and submit")
+            "1. click 'copy auth url'\n2. open it in your browser and approve\n3. the page will fail to load - that is normal\n4. copy the whole url from the address bar\n5. paste it below and submit")
 
         local st_lbl
         at:button("copy auth url", function()
@@ -2704,7 +2704,7 @@ function kyri.new(title, options)
                         icon_img.Image = asset
                     end)
                     if not ok then
-                        -- silently fail — icon stays as default
+                        -- silently fail - icon stays as default
                     end
                 end)
             end
@@ -3351,7 +3351,7 @@ function kyri.new(title, options)
                 local minus_btn = make("TextButton", {
                     Size = UDim2.new(0.45, 0, 1, 0),
                     BackgroundColor3 = t.container,
-                    Text = "–",
+                    Text = "-",
                     TextColor3 = t.text,
                     Font = Enum.Font.GothamBold,
                     TextSize = 16,

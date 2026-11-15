@@ -732,7 +732,7 @@ body {
 					<li>built-in save/load config system with auto-load support</li>
 					<li>draggable and resizable window</li>
 					<li>keybind system with press or hold modes, supports mouse buttons</li>
-					<li>tab icons via 560+ lucideblox names, rbxassetid://, rbxthumb://, or https:// — fetched on demand, not bundled</li>
+					<li>tab icons via 560+ lucideblox names, rbxassetid://, rbxthumb://, or https:// - fetched on demand, not bundled</li>
 					<li>dynamic island: a floating pill that expands into a panel, usable for anything</li>
 					<li>one-line spotify control with PKCE auth, album art, and chat commands</li>
 					<li>mobile support</li>
@@ -781,7 +781,7 @@ end, "ws")</code></pre>
 						<tr><td>AutoLoad</td><td>string</td><td>config name to load on startup</td></tr>
 						<tr><td>Theme</td><td>table</td><td>override theme colors at init (any subset)</td></tr>
 						<tr><td>KeySystem</td><td><code>"Once"</code> / <code>"Everytime"</code></td><td>enable key gate before window loads</td></tr>
-						<tr><td>KeySettings</td><td>table</td><td>key system config — see <a href="#key-system">key system</a></td></tr>
+						<tr><td>KeySettings</td><td>table</td><td>key system config - see <a href="#key-system">key system</a></td></tr>
 						<tr><td>Mode</td><td><code>"window"</code> / <code>"island"</code></td><td>layout. defaults to island on touch, window otherwise</td></tr>
 						<tr><td>Remember</td><td>bool</td><td><code>true</code>. persists position and size to <code>KyriLib/window.json</code></td></tr>
 						<tr><td>Shadow</td><td>bool</td><td><code>false</code>. set <code>true</code> for a drop shadow under the frame</td></tr>
@@ -811,11 +811,11 @@ w:destroy()                    -- destroy the window, island and spotify loop</c
 				<pre><code>local w = kyri.new("my hub", { Mode = "island" })
 local main = w:tab("Main", "sword")
 main:toggle("fly", false, function(s) end, "fly")</code></pre>
-				<p><code>window</code> is the classic layout — a 520x400 frame with a tab sidebar, resizable from the bottom-right corner. <code>island</code> is a <code>kyri.island</code>, the same pill the spotify integration uses, with the tab strip and pages in its body — so it collapses to 230x38 and expands into a 370x430 panel.</p>
+				<p><code>window</code> is the classic layout - a 520x400 frame with a tab sidebar, resizable from the bottom-right corner. <code>island</code> is a <code>kyri.island</code>, the same pill the spotify integration uses, with the tab strip and pages in its body - so it collapses to 230x38 and expands into a 370x430 panel.</p>
 				<p>because island mode <em>is</em> an island, <code>w:spotify()</code> shares it rather than adding a second pill: one pill holding the track, the transport buttons, the seek and volume rows and your own tabs. the panel grows to fit the extra rows.</p>
 
 				<h3>keeping them separate</h3>
-				<p>all four combinations work — pick by layout mode and the <code>island</code> flag.</p>
+				<p>all four combinations work - pick by layout mode and the <code>island</code> flag.</p>
 				<pre><code>-- window + its own spotify pill, kept apart (the default)
 local w = kyri.new("my hub")
 w:spotify()
@@ -831,9 +831,9 @@ w:spotify()
 -- a pill for your tabs and a second pill for spotify
 local w = kyri.new("my hub", { Mode = "island" })
 w:spotify({ island = true })</code></pre>
-				<p>islands created in the same run stack instead of replacing each other, so a second pill steps down a row rather than landing on the first. each remembers its own position — <code>island.json</code> is keyed by <code>id</code>, with <code>"hub"</code> and <code>"spotify"</code> for the two built-in ones.</p>
-				<p>every <code>w:tab</code> and element call is identical in both, so nothing in your script changes but the one option. touch devices default to the island because the sidebar leaves only ~190px of usable width on a phone — pass <code>Mode = "window"</code> to opt back out.</p>
-				<p>position is remembered between runs, as is the window's size. window mode has a close button in the topbar, island mode has one beside the collapse X — both call <code>w:destroy()</code>.</p>
+				<p>islands created in the same run stack instead of replacing each other, so a second pill steps down a row rather than landing on the first. each remembers its own position - <code>island.json</code> is keyed by <code>id</code>, with <code>"hub"</code> and <code>"spotify"</code> for the two built-in ones.</p>
+				<p>every <code>w:tab</code> and element call is identical in both, so nothing in your script changes but the one option. touch devices default to the island because the sidebar leaves only ~190px of usable width on a phone - pass <code>Mode = "window"</code> to opt back out.</p>
+				<p>position is remembered between runs, as is the window's size. window mode has a close button in the topbar, island mode has one beside the collapse X - both call <code>w:destroy()</code>.</p>
 
 				<h3>randomised names</h3>
 				<p>every ScreenGui the library creates is given a random name per run, as is the mobile toggle action. stale instances from a previous execute are found by a <code>kyri</code> attribute rather than a fixed name, so nothing needs to look for <code>"Kyri"</code> in PlayerGui.</p>
@@ -943,7 +943,7 @@ tab:search(placeholder)        -- filter box, hides non-matching elements</code>
 			<section id="island">
 				<h2>island</h2>
 
-				<p>a floating pill at the top of the screen that expands into a panel. it is standalone — it works with or without a window, and it is not music-specific.</p>
+				<p>a floating pill at the top of the screen that expands into a panel. it is standalone - it works with or without a window, and it is not music-specific.</p>
 
 				<pre><code>local isl = kyri.island({
     title = "my script",
@@ -973,14 +973,14 @@ isl:notify("saved", 2)</code></pre>
 						<tr><td>draggable</td><td>bool</td><td><code>true</code></td><td>drag to reposition</td></tr>
 						<tr><td>hover</td><td>bool</td><td><code>false</code></td><td>expand on hover instead of on tap only</td></tr>
 						<tr><td>y</td><td>number</td><td>10</td><td>offset from the top of the screen</td></tr>
-						<tr><td>position</td><td>UDim2</td><td>—</td><td>absolute position, overrides the top-center anchor</td></tr>
-						<tr><td>on_seek</td><td>function</td><td>—</td><td><code>fn(pct)</code> where pct is 0-1</td></tr>
-						<tr><td>on_volume</td><td>function</td><td>—</td><td><code>fn(percent)</code> where percent is 0-100</td></tr>
-						<tr><td>on_toggle</td><td>function</td><td>—</td><td><code>fn(expanded)</code></td></tr>
+						<tr><td>position</td><td>UDim2</td><td>none</td><td>absolute position, overrides the top-center anchor</td></tr>
+						<tr><td>on_seek</td><td>function</td><td>none</td><td><code>fn(pct)</code> where pct is 0-1</td></tr>
+						<tr><td>on_volume</td><td>function</td><td>none</td><td><code>fn(percent)</code> where percent is 0-100</td></tr>
+						<tr><td>on_toggle</td><td>function</td><td>none</td><td><code>fn(expanded)</code></td></tr>
 						<tr><td>remember</td><td>bool</td><td><code>true</code></td><td>restore the position you last dragged it to</td></tr>
-						<tr><td>body_height</td><td>number</td><td>—</td><td>adds <code>isl.body</code>, a fixed-height frame you fill yourself</td></tr>
-						<tr><td>total_height</td><td>number</td><td>—</td><td>sizes <code>isl.body</code> so the whole open island lands on this height</td></tr>
-						<tr><td>on_close</td><td>function</td><td>—</td><td>adds a quit button beside the collapse X</td></tr>
+						<tr><td>body_height</td><td>number</td><td>none</td><td>adds <code>isl.body</code>, a fixed-height frame you fill yourself</td></tr>
+						<tr><td>total_height</td><td>number</td><td>none</td><td>sizes <code>isl.body</code> so the whole open island lands on this height</td></tr>
+						<tr><td>on_close</td><td>function</td><td>none</td><td>adds a quit button beside the collapse X</td></tr>
 						<tr><td>id</td><td>string</td><td><code>"main"</code></td><td>which slot in <code>island.json</code> holds this island's position</td></tr>
 					</tbody>
 				</table>
@@ -1103,7 +1103,7 @@ w.flags.ws_set(100, true)</code></pre>
 			<section id="spotify">
 				<h2>spotify</h2>
 
-				<p>control real Spotify playback from in-game. one call wires up the island, the tabs, the auth flow and the polling loop — you do not write any of it:</p>
+				<p>control real Spotify playback from in-game. one call wires up the island, the tabs, the auth flow and the polling loop - you do not write any of it:</p>
 
 				<pre><code>local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
 
@@ -1122,20 +1122,20 @@ local sp = w:spotify({ commands = true })</code></pre>
 					<tbody>
 						<tr><td>island</td><td>bool</td><td><code>true</code></td><td>show the island with transport controls</td></tr>
 						<tr><td>tabs</td><td>bool</td><td><code>true</code></td><td>build Now Playing, Search and Auth tabs</td></tr>
-						<tr><td>window</td><td>window</td><td>—</td><td>build tabs on this window instead of creating one</td></tr>
+						<tr><td>window</td><td>window</td><td>none</td><td>build tabs on this window instead of creating one</td></tr>
 						<tr><td>commands</td><td>bool</td><td><code>false</code></td><td>enable <code>!sp</code> chat commands</td></tr>
 						<tr><td>client_id</td><td>string</td><td>built-in</td><td>use your own Spotify app</td></tr>
-						<tr><td>on_track</td><td>function</td><td>—</td><td><code>fn(track)</code> when the track changes</td></tr>
-						<tr><td>island_y / island_width / island_position / island_hover</td><td>—</td><td>—</td><td>passed through to the island</td></tr>
+						<tr><td>on_track</td><td>function</td><td>none</td><td><code>fn(track)</code> when the track changes</td></tr>
+						<tr><td>island_y / island_width / island_position / island_hover</td><td>none</td><td>none</td><td>passed through to the island</td></tr>
 					</tbody>
 				</table>
 
 				<h3>connecting</h3>
-				<p>once per machine — the refresh token is saved to <code>KyriLib/spotify/tokens.json</code> and reused from then on.</p>
+				<p>once per machine - the refresh token is saved to <code>KyriLib/spotify/tokens.json</code> and reused from then on.</p>
 				<ol>
 					<li>open the <strong>Auth</strong> tab and click <em>copy auth url</em></li>
 					<li>paste it in a browser and approve</li>
-					<li>the callback page fails to load — that is expected, there is no local server</li>
+					<li>the callback page fails to load - that is expected, there is no local server</li>
 					<li>copy the whole url from the address bar</li>
 					<li>paste it in the input and hit submit</li>
 				</ol>
@@ -1182,13 +1182,13 @@ sp.island    sp.window</code></pre>
 
 				<div class="admonition admonition-warning">
 					<div class="admonition-title">executor requirements</div>
-					<p>Needs <code>request</code> or <code>http_request</code> for the Spotify Web API, <code>writefile</code> to persist tokens, and <code>getcustomasset</code> for album art. Playback also needs an active Spotify device — open Spotify on any device first, otherwise the API has nothing to control.</p>
+					<p>Needs <code>request</code> or <code>http_request</code> for the Spotify Web API, <code>writefile</code> to persist tokens, and <code>getcustomasset</code> for album art. Playback also needs an active Spotify device - open Spotify on any device first, otherwise the API has nothing to control.</p>
 				</div>
 			</section>
 
 			<section id="key-system">
 				<h2>key system</h2>
-				<p>gate your script behind a key before the window loads. pass <code>KeySystem</code> and <code>KeySettings</code> to <code>kyri.new</code>. if the user closes the dialog without a valid key, <code>kyri.new</code> returns <code>nil</code> — always guard your code.</p>
+				<p>gate your script behind a key before the window loads. pass <code>KeySystem</code> and <code>KeySettings</code> to <code>kyri.new</code>. if the user closes the dialog without a valid key, <code>kyri.new</code> returns <code>nil</code> - always guard your code.</p>
 
 				<pre><code>local w = kyri.new("my script", {
     GameName = "MyGame",
@@ -1211,7 +1211,7 @@ if not w then return end</code></pre>
 						<tr><th>value</th><th>behaviour</th></tr>
 					</thead>
 					<tbody>
-						<tr><td><code>"Once"</code></td><td>saves the accepted key to disk — dialog is skipped on future runs. if the owner updates the <code>Key</code> list, the saved key becomes invalid and the dialog shows again automatically</td></tr>
+						<tr><td><code>"Once"</code></td><td>saves the accepted key to disk - dialog is skipped on future runs. if the owner updates the <code>Key</code> list, the saved key becomes invalid and the dialog shows again automatically</td></tr>
 						<tr><td><code>"Everytime"</code></td><td>always shows the dialog, never saves the key</td></tr>
 					</tbody>
 				</table>
@@ -1233,7 +1233,7 @@ if not w then return end</code></pre>
 
 				<div class="admonition admonition-info">
 					<div class="admonition-title">key expiry</div>
-					<p>in <code>"Once"</code> mode, the saved key is validated against your current <code>Key</code> list on every run. changing or removing a key in your script immediately invalidates any saved copies — users will see the dialog again on their next run.</p>
+					<p>in <code>"Once"</code> mode, the saved key is validated against your current <code>Key</code> list on every run. changing or removing a key in your script immediately invalidates any saved copies - users will see the dialog again on their next run.</p>
 				</div>
 			</section>
 
@@ -1311,23 +1311,10 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 				border-radius: 12px;
 				display: flex;
 				flex-direction: column;
-				box-shadow: 0 0 0 1px var(--bor), 0 32px 80px rgba(0,0,0,.7);
 				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 				position: relative;
 				overflow: hidden;
 				flex-shrink: 0;
-				transition: box-shadow .3s;
-			}
-			/* glow behind window */
-			.kd::before {
-				content: '';
-				position: absolute;
-				inset: -1px;
-				border-radius: 13px;
-				box-shadow: 0 0 60px 10px color-mix(in srgb, var(--acc) 18%, transparent);
-				pointer-events: none;
-				z-index: 0;
-				transition: box-shadow .3s;
 			}
 			/* topbar */
 			.kd-top {
@@ -1335,24 +1322,28 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 				background: var(--con);
 				display: flex;
 				align-items: center;
-				padding: 0 14px 0 8px;
+				padding: 0 15px 0 14px;
 				flex-shrink: 0;
 				position: relative;
 				z-index: 1;
+				gap: 10px;
 			}
-			.kd-acbar {
-				width: 3px;
-				height: 24px;
-				background: var(--acc);
-				border-radius: 99px;
-				margin: 14px 10px 14px 8px;
+			.kd-badge {
+				width: 26px;
+				height: 26px;
+				border-radius: 8px;
+				background: color-mix(in srgb, var(--acc) 16%, transparent);
+				color: var(--acc);
+				font-size: 14px;
+				font-weight: 700;
+				display: flex; align-items: center; justify-content: center;
 				flex-shrink: 0;
-				transition: background .3s;
+				transition: background .3s, color .3s;
 			}
 			.kd-title {
 				flex: 1;
 				color: var(--txt);
-				font-size: 15px;
+				font-size: 17px;
 				font-weight: 700;
 				letter-spacing: -.01em;
 				transition: color .3s;
@@ -1364,9 +1355,12 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 				cursor: pointer;
 				transition: opacity .2s;
 				display: flex; align-items: center; justify-content: center;
+				flex-shrink: 0;
 			}
 			.kd-min:hover { opacity: .8; }
 			.kd-min svg { width: 14px; height: 14px; stroke: var(--txt); stroke-width: 2; fill: none; }
+			.kd-min.x { margin-left: 10px; }
+			.kd-min.x svg { width: 13px; height: 13px; }
 			/* body */
 			.kd-body {
 				display: flex;
@@ -1669,23 +1663,193 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 			.kd-nf-t    { font-size: 12px; font-weight: 700; color: var(--txt); transition: color .3s; }
 			.kd-nf-m    { font-size: 11px; color: var(--sub); margin-top: 1px; transition: color .3s; }
 			.kd-nf-prog { height: 2px; background: var(--acc); transition: background .3s; margin-top: 4px; }
+			/* ---- island shell ---- */
+			.ki {
+				--bg:        #08080a;
+				--con:       #0e0e12;
+				--el:        #14141a;
+				--hov:       #1c1c24;
+				--act:       #20202a;
+				--acc:       #8a74f9;
+				--txt:       #f5f5fa;
+				--sub:       #a5a5b4;
+				--bor:       #202028;
+				width: 230px;
+				height: 38px;
+				background: #070709;
+				border: 1px solid color-mix(in srgb, var(--bor) 70%, transparent);
+				border-radius: 19px;
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				position: relative;
+				overflow: hidden;
+				flex-shrink: 0;
+				cursor: pointer;
+				transition: width .34s cubic-bezier(.22,1,.36,1), height .34s cubic-bezier(.22,1,.36,1), border-radius .3s;
+			}
+			.ki.open {
+				width: 370px;
+				height: 430px;
+				border-radius: 22px;
+				cursor: default;
+			}
+			/* collapsed pill */
+			.ki-pill {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				padding: 0 7px;
+				gap: 8px;
+				opacity: 1;
+				transition: opacity .18s;
+			}
+			.ki.open .ki-pill { opacity: 0; pointer-events: none; }
+			.ki-tile {
+				width: 24px; height: 24px;
+				border-radius: 7px;
+				background: var(--el);
+				display: flex; align-items: center; justify-content: center;
+				flex-shrink: 0;
+				transition: background .3s;
+			}
+			.ki-tile svg { width: 13px; height: 13px; stroke: var(--sub); stroke-width: 2; fill: none; }
+			.ki-pill-t {
+				flex: 1;
+				color: var(--txt);
+				font-size: 13px;
+				font-weight: 500;
+				white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+				transition: color .3s;
+			}
+			.ki-chev { width: 14px; height: 14px; opacity: .65; flex-shrink: 0; margin-right: 5px; }
+			.ki-chev svg { width: 14px; height: 14px; stroke: var(--sub); stroke-width: 2; fill: none; }
+			/* expanded panel */
+			.ki-panel {
+				position: absolute;
+				inset: 0;
+				padding: 14px;
+				display: flex;
+				flex-direction: column;
+				gap: 11px;
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity .26s;
+			}
+			.ki.open .ki-panel { opacity: 1; pointer-events: all; }
+			.ki-head { height: 52px; display: flex; gap: 12px; flex-shrink: 0; position: relative; }
+			.ki-art {
+				width: 52px; height: 52px;
+				border-radius: 10px;
+				background: var(--el);
+				display: flex; align-items: center; justify-content: center;
+				flex-shrink: 0;
+				transition: background .3s;
+			}
+			.ki-art svg { width: 20px; height: 20px; stroke: var(--sub); stroke-width: 2; fill: none; }
+			.ki-htxt { flex: 1; padding-top: 4px; min-width: 0; }
+			.ki-ht { color: var(--txt); font-size: 15px; font-weight: 700; letter-spacing: -.01em; transition: color .3s; }
+			.ki-hs { color: var(--sub); font-size: 12px; margin-top: 3px; transition: color .3s; }
+			.ki-hbtns { display: flex; gap: 8px; align-items: flex-start; padding-top: 6px; }
+			.ki-hb {
+				width: 20px; height: 20px;
+				opacity: .5;
+				cursor: pointer;
+				display: flex; align-items: center; justify-content: center;
+				transition: opacity .2s;
+			}
+			.ki-hb:hover { opacity: .9; }
+			.ki-hb svg { width: 15px; height: 15px; stroke: var(--sub); stroke-width: 2; fill: none; }
+			/* chip tab strip */
+			.ki-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+			.ki-strip {
+				height: 28px;
+				display: flex;
+				gap: 6px;
+				flex-shrink: 0;
+				overflow-x: auto;
+				scrollbar-width: none;
+				margin-bottom: 10px;
+			}
+			.ki-strip::-webkit-scrollbar { display: none; }
+			.ki-tb {
+				height: 28px;
+				background: var(--el);
+				border-radius: 8px;
+				display: flex;
+				align-items: center;
+				gap: 7px;
+				padding: 0 13px 0 11px;
+				cursor: pointer;
+				color: var(--sub);
+				font-size: 13px;
+				font-weight: 500;
+				white-space: nowrap;
+				flex-shrink: 0;
+				position: relative;
+				overflow: hidden;
+				transition: background .15s, color .15s;
+			}
+			.ki-tb:hover { background: var(--hov); color: var(--txt); }
+			.ki-tb.on { background: var(--hov); color: var(--txt); }
+			.ki-tb svg { width: 15px; height: 15px; stroke: currentColor; stroke-width: 2; fill: none; opacity: .7; }
+			.ki-tb.on svg { opacity: 1; }
+			.ki-ind {
+				position: absolute;
+				left: 0; bottom: 0;
+				height: 2px; width: 0;
+				background: var(--acc);
+				transition: width .2s, background .3s;
+			}
+			.ki-tb.on .ki-ind { width: 100%; }
+			/* mode switch */
+			.kd-modes {
+				display: flex;
+				gap: 6px;
+				justify-content: center;
+				margin-bottom: 16px;
+			}
+			.kd-mode {
+				font: inherit;
+				font-size: 13px;
+				padding: 6px 14px;
+				border-radius: 8px;
+				border: 1px solid var(--border, #202028);
+				background: transparent;
+				color: inherit;
+				opacity: .6;
+				cursor: pointer;
+				transition: opacity .2s, border-color .2s;
+			}
+			.kd-mode:hover { opacity: .9; }
+			.kd-mode.on { opacity: 1; border-color: #8a74f9; color: #8a74f9; }
+			.kd-stage { display: flex; justify-content: center; align-items: flex-start; min-height: 440px; }
 			@media (max-width: 620px) {
 				.kd { width: 100%; height: 380px; }
+				.ki.open { width: 100%; height: 420px; }
+				.kd-stage { min-height: 430px; }
 			}
 			</style>
 
-			<div class="kd-wrap">
+			<div class="kd-modes">
+				<button class="kd-mode on" data-mode="window">window</button>
+				<button class="kd-mode" data-mode="island">island</button>
+			</div>
+
+			<div class="kd-wrap kd-stage">
 				<div class="kd" id="kd">
 					<!-- topbar -->
 					<div class="kd-top">
-						<div class="kd-acbar" id="kdAcbar"></div>
+						<div class="kd-badge" id="kdBadge">D</div>
 						<div class="kd-title">demo script</div>
-						<div class="kd-min">
+						<div class="kd-min" title="minimise">
 							<svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+						</div>
+						<div class="kd-min x" title="close">
+							<svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
 						</div>
 					</div>
 					<!-- body -->
-					<div class="kd-body">
+					<div class="kd-body" id="kdBody">
 						<!-- sidebar -->
 						<div class="kd-sb" id="kdSb">
 							<div class="kd-tb on" data-pg="main">
@@ -1705,7 +1869,7 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 							</div>
 						</div>
 						<!-- content -->
-						<div class="kd-con">
+						<div class="kd-con" id="kdCon">
 							<!-- main page -->
 							<div class="kd-pg on" id="kpg-main">
 								<div class="kd-sec"><div class="kd-sec-line"></div><span class="kd-sec-lbl">movement</span></div>
@@ -1786,6 +1950,58 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 					<!-- notification container -->
 					<div class="kd-nfs" id="kdNfs"></div>
 				</div>
+
+				<!-- island shell: the same pages, different chrome -->
+				<div class="ki" id="ki" style="display:none">
+					<div class="ki-pill" id="kiPill">
+						<div class="ki-tile">
+							<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+						</div>
+						<div class="ki-pill-t">demo script</div>
+						<div class="ki-chev">
+							<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+						</div>
+					</div>
+					<div class="ki-panel">
+						<div class="ki-head">
+							<div class="ki-art">
+								<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+							</div>
+							<div class="ki-htxt">
+								<div class="ki-ht">demo script</div>
+								<div class="ki-hs">3 tabs</div>
+							</div>
+							<div class="ki-hbtns">
+								<div class="ki-hb" title="close the script">
+									<svg viewBox="0 0 24 24"><path d="M18.36 6.64A9 9 0 1 1 5.64 6.64M12 2v10"/></svg>
+								</div>
+								<div class="ki-hb" id="kiCollapse" title="collapse">
+									<svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+								</div>
+							</div>
+						</div>
+						<div class="ki-body">
+							<div class="ki-strip" id="kiStrip">
+								<div class="ki-tb on" data-pg="main">
+									<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+									Main
+									<div class="ki-ind"></div>
+								</div>
+								<div class="ki-tb" data-pg="visual">
+									<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+									Themes
+									<div class="ki-ind"></div>
+								</div>
+								<div class="ki-tb" data-pg="misc">
+									<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+									Misc
+									<div class="ki-ind"></div>
+								</div>
+							</div>
+							<!-- kdCon is moved in here when island mode is active -->
+						</div>
+					</div>
+				</div>
 			</div>
 
 			<script>
@@ -1802,35 +2018,38 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 				function applyTheme(name) {
 					const t = themes[name];
 					for (const [k,v] of Object.entries(t)) W.style.setProperty('--'+k, v);
-					W.querySelectorAll('.kd-sec-lbl').forEach(el => el.style.background = t.bg);
+					const isl = document.getElementById('ki');
+					for (const k in t) isl.style.setProperty('--' + k, t[k]);
+					document.querySelectorAll('.kd-sec-lbl').forEach(el => el.style.background = t.bg);
 					const acc = document.getElementById('kdAcc');
 					if (acc) acc.value = t.acc;
 				}
 
 				window.kdTheme = function(name, el) {
 					applyTheme(name);
-					W.querySelectorAll('.kd-th-btn').forEach(b => b.classList.remove('on'));
+					document.querySelectorAll('.kd-th-btn').forEach(b => b.classList.remove('on'));
 					el.classList.add('on');
 					kdNotify('theme', name + ' applied', 2);
 				};
 
 				window.kdAccent = function(hex) {
 					W.style.setProperty('--acc', hex);
-					W.querySelectorAll('.kd-th-btn').forEach(b => b.classList.remove('on'));
+					document.getElementById('ki').style.setProperty('--acc', hex);
+					document.querySelectorAll('.kd-th-btn').forEach(b => b.classList.remove('on'));
 				};
 
 				// tabs
-				W.querySelectorAll('.kd-tb').forEach(btn => {
+				document.querySelectorAll('.kd-tb, .ki-tb').forEach(btn => {
 					btn.addEventListener('click', () => {
-						W.querySelectorAll('.kd-tb').forEach(b => b.classList.remove('on'));
-						W.querySelectorAll('.kd-pg').forEach(p => p.classList.remove('on'));
-						btn.classList.add('on');
-						document.getElementById('kpg-'+btn.dataset.pg).classList.add('on');
+						const pg = btn.dataset.pg;
+						document.querySelectorAll('.kd-tb, .ki-tb').forEach(b => b.classList.toggle('on', b.dataset.pg === pg));
+						document.querySelectorAll('.kd-pg').forEach(p => p.classList.remove('on'));
+						document.getElementById('kpg-'+pg).classList.add('on');
 					});
 				});
 
 				// toggles
-				W.querySelectorAll('.kd-tog').forEach(tog => {
+				document.querySelectorAll('.kd-tog').forEach(tog => {
 					tog.addEventListener('click', () => tog.classList.toggle('on'));
 				});
 
@@ -1926,6 +2145,33 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 					n.addEventListener('click', dismiss);
 					setTimeout(dismiss, dur*1000);
 				};
+
+				// island shell: same pages, different chrome
+				const I = document.getElementById('ki');
+				const con = document.getElementById('kdCon');
+				const nfs = document.getElementById('kdNfs');
+				const kdBody = document.getElementById('kdBody');
+				const kiBody = I.querySelector('.ki-body');
+
+				function setMode(mode) {
+					const island = mode === 'island';
+					document.querySelectorAll('.kd-mode').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+					W.style.display = island ? 'none' : 'flex';
+					I.style.display = island ? 'block' : 'none';
+					(island ? kiBody : kdBody).appendChild(con);
+					(island ? I : W).appendChild(nfs);
+					if (!island) I.classList.remove('open');
+				}
+
+				document.querySelectorAll('.kd-mode').forEach(b => {
+					b.addEventListener('click', () => setMode(b.dataset.mode));
+				});
+
+				document.getElementById('kiPill').addEventListener('click', () => I.classList.add('open'));
+				document.getElementById('kiCollapse').addEventListener('click', e => {
+					e.stopPropagation();
+					I.classList.remove('open');
+				});
 
 				// animate progress bar on load
 				setTimeout(() => {

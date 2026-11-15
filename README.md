@@ -74,11 +74,11 @@ main:toggle("fly", false, function(s) end, "fly")
 ```
 
 `window` is the classic layout: a 520x400 frame with a tab sidebar, resizable from the
-bottom-right corner. `island` is a `kyri.island` — the same pill the Spotify integration uses
-— with the tab strip and pages living in its body, so it collapses to a 230x38 pill and
-expands into a 370x430 panel.
+bottom-right corner. `island` is a `kyri.island`, the same pill the Spotify integration uses,
+with the tab strip and pages living in its body, so it collapses to a 230x38 pill and expands
+into a 370x430 panel.
 
-Every `w:tab` and element call is identical in both — nothing in your script changes but the
+Every `w:tab` and element call is identical in both - nothing in your script changes but the
 one option. Touch devices default to the island because the sidebar leaves only ~190px of
 usable width on a phone; pass `Mode = "window"` to opt back out.
 
@@ -116,12 +116,12 @@ w:spotify({ island = true })
 ```
 
 Islands created in the same run stack instead of replacing each other, so the second pill steps
-down a row rather than landing on the first. Each remembers its own position — `island.json` is
+down a row rather than landing on the first. Each remembers its own position - `island.json` is
 keyed by `id`, with `"hub"` and `"spotify"` for the two built-in ones.
 
 In island mode `w:resetpos()` clears the island's saved position; in window mode it clears the
 window's position and size. Window mode has a close button in the topbar, island mode has one
-beside the collapse X — both call `w:destroy()`.
+beside the collapse X - both call `w:destroy()`.
 
 `kyri.presets` contains built-in themes: `kyri`, `midnight`, `rose`, `forest`, `slate`
 
@@ -225,7 +225,7 @@ tab:search(placeholder) -- filter box, hides elements on this tab that don't mat
 
 ### Island
 
-A floating pill at the top of the screen that expands into a panel — a dynamic island. It is
+A floating pill at the top of the screen that expands into a panel - a dynamic island. It is
 standalone: it works with or without a window.
 
 ```lua
@@ -255,14 +255,14 @@ isl:notify("saved", 2)
 | `draggable` | bool | `true` | drag to reposition (a tap under 6px still opens it) |
 | `hover` | bool | `false` | expand on hover instead of only on tap |
 | `y` | number | `10` | offset from the top |
-| `position` | UDim2 | — | absolute position, overrides the top-center anchor |
-| `on_seek` | function | — | `fn(pct)` where pct is 0-1 |
-| `on_volume` | function | — | `fn(percent)` where percent is 0-100 |
-| `on_toggle` | function | — | `fn(expanded)` |
+| `position` | UDim2 | none | absolute position, overrides the top-center anchor |
+| `on_seek` | function | none | `fn(pct)` where pct is 0-1 |
+| `on_volume` | function | none | `fn(percent)` where percent is 0-100 |
+| `on_toggle` | function | none | `fn(expanded)` |
 | `remember` | bool | `true` | restore the position you last dragged it to |
-| `body_height` | number | — | adds `isl.body`, a fixed-height frame you fill yourself |
-| `total_height` | number | — | sizes `isl.body` so the whole open island lands on this height |
-| `on_close` | function | — | adds a quit button beside the collapse X |
+| `body_height` | number | none | adds `isl.body`, a fixed-height frame you fill yourself |
+| `total_height` | number | none | sizes `isl.body` so the whole open island lands on this height |
+| `on_close` | function | none | adds a quit button beside the collapse X |
 | `id` | string | `"main"` | which slot in `island.json` holds this island's position |
 
 **Methods:**
@@ -284,7 +284,7 @@ the drag. From a window, `w:island(opts)` does the same thing and inherits the w
 ### Spotify
 
 Control real Spotify playback. One call wires up the island, the tabs, the auth flow and the polling
-loop — you do not write any of it:
+loop - you do not write any of it:
 
 ```lua
 kyri.spotify()
@@ -302,13 +302,13 @@ local sp = w:spotify({ commands = true })
 |-----|------|---------|-------------|
 | `island` | bool | `true` | show the island with transport controls |
 | `tabs` | bool | `true` | build Now Playing / Search / Auth tabs |
-| `window` | window | — | build tabs on this window instead of creating one |
+| `window` | window | none | build tabs on this window instead of creating one |
 | `commands` | bool | `false` | enable `!sp` chat commands |
 | `client_id` | string | built-in | use your own Spotify app |
-| `on_track` | function | — | `fn(track)` when the track changes |
-| `island_y`, `island_width`, `island_position`, `island_hover` | — | — | passed through to the island |
+| `on_track` | function | none | `fn(track)` when the track changes |
+| `island_y`, `island_width`, `island_position`, `island_hover` | none | - | passed through to the island |
 
-**Connecting** (once per machine — the refresh token is saved to `KyriLib/spotify/tokens.json`):
+**Connecting** (once per machine - the refresh token is saved to `KyriLib/spotify/tokens.json`):
 
 1. open the **Auth** tab, click *copy auth url*
 2. paste it in a browser and approve
