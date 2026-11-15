@@ -539,6 +539,7 @@ sp:devices()                   -- list of connected devices
 sp:transfer(id, play)          -- move playback to a device id
 sp:playlists(limit)            -- your playlists
 sp:playcontext(uri)            -- play a playlist or album uri
+sp.device_id                   -- the device plays are sent to, learned from sync
 sp:lyrics()                    -- lrclib lookup, {plain, synced, instrumental} or nil
 sp:sync()                 -- force a refresh now
 sp:authed()

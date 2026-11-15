@@ -1571,6 +1571,7 @@ function kyri.spotify(opts)
     sp.track = nil
     sp.results = {}
     sp.lyric_offset = 0
+    sp.device_id = nil
 
     local CID = opts.client_id or "035b9c837a6f46ffaffce6ada163a6ad"
     local REDIR = opts.redirect or "http://127.0.0.1:8888/callback"
@@ -1826,19 +1827,37 @@ function kyri.spotify(opts)
         return sp.my_playlists
     end
 
-    function sp:playcontext(uri)
-        if not uri then return false end
-        local r = api("PUT", "/me/player/play", {context_uri = uri})
+    local function target()
+        if not sp.device_id then
+            local list = sp:devices()
+            for i,d in pairs(list) do
+                if d.is_active then sp.device_id = d.id break end
+            end
+            if not sp.device_id and list[1] then sp.device_id = list[1].id end
+        end
+        return sp.device_id and ("?device_id=" .. sp.device_id) or ""
+    end
+
+    local function start(body)
+        local r = api("PUT", "/me/player/play" .. target(), body)
+        if r and (r.StatusCode == 404 or r.StatusCode == 403) then
+            sp.device_id = nil
+            local t = target()
+            if t ~= "" then r = api("PUT", "/me/player/play" .. t, body) end
+        end
         cur_id = ""
         task.delay(0.4, function() sp:sync() end)
-        return report(r, "play")
+        return r
+    end
+
+    function sp:playcontext(uri)
+        if not uri then return false end
+        return report(start({context_uri = uri}), "play")
     end
 
     function sp:playuri(uri)
-        local r = api("PUT", "/me/player/play", {uris = {uri}})
-        cur_id = ""
-        task.delay(0.4, function() sp:sync() end)
-        return report(r, "play")
+        if not uri then return false end
+        return report(start({uris = {uri}}), "play")
     end
 
     function sp:queue(uri)
@@ -1847,6 +1866,7 @@ function kyri.spotify(opts)
 
     function sp:transfer(id, play)
         if not id then return false end
+        sp.device_id = id
         local r = api("PUT", "/me/player", {device_ids = {id}, play = play ~= false})
         cur_id = ""
         task.delay(0.6, function() sp:sync() end)
@@ -1995,7 +2015,10 @@ function kyri.spotify(opts)
         sp.playing = d.is_playing and true or false
         sp.pos = math.floor((d.progress_ms or 0) / 1000)
         sp.dur = math.floor((d.item.duration_ms or 0) / 1000)
-        if d.device and d.device.volume_percent then sp.vol = d.device.volume_percent end
+        if d.device then
+            if d.device.id then sp.device_id = d.device.id end
+            if d.device.volume_percent then sp.vol = d.device.volume_percent end
+        end
         if d.shuffle_state ~= nil then sp.shuffle = d.shuffle_state end
         if d.repeat_state then sp.loop = d.repeat_state end
 
