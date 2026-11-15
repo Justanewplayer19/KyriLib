@@ -1540,11 +1540,14 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 				overflow-y: auto;
 				overflow-x: hidden;
 				padding: 6px 12px 12px 2px;
-				scrollbar-width: thin;
-				scrollbar-color: var(--acc) transparent;
+				scrollbar-width: none;
 			}
 			.kd-con::-webkit-scrollbar { width: 3px; }
-			.kd-con::-webkit-scrollbar-thumb { background: var(--acc); border-radius: 99px; }
+			.kd-con::-webkit-scrollbar-track { background: transparent; }
+			.kd-con::-webkit-scrollbar-thumb {
+				background: color-mix(in srgb, var(--acc) 70%, transparent);
+				border-radius: 99px;
+			}
 			.kd-pg { display: none; flex-direction: column; gap: 7px; }
 			.kd-pg.on { display: flex; }
 			/* section divider */
@@ -2274,7 +2277,6 @@ misc:button("default", function() w:apply_theme(kyri.presets["kyri"]) end)</code
 				// island shell: same pages, different chrome
 				const I = document.getElementById('ki');
 				const con = document.getElementById('kdCon');
-				const nfs = document.getElementById('kdNfs');
 				const kdBody = document.getElementById('kdBody');
 				const kiBody = I.querySelector('.ki-body');
 
