@@ -2278,7 +2278,7 @@ function kyri.spotify(opts)
 
     function sp:lyrics()
         if not sp.track or not sp.track.name then return nil end
-        local id = sp.track.id or sp.track.name
+        local id = (sp.track.id or sp.track.name) .. "|" .. tostring(sp.lyric_source)
 
         if sp.lyric_pick then
             local d = sp.lyric_pick
