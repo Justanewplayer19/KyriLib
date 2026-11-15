@@ -1272,7 +1272,14 @@ function kyri.spotify(opts)
         task.spawn(new_token)
     end
 
-    if opts.island ~= false then
+    -- an island-mode window is already a pill at the top of the screen, a second
+    -- one would land straight on top of it. opts.island = true forces both
+    local own_island = opts.island ~= false
+    if opts.island ~= true and opts.window and opts.window.mode == "island" then
+        own_island = false
+    end
+
+    if own_island then
         isl = kyri.island({
             title = sp.ready and "spotify" or "spotify · not connected",
             subtitle = "",
