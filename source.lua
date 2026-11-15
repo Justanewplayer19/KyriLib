@@ -1913,83 +1913,502 @@ function kyri.new(title, options)
     end
 
     local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1280, 720)
-    local win_w, win_h = 520, 400
-    if w.is_mobile then
-        win_w = math.clamp(math.floor(vp.X * 0.88), 270, 480)
-        win_h = math.clamp(math.floor(vp.Y * 0.6), 240, 400)
+
+    -- "island" collapses to a pill you click to open, "window" is the classic
+    -- sidebar layout. phones get the island by default, the sidebar eats too
+    -- much of a narrow screen to be usable
+    local mode = options.Mode
+    if mode ~= "island" and mode ~= "window" then
+        mode = w.is_mobile and "island" or "window"
     end
-    local side_w = w.is_mobile and 104 or 140
+    w.mode = mode
+    w.gui.IgnoreGuiInset = mode ~= "island"
 
-    local main = make("Frame", {
-        Name = rnd(),
-        Size = UDim2.fromOffset(win_w, win_h),
-        Position = UDim2.new(0.5, -win_w / 2, 0.5, -win_h / 2),
-        BackgroundColor3 = t.bg,
-        ClipsDescendants = true,
-        Parent = w.gui
-    })
+    local remember = options.Remember ~= false
+    local POS_FILE = "KyriLib/window.json"
 
-    make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = main})
-
-    -- inset from the corner: main clips to a 12px radius, so a flush handle
-    -- gets sliced diagonally by the rounding
-    local resize_handle = make("ImageButton", {
-        Size = UDim2.fromOffset(14, 14),
-        Position = UDim2.new(1, -8, 1, -8),
-        AnchorPoint = Vector2.new(1, 1),
-        BackgroundTransparency = 1,
-        Image = "rbxassetid://6023426962",
-        ImageColor3 = t.subtext,
-        ImageTransparency = 0.5,
-        ZIndex = 100,
-        Visible = not w.is_mobile,
-        Parent = main
-    })
-
-    local minimized = false
-    local pre_min_size = nil
-    local sidebar, content
-
-    if not w.is_mobile then
-        local resizing = false
-        local resize_start = nil
-        local size_start = nil
-        local min_size = Vector2.new(400, 300)
-
-        resize_handle.InputBegan:Connect(function(inp)
-            if minimized then return end
-            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-                resizing = true
-                resize_start = inp.Position
-                size_start = main.Size
-            end
+    local function read_pos()
+        if not remember or not isfile then return nil end
+        local d
+        pcall(function()
+            if isfile(POS_FILE) then d = kyri.svc.http:JSONDecode(readfile(POS_FILE)) end
         end)
+        if type(d) ~= "table" or type(d[mode]) ~= "table" then return nil end
+        return d[mode]
+    end
 
-        table.insert(conns, kyri.svc.inp.InputChanged:Connect(function(inp)
-            if resizing and inp.UserInputType == Enum.UserInputType.MouseMovement then
-                local delta = inp.Position - resize_start
-                local new_x = math.max(size_start.X.Offset + delta.X, min_size.X)
-                local new_y = math.max(size_start.Y.Offset + delta.Y, min_size.Y)
-                main.Size = UDim2.fromOffset(new_x, new_y)
+    local function write_pos(p, s)
+        if not remember or not writefile then return end
+        pcall(function()
+            local d = {}
+            if isfile and isfile(POS_FILE) then
+                local ok, got = pcall(function() return kyri.svc.http:JSONDecode(readfile(POS_FILE)) end)
+                if ok and type(got) == "table" then d = got end
             end
-        end))
-
-        table.insert(conns, kyri.svc.inp.InputEnded:Connect(function(inp)
-            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-                resizing = false
-            end
-        end))
-
-        resize_handle.MouseEnter:Connect(function()
-            kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.text, ImageTransparency = 0}):Play()
-        end)
-        resize_handle.MouseLeave:Connect(function()
-            kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.subtext, ImageTransparency = 0.5}):Play()
+            d[mode] = {x = p.X.Offset, y = p.Y.Offset, w = s and s.X.Offset, h = s and s.Y.Offset}
+            if isfolder and not isfolder("KyriLib") then makefolder("KyriLib") end
+            writefile(POS_FILE, kyri.svc.http:JSONEncode(d))
         end)
     end
 
-    -- no border stroke on main: against the near-black bg it reads as a faint
-    -- grey rim. the drop shadow below carries the edge separation instead.
+    local function fit(x, y, sw, sh)
+        return math.clamp(x, 0, math.max(vp.X - sw, 0)), math.clamp(y, 0, math.max(vp.Y - sh, 0))
+    end
+
+    local main, top, sidebar, content, tab_holder, tab_list
+    local ind_pos, ind_off, ind_on
+    local on_header_tap
+    local pos_adjust = function(p) return p end
+
+    if mode == "island" then
+        local pill_w, pill_h = 236, 40
+        local pan_w = w.is_mobile and math.clamp(math.floor(vp.X * 0.9), 260, 420) or 370
+        local pan_h = w.is_mobile and math.clamp(math.floor(vp.Y * 0.62), 300, 520) or 430
+
+        ind_pos = UDim2.new(0, 0, 1, -2)
+        ind_off = UDim2.new(0, 0, 0, 2)
+        ind_on = UDim2.new(1, 0, 0, 2)
+
+        local sv = read_pos()
+        local pos = UDim2.new(0.5, -pill_w / 2, 0, 12)
+        if sv then
+            local x, y = fit(sv.x, sv.y, pill_w, pill_h)
+            pos = UDim2.fromOffset(x, y)
+        end
+
+        main = make("Frame", {
+            Name = rnd(),
+            Size = UDim2.fromOffset(pill_w, pill_h),
+            Position = pos,
+            BackgroundColor3 = t.bg,
+            ClipsDescendants = true,
+            Parent = w.gui
+        })
+        make("UICorner", {CornerRadius = UDim.new(0, 14), Parent = main})
+
+        top = make("Frame", {
+            Size = UDim2.new(1, 0, 0, pill_h),
+            BackgroundColor3 = t.container,
+            Parent = main
+        })
+        make("UICorner", {CornerRadius = UDim.new(0, 14), Parent = top})
+
+        local top_fill = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 14),
+            Position = UDim2.new(0, 0, 1, -14),
+            BackgroundColor3 = t.container,
+            BorderSizePixel = 0,
+            Visible = false,
+            Parent = top
+        })
+
+        local badge = make("Frame", {
+            Size = UDim2.fromOffset(22, 22),
+            Position = UDim2.fromOffset(10, 9),
+            BackgroundColor3 = t.accent,
+            BackgroundTransparency = 0.84,
+            Parent = top
+        })
+        make("UICorner", {CornerRadius = UDim.new(0, 7), Parent = badge})
+        table.insert(w.accents, {obj = badge, prop = "BackgroundColor3"})
+
+        local badge_txt = make("TextLabel", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Text = (w.title or "k"):sub(1, 1):upper(),
+            TextColor3 = t.accent,
+            Font = Enum.Font.GothamBold,
+            TextSize = 12,
+            Parent = badge
+        })
+        table.insert(w.accents, {obj = badge_txt, prop = "TextColor3"})
+
+        local title_lbl = make("TextLabel", {
+            Size = UDim2.new(1, -108, 1, 0),
+            Position = UDim2.fromOffset(40, 0),
+            BackgroundTransparency = 1,
+            Text = w.title,
+            TextColor3 = t.text,
+            Font = Enum.Font.GothamBold,
+            TextSize = 15,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = top
+        })
+
+        local chev = make("ImageButton", {
+            Size = UDim2.fromOffset(16, 16),
+            Position = UDim2.new(1, -40, 0.5, 0),
+            AnchorPoint = Vector2.new(1, 0.5),
+            BackgroundTransparency = 1,
+            Image = ico("chevron-down") or "rbxassetid://7733717447",
+            ImageColor3 = t.subtext,
+            Parent = top
+        })
+
+        local close = make("ImageButton", {
+            Size = UDim2.fromOffset(15, 15),
+            Position = UDim2.new(1, -14, 0.5, 0),
+            AnchorPoint = Vector2.new(1, 0.5),
+            BackgroundTransparency = 1,
+            Image = ico("x") or "rbxassetid://7743878857",
+            ImageColor3 = t.subtext,
+            Parent = top
+        })
+
+        for i,b in pairs({chev, close}) do
+            b.MouseEnter:Connect(function()
+                play("hover")
+                kyri.svc.tw:Create(b, TweenInfo.new(0.2), {ImageColor3 = t.text}):Play()
+            end)
+            b.MouseLeave:Connect(function()
+                kyri.svc.tw:Create(b, TweenInfo.new(0.2), {ImageColor3 = t.subtext}):Play()
+            end)
+        end
+
+        local strip = make("Frame", {
+            Size = UDim2.new(1, -20, 0, 28),
+            Position = UDim2.fromOffset(10, pill_h + 6),
+            BackgroundTransparency = 1,
+            Visible = false,
+            Parent = main
+        })
+        sidebar = strip
+
+        tab_holder = make("ScrollingFrame", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            ScrollBarThickness = 0,
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            ScrollingDirection = Enum.ScrollingDirection.X,
+            Parent = strip
+        })
+
+        tab_list = make("UIListLayout", {
+            Padding = UDim.new(0, 6),
+            FillDirection = Enum.FillDirection.Horizontal,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Parent = tab_holder
+        })
+
+        tab_list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            tab_holder.CanvasSize = UDim2.new(0, tab_list.AbsoluteContentSize.X, 0, 0)
+        end)
+
+        content = make("Frame", {
+            Size = UDim2.new(1, -20, 1, -(pill_h + 46)),
+            Position = UDim2.fromOffset(10, pill_h + 42),
+            BackgroundTransparency = 1,
+            ClipsDescendants = true,
+            Visible = false,
+            Parent = main
+        })
+
+        local open = false
+        local dx = math.floor((pan_w - pill_w) / 2)
+        local ti = TweenInfo.new(0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+        local function set_open(v)
+            if open == v then return end
+            open = v
+            play("click")
+
+            local p = main.Position
+            local d = dx
+
+            if open then
+                top_fill.Visible = true
+                local nx = p.X.Offset - d
+                if p.X.Scale == 0 then nx = math.max(nx, 8) end
+                kyri.svc.tw:Create(main, ti, {
+                    Size = UDim2.fromOffset(pan_w, pan_h),
+                    Position = UDim2.new(p.X.Scale, nx, p.Y.Scale, p.Y.Offset)
+                }):Play()
+                task.delay(0.1, function()
+                    if open then
+                        strip.Visible = true
+                        content.Visible = true
+                    end
+                end)
+            else
+                strip.Visible = false
+                content.Visible = false
+                top_fill.Visible = false
+                kyri.svc.tw:Create(main, ti, {
+                    Size = UDim2.fromOffset(pill_w, pill_h),
+                    Position = UDim2.new(p.X.Scale, p.X.Offset + d, p.Y.Scale, p.Y.Offset)
+                }):Play()
+            end
+
+            kyri.svc.tw:Create(chev, TweenInfo.new(0.25), {Rotation = open and 180 or 0}):Play()
+        end
+
+        chev.MouseButton1Click:Connect(function() set_open(not open) end)
+        close.MouseButton1Click:Connect(function()
+            play("click")
+            w:destroy()
+        end)
+
+        on_header_tap = function() set_open(not open) end
+
+        -- the panel grows left of the pill, so a position saved while open
+        -- would drift the pill on the next run
+        pos_adjust = function(p)
+            if not open then return p end
+            return UDim2.new(p.X.Scale, p.X.Offset + dx, p.Y.Scale, p.Y.Offset)
+        end
+
+        w.expand = function() set_open(true) end
+        w.collapse = function() set_open(false) end
+        w.expanded = function() return open end
+    else
+        local win_w, win_h = 520, 400
+        if w.is_mobile then
+            win_w = math.clamp(math.floor(vp.X * 0.88), 270, 480)
+            win_h = math.clamp(math.floor(vp.Y * 0.6), 240, 400)
+        end
+        local side_w = w.is_mobile and 104 or 140
+
+        ind_pos = UDim2.new(1, 0, 0, 0)
+        ind_off = UDim2.new(0, 0, 0, 38)
+        ind_on = UDim2.new(0, 3, 0, 38)
+
+        local sv = read_pos()
+        if sv and sv.w and sv.h then
+            win_w = math.clamp(sv.w, 400, math.max(math.floor(vp.X), 400))
+            win_h = math.clamp(sv.h, 300, math.max(math.floor(vp.Y), 300))
+        end
+        local pos = UDim2.new(0.5, -win_w / 2, 0.5, -win_h / 2)
+        if sv then
+            local x, y = fit(sv.x, sv.y, win_w, win_h)
+            pos = UDim2.fromOffset(x, y)
+        end
+
+        main = make("Frame", {
+            Name = rnd(),
+            Size = UDim2.fromOffset(win_w, win_h),
+            Position = pos,
+            BackgroundColor3 = t.bg,
+            ClipsDescendants = true,
+            Parent = w.gui
+        })
+
+        make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = main})
+
+        -- inset from the corner: main clips to a 12px radius, so a flush handle
+        -- gets sliced diagonally by the rounding
+        local resize_handle = make("ImageButton", {
+            Size = UDim2.fromOffset(14, 14),
+            Position = UDim2.new(1, -8, 1, -8),
+            AnchorPoint = Vector2.new(1, 1),
+            BackgroundTransparency = 1,
+            Image = "rbxassetid://6023426962",
+            ImageColor3 = t.subtext,
+            ImageTransparency = 0.5,
+            ZIndex = 100,
+            Visible = not w.is_mobile,
+            Parent = main
+        })
+
+        local minimized = false
+        local pre_min_size = nil
+
+        if not w.is_mobile then
+            local resizing = false
+            local resize_start = nil
+            local size_start = nil
+            local min_size = Vector2.new(400, 300)
+
+            resize_handle.InputBegan:Connect(function(inp)
+                if minimized then return end
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                    resizing = true
+                    resize_start = inp.Position
+                    size_start = main.Size
+                end
+            end)
+
+            table.insert(conns, kyri.svc.inp.InputChanged:Connect(function(inp)
+                if resizing and inp.UserInputType == Enum.UserInputType.MouseMovement then
+                    local delta = inp.Position - resize_start
+                    local new_x = math.max(size_start.X.Offset + delta.X, min_size.X)
+                    local new_y = math.max(size_start.Y.Offset + delta.Y, min_size.Y)
+                    main.Size = UDim2.fromOffset(new_x, new_y)
+                end
+            end))
+
+            table.insert(conns, kyri.svc.inp.InputEnded:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if resizing then write_pos(main.Position, main.Size) end
+                    resizing = false
+                end
+            end))
+
+            resize_handle.MouseEnter:Connect(function()
+                kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.text, ImageTransparency = 0}):Play()
+            end)
+            resize_handle.MouseLeave:Connect(function()
+                kyri.svc.tw:Create(resize_handle, TweenInfo.new(0.2), {ImageColor3 = t.subtext, ImageTransparency = 0.5}):Play()
+            end)
+        end
+
+        -- no border stroke on main: against the near-black bg it reads as a faint
+        -- grey rim. the drop shadow below carries the edge separation instead.
+
+        top = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 52),
+            BackgroundColor3 = t.container,
+            Parent = main
+        })
+
+        make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = top})
+
+        -- squares off the topbar's lower corners so it flows into the body;
+        -- hidden while minimised, otherwise the collapsed pill gets square corners
+        local top_fill = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 12),
+            Position = UDim2.new(0, 0, 1, -12),
+            BackgroundColor3 = t.container,
+            BorderSizePixel = 0,
+            Parent = top
+        })
+
+        local badge = make("Frame", {
+            Size = UDim2.fromOffset(26, 26),
+            Position = UDim2.fromOffset(14, 13),
+            BackgroundColor3 = t.accent,
+            BackgroundTransparency = 0.84,
+            Parent = top
+        })
+        make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = badge})
+        table.insert(w.accents, {obj = badge, prop = "BackgroundColor3"})
+
+        local badge_txt = make("TextLabel", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Text = (w.title or "k"):sub(1, 1):upper(),
+            TextColor3 = t.accent,
+            Font = Enum.Font.GothamBold,
+            TextSize = 14,
+            Parent = badge
+        })
+        table.insert(w.accents, {obj = badge_txt, prop = "TextColor3"})
+
+        local title_lbl = make("TextLabel", {
+            Size = UDim2.new(1, -146, 1, 0),
+            Position = UDim2.fromOffset(50, 0),
+            BackgroundTransparency = 1,
+            Text = w.title,
+            TextColor3 = t.text,
+            Font = Enum.Font.GothamBold,
+            TextSize = 17,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = top
+        })
+
+        local close = make("ImageButton", {
+            Size = UDim2.fromOffset(16, 16),
+            Position = UDim2.new(1, -15, 0.5, 0),
+            AnchorPoint = Vector2.new(1, 0.5),
+            BackgroundTransparency = 1,
+            Image = ico("x") or "rbxassetid://7743878857",
+            ImageColor3 = t.subtext,
+            Parent = top
+        })
+
+        local minimize = make("ImageButton", {
+            Size = UDim2.fromOffset(18, 18),
+            Position = UDim2.new(1, -43, 0.5, 0),
+            AnchorPoint = Vector2.new(1, 0.5),
+            BackgroundTransparency = 1,
+            Image = "rbxassetid://6026568240",
+            ImageColor3 = t.subtext,
+            Parent = top
+        })
+
+        for i,b in pairs({minimize, close}) do
+            b.MouseEnter:Connect(function()
+                play("hover")
+                kyri.svc.tw:Create(b, TweenInfo.new(0.2), {ImageColor3 = t.text}):Play()
+            end)
+            b.MouseLeave:Connect(function()
+                kyri.svc.tw:Create(b, TweenInfo.new(0.2), {ImageColor3 = t.subtext}):Play()
+            end)
+        end
+
+        close.MouseButton1Click:Connect(function()
+            play("click")
+            w:destroy()
+        end)
+
+        minimize.MouseButton1Click:Connect(function()
+            play("click")
+            minimized = not minimized
+
+            if minimized then
+                pre_min_size = main.Size
+                sidebar.Visible = false
+                content.Visible = false
+                resize_handle.Visible = false
+                top_fill.Visible = false
+                local pill = math.clamp(math.floor(title_lbl.TextBounds.X) + 140, 210, 350)
+                kyri.svc.tw:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                    Size = UDim2.fromOffset(pill, 52)
+                }):Play()
+            else
+                top_fill.Visible = true
+                kyri.svc.tw:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                    Size = pre_min_size
+                }):Play()
+                task.delay(0.3, function()
+                    if not minimized then
+                        sidebar.Visible = true
+                        content.Visible = true
+                        resize_handle.Visible = not w.is_mobile
+                    end
+                end)
+            end
+
+            kyri.svc.tw:Create(minimize, TweenInfo.new(0.25), {
+                Rotation = minimized and 180 or 0
+            }):Play()
+        end)
+
+        sidebar = make("Frame", {
+            Size = UDim2.new(0, side_w, 1, -64),
+            Position = UDim2.fromOffset(12, 58),
+            BackgroundTransparency = 1,
+            Parent = main
+        })
+
+        tab_holder = make("ScrollingFrame", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            ScrollBarThickness = 0,
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            ScrollingDirection = Enum.ScrollingDirection.Y,
+            Parent = sidebar
+        })
+
+        tab_list = make("UIListLayout", {
+            Padding = UDim.new(0, 6),
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Parent = tab_holder
+        })
+
+        tab_list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            tab_holder.CanvasSize = UDim2.new(0, 0, 0, tab_list.AbsoluteContentSize.Y)
+        end)
+
+        content = make("Frame", {
+            Size = UDim2.new(1, -(side_w + 28), 1, -70),
+            Position = UDim2.fromOffset(side_w + 18, 58),
+            BackgroundTransparency = 1,
+            ClipsDescendants = true,
+            Parent = main
+        })
+    end
 
     -- drop shadow sits outside main, so it is a sibling: main clips its children
     local shadow = make("ImageLabel", {
@@ -2015,147 +2434,12 @@ function kyri.new(title, options)
     main:GetPropertyChangedSignal("Visible"):Connect(sync_shadow)
     sync_shadow()
 
-    local top = make("Frame", {
-        Size = UDim2.new(1, 0, 0, 52),
-        BackgroundColor3 = t.container,
-        Parent = main
-    })
-
-    make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = top})
-
-    -- squares off the topbar's lower corners so it flows into the body;
-    -- hidden while minimised, otherwise the collapsed pill gets square corners
-    local top_fill = make("Frame", {
-        Size = UDim2.new(1, 0, 0, 12),
-        Position = UDim2.new(0, 0, 1, -12),
-        BackgroundColor3 = t.container,
-        BorderSizePixel = 0,
-        Parent = top
-    })
-
-    local badge = make("Frame", {
-        Size = UDim2.fromOffset(26, 26),
-        Position = UDim2.fromOffset(14, 13),
-        BackgroundColor3 = t.accent,
-        BackgroundTransparency = 0.84,
-        Parent = top
-    })
-    make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = badge})
-    table.insert(w.accents, {obj = badge, prop = "BackgroundColor3"})
-
-    local badge_txt = make("TextLabel", {
-        Size = UDim2.fromScale(1, 1),
-        BackgroundTransparency = 1,
-        Text = (w.title or "k"):sub(1, 1):upper(),
-        TextColor3 = t.accent,
-        Font = Enum.Font.GothamBold,
-        TextSize = 14,
-        Parent = badge
-    })
-    table.insert(w.accents, {obj = badge_txt, prop = "TextColor3"})
-
-    local title_lbl = make("TextLabel", {
-        Size = UDim2.new(1, -110, 1, 0),
-        Position = UDim2.fromOffset(50, 0),
-        BackgroundTransparency = 1,
-        Text = w.title,
-        TextColor3 = t.text,
-        Font = Enum.Font.GothamBold,
-        TextSize = 17,
-        TextTruncate = Enum.TextTruncate.AtEnd,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = top
-    })
-
-    local minimize = make("ImageButton", {
-        Size = UDim2.fromOffset(18, 18),
-        Position = UDim2.new(1, -15, 0.5, 0),
-        AnchorPoint = Vector2.new(1, 0.5),
-        BackgroundTransparency = 1,
-        Image = "rbxassetid://6026568240",
-        ImageColor3 = t.subtext,
-        Parent = top
-    })
-
-    minimize.MouseEnter:Connect(function()
-        play("hover")
-        kyri.svc.tw:Create(minimize, TweenInfo.new(0.2), {ImageColor3 = t.text}):Play()
-    end)
-    minimize.MouseLeave:Connect(function()
-        kyri.svc.tw:Create(minimize, TweenInfo.new(0.2), {ImageColor3 = t.subtext}):Play()
-    end)
-
-    minimize.MouseButton1Click:Connect(function()
-        play("click")
-        minimized = not minimized
-
-        if minimized then
-            pre_min_size = main.Size
-            sidebar.Visible = false
-            content.Visible = false
-            resize_handle.Visible = false
-            top_fill.Visible = false
-            local pill = math.clamp(math.floor(title_lbl.TextBounds.X) + 112, 190, 330)
-            kyri.svc.tw:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                Size = UDim2.fromOffset(pill, 52)
-            }):Play()
-        else
-            top_fill.Visible = true
-            kyri.svc.tw:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-                Size = pre_min_size
-            }):Play()
-            task.delay(0.3, function()
-                if not minimized then
-                    sidebar.Visible = true
-                    content.Visible = true
-                    resize_handle.Visible = not w.is_mobile
-                end
-            end)
-        end
-
-        kyri.svc.tw:Create(minimize, TweenInfo.new(0.25), {
-            Rotation = minimized and 180 or 0
-        }):Play()
-    end)
-
-    sidebar = make("Frame", {
-        Size = UDim2.new(0, side_w, 1, -64),
-        Position = UDim2.fromOffset(12, 58),
-        BackgroundTransparency = 1,
-        Parent = main
-    })
-
-    local tab_holder = make("ScrollingFrame", {
-        Size = UDim2.fromScale(1, 1),
-        BackgroundTransparency = 1,
-        ScrollBarThickness = 0,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        ScrollingDirection = Enum.ScrollingDirection.Y,
-        Parent = sidebar
-    })
-
-    local tab_list = make("UIListLayout", {
-        Padding = UDim.new(0, 6),
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Parent = tab_holder
-    })
-
-    tab_list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        tab_holder.CanvasSize = UDim2.new(0, 0, 0, tab_list.AbsoluteContentSize.Y)
-    end)
-
-    content = make("Frame", {
-        Size = UDim2.new(1, -(side_w + 28), 1, -70),
-        Position = UDim2.fromOffset(side_w + 18, 58),
-        BackgroundTransparency = 1,
-        ClipsDescendants = true,
-        Parent = main
-    })
-
     local drag, drag_input, drag_start, input_start = false, nil, nil, nil
+    local moved = false
 
     local function update_input(input)
         local delta = input.Position - drag_start
+        if math.abs(delta.X) > 4 or math.abs(delta.Y) > 4 then moved = true end
         local position = UDim2.new(
             input_start.X.Scale,
             input_start.X.Offset + delta.X,
@@ -2170,6 +2454,7 @@ function kyri.new(title, options)
     top.InputBegan:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or (w.is_mobile and inp.UserInputType == Enum.UserInputType.Touch) then
             drag = true
+            moved = false
             drag_start = inp.Position
             input_start = main.Position
             drag_input = inp
@@ -2177,6 +2462,11 @@ function kyri.new(title, options)
             inp.Changed:Connect(function()
                 if inp.UserInputState == Enum.UserInputState.End then
                     drag = false
+                    if moved then
+                        write_pos(pos_adjust(main.Position), mode == "window" and main.Size or nil)
+                    elseif on_header_tap then
+                        on_header_tap()
+                    end
                 end
             end)
         end
@@ -2191,6 +2481,10 @@ function kyri.new(title, options)
     table.insert(conns, kyri.svc.run.Heartbeat:Connect(function()
         if drag and drag_input then update_input(drag_input) end
     end))
+
+    function w:resetpos()
+        if isfile and isfile(POS_FILE) then pcall(function() delfile(POS_FILE) end) end
+    end
 
     w.gui:SetAttribute("kyri", true)
     w.gui.Parent = localPlayer.PlayerGui
@@ -2373,9 +2667,11 @@ function kyri.new(title, options)
         tab.name = name
         tab.elements = {}
 
+        local chip = w.mode == "island"
+
         local btn = make("TextButton", {
             Name = name,
-            Size = UDim2.new(1, 0, 0, 38),
+            Size = chip and UDim2.new(0, 60, 0, 28) or UDim2.new(1, 0, 0, 38),
             BackgroundColor3 = t.element,
             Text = "",
             AutoButtonColor = false,
@@ -2385,6 +2681,7 @@ function kyri.new(title, options)
 
         local has_icon = icon ~= nil
         local text_offset = has_icon and 36 or 12
+        if chip then text_offset = has_icon and 29 or 11 end
 
         if has_icon then
             local icon_id = kyri.icons[icon]
@@ -2392,8 +2689,8 @@ function kyri.new(title, options)
                 or "rbxassetid://7743875962"
 
             local icon_img = make("ImageLabel", {
-                Size = UDim2.fromOffset(18, 18),
-                Position = UDim2.fromOffset(11, 10),
+                Size = UDim2.fromOffset(chip and 15 or 18, chip and 15 or 18),
+                Position = chip and UDim2.fromOffset(9, 6) or UDim2.fromOffset(11, 10),
                 BackgroundTransparency = 1,
                 Image = icon_id,
                 ImageColor3 = t.subtext,
@@ -2436,9 +2733,14 @@ function kyri.new(title, options)
             Parent = btn
         })
 
+        if chip then
+            btn.Size = UDim2.new(0, math.clamp(math.floor(txt.TextBounds.X) + text_offset + 13, 54, 150), 0, 28)
+            txt.TextSize = 13
+        end
+
         local indicator = make("Frame", {
-            Size = UDim2.new(0, 0, 0, 38),
-            Position = UDim2.new(1, 0, 0, 0),
+            Size = ind_off,
+            Position = ind_pos,
             BackgroundColor3 = t.accent,
             BorderSizePixel = 0,
             Parent = btn
@@ -2473,9 +2775,14 @@ function kyri.new(title, options)
             Parent = page
         })
 
-        page_list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            page.CanvasSize = UDim2.new(0, 0, 0, page_list.AbsoluteContentSize.Y + 12)
-        end)
+        local function sync_bar()
+            local h = page_list.AbsoluteContentSize.Y + 12
+            page.CanvasSize = UDim2.new(0, 0, 0, h)
+            page.ScrollBarThickness = h > page.AbsoluteSize.Y + 1 and 3 or 0
+        end
+
+        page_list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(sync_bar)
+        page:GetPropertyChangedSignal("AbsoluteSize"):Connect(sync_bar)
 
         local ti = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
@@ -2486,7 +2793,7 @@ function kyri.new(title, options)
                 tb.page.Visible = false
                 kyri.svc.tw:Create(tb.btn, ti, {BackgroundColor3 = t.element}):Play()
                 kyri.svc.tw:Create(tb.txt, ti, {TextColor3 = t.subtext}):Play()
-                kyri.svc.tw:Create(tb.indicator, ti, {Size = UDim2.new(0, 0, 0, 38)}):Play()
+                kyri.svc.tw:Create(tb.indicator, ti, {Size = ind_off}):Play()
                 if tb.icon then
                     kyri.svc.tw:Create(tb.icon, ti, {ImageColor3 = t.subtext}):Play()
                 end
@@ -2495,7 +2802,7 @@ function kyri.new(title, options)
             page.Visible = true
             kyri.svc.tw:Create(btn, ti, {BackgroundColor3 = t.hover}):Play()
             kyri.svc.tw:Create(txt, ti, {TextColor3 = t.text}):Play()
-            kyri.svc.tw:Create(indicator, ti, {Size = UDim2.new(0, 3, 0, 38)}):Play()
+            kyri.svc.tw:Create(indicator, ti, {Size = ind_on}):Play()
             if tab.icon then
                 kyri.svc.tw:Create(tab.icon, ti, {ImageColor3 = t.text}):Play()
             end
@@ -2547,6 +2854,60 @@ function kyri.new(title, options)
             })
 
             return frame
+        end
+
+        function tab:search(ph)
+            local box = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 34),
+                BackgroundColor3 = t.element,
+                Parent = page
+            })
+            make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = box})
+
+            make("ImageLabel", {
+                Size = UDim2.fromOffset(14, 14),
+                Position = UDim2.fromOffset(11, 10),
+                BackgroundTransparency = 1,
+                Image = ico("search") or "rbxassetid://7734052925",
+                ImageColor3 = t.subtext,
+                Parent = box
+            })
+
+            local tb = make("TextBox", {
+                Size = UDim2.new(1, -42, 1, 0),
+                Position = UDim2.fromOffset(33, 0),
+                BackgroundTransparency = 1,
+                Text = "",
+                PlaceholderText = ph or "search",
+                PlaceholderColor3 = t.subtext,
+                TextColor3 = t.text,
+                Font = Enum.Font.Gotham,
+                TextSize = 13,
+                ClearTextOnFocus = false,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = box
+            })
+
+            local function hit(o, q)
+                if (o:IsA("TextLabel") or o:IsA("TextButton")) and o.Text:lower():find(q, 1, true) then
+                    return true
+                end
+                for i,c in pairs(o:GetChildren()) do
+                    if hit(c, q) then return true end
+                end
+                return false
+            end
+
+            tb:GetPropertyChangedSignal("Text"):Connect(function()
+                local q = tb.Text:lower()
+                for i,c in pairs(page:GetChildren()) do
+                    if c ~= box and c:IsA("GuiObject") then
+                        c.Visible = q == "" or hit(c, q)
+                    end
+                end
+            end)
+
+            return tb
         end
 
         function tab:space(height)
@@ -3933,7 +4294,7 @@ function kyri.new(title, options)
             page.Visible = true
             kyri.svc.tw:Create(btn, ti, {BackgroundColor3 = t.hover}):Play()
             kyri.svc.tw:Create(txt, ti, {TextColor3 = t.text}):Play()
-            kyri.svc.tw:Create(indicator, ti, {Size = UDim2.new(0, 3, 0, 38)}):Play()
+            kyri.svc.tw:Create(indicator, ti, {Size = ind_on}):Play()
             if tab.icon then
                 kyri.svc.tw:Create(tab.icon, ti, {ImageColor3 = t.text}):Play()
             end
@@ -4056,6 +4417,28 @@ function kyri.new(title, options)
             end
 
             local configs = list_configs(w.game_name)
+
+            if #configs == 0 then
+                local none = make("Frame", {
+                    Name = cfg_row,
+                    Size = UDim2.new(1, 0, 0, 32),
+                    BackgroundTransparency = 1,
+                    Parent = settings.page
+                })
+                make("TextLabel", {
+                    Size = UDim2.new(1, -6, 1, 0),
+                    Position = UDim2.fromOffset(6, 0),
+                    BackgroundTransparency = 1,
+                    Text = "nothing saved yet",
+                    TextColor3 = t.subtext,
+                    TextTransparency = 0.35,
+                    Font = Enum.Font.Gotham,
+                    TextSize = 12,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    Parent = none
+                })
+            end
+
             for _, cfg_name in ipairs(configs) do
                 local cfg_btn = make("Frame", {
                     Name = cfg_row,
