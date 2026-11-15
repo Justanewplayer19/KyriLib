@@ -1082,7 +1082,7 @@ function kyri.island(opts)
         return api
     end
 
-    function isl:input(ph, cb)
+    function isl:input(ph, cb, kinds)
         local box = make("Frame", {
             Size = UDim2.new(1, 0, 0, 30),
             BackgroundColor3 = t.element,
@@ -1101,8 +1101,12 @@ function kyri.island(opts)
             Parent = box
         })
 
+        kinds = kinds or {{"track", "songs"}, {"playlist", "lists"}}
+        local chip_w = 42
+        local strip_w = #kinds * chip_w + (#kinds - 1) * 2 + 10
+
         local tb = make("TextBox", {
-            Size = UDim2.new(1, -124, 1, 0),
+            Size = UDim2.new(1, -(strip_w + 40), 1, 0),
             Position = UDim2.fromOffset(32, 0),
             BackgroundTransparency = 1,
             Text = "",
@@ -1116,7 +1120,7 @@ function kyri.island(opts)
             Parent = box
         })
 
-        local mode = "track"
+        local mode = kinds[1][1]
         local tabs = {}
 
         local function paint()
@@ -1129,11 +1133,10 @@ function kyri.island(opts)
             end
         end
 
-        local kinds = {{"track", "songs"}, {"playlist", "lists"}}
         for i,v in pairs(kinds) do
             local b = make("TextButton", {
-                Size = UDim2.fromOffset(42, 20),
-                Position = UDim2.new(1, -88 + (i - 1) * 44, 0.5, -10),
+                Size = UDim2.fromOffset(chip_w, 20),
+                Position = UDim2.new(1, -(strip_w - 10) + (i - 1) * (chip_w + 2), 0.5, -10),
                 BackgroundColor3 = t.container,
                 Text = v[2],
                 TextColor3 = t.subtext,
@@ -1275,39 +1278,43 @@ function kyri.island(opts)
             Parent = box
         })
 
-        local base = make("TextLabel", {
-            Size = UDim2.fromScale(1, 1),
-            BackgroundTransparency = 1,
-            Text = "",
-            TextColor3 = t.subtext,
-            TextTransparency = 0.5,
-            TextSize = 14,
-            TextTruncate = Enum.TextTruncate.AtEnd,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = roll
-        })
+        local function mk(col, tr)
+            return make("TextLabel", {
+                Size = UDim2.fromScale(1, 1),
+                BackgroundTransparency = 1,
+                Text = "",
+                TextColor3 = col,
+                TextTransparency = tr,
+                TextSize = 14,
+                TextWrapped = false,
+                TextTruncate = Enum.TextTruncate.AtEnd,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = roll
+            })
+        end
 
-        local clip = make("Frame", {
-            Size = UDim2.new(0, 0, 1, 0),
-            BackgroundTransparency = 1,
-            ClipsDescendants = true,
-            Parent = roll
-        })
-
-        local hl = make("TextLabel", {
-            Size = UDim2.fromOffset(2000, 26),
-            BackgroundTransparency = 1,
-            Text = "",
-            TextColor3 = t.text,
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            Parent = clip
-        })
+        local base = mk(t.subtext, 0.5)
+        local hl = mk(t.text, 0)
 
         setfont(base, f_bold)
         setfont(hl, f_bold)
 
+        local grad = make("UIGradient", {Parent = hl})
+
+        local function wipe(p)
+            p = math.clamp(p, 0.0005, 0.9995)
+            grad.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 0),
+                NumberSequenceKeypoint.new(p, 0),
+                NumberSequenceKeypoint.new(math.min(p + 0.0004, 1), 1),
+                NumberSequenceKeypoint.new(1, 1)
+            })
+        end
+
+        wipe(0)
+
         local shown = ""
+        local fitting = 0
         local api = {box = box}
 
         function api:set(text, pct)
@@ -1317,7 +1324,10 @@ function kyri.island(opts)
                 shown = text
                 base.Text = text
                 hl.Text = text
-                clip.Size = UDim2.new(0, 0, 1, 0)
+                base.TextSize = 14
+                hl.TextSize = 14
+                wipe(0)
+
                 roll.Position = UDim2.fromOffset(0, 15)
                 base.TextTransparency = 1
                 hl.TextTransparency = 1
@@ -1326,16 +1336,30 @@ function kyri.island(opts)
                 }):Play()
                 kyri.svc.tw:Create(base, TweenInfo.new(0.26), {TextTransparency = 0.5}):Play()
                 kyri.svc.tw:Create(hl, TweenInfo.new(0.26), {TextTransparency = 0}):Play()
+
+                fitting = fitting + 1
+                local mine = fitting
+                task.spawn(function()
+                    task.wait()
+                    if mine ~= fitting or base.Text ~= text then return end
+                    local room = box.AbsoluteSize.X
+                    local wide = base.TextBounds.X
+                    if room > 0 and wide > room then
+                        local sz = math.max(8, math.floor(14 * room / wide))
+                        base.TextSize = sz
+                        hl.TextSize = sz
+                    end
+                end)
             end
 
-            clip.Size = UDim2.new(math.clamp(pct or 0, 0, 1), 0, 1, 0)
+            wipe(pct or 0)
         end
 
         function api:clear()
             shown = ""
             base.Text = ""
             hl.Text = ""
-            clip.Size = UDim2.new(0, 0, 1, 0)
+            wipe(0)
         end
 
         function api:show(v)
