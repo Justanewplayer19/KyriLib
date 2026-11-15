@@ -818,7 +818,15 @@ body {
 local w = kyri.new("my hub")
 w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")</code></pre>
 				<p>everything past that line is the same. <code>kyri.studio</code> is <code>true</code> so you can branch if you need to.</p>
-				<p>the logo splash still shows in studio. the png needs <code>getcustomasset</code>, which studio does not have, so it falls back to drawing the KyriLib wordmark as text in Merriweather. no asset and no network needed, and it is the same mark either way.</p>
+				<h3>the splash</h3>
+				<p>it tries four things in order and uses the first that actually renders:</p>
+				<ol>
+					<li><code>Logo</code>, if you passed one</li>
+					<li>the png cached on disk through <code>getcustomasset</code>, which only executors have</li>
+					<li><code>rbxassetid://88259917092947</code>, the logo uploaded to roblox, which works anywhere</li>
+					<li>the KyriLib wordmark drawn as text in Merriweather</li>
+				</ol>
+				<p>each step loads the image and checks <code>IsLoaded</code> rather than assuming, so a pending, moderated or deleted asset falls through instead of leaving a blank frame on screen.</p>
 				<p><a href="https://github.com/Justanewplayer19/KyriLib/blob/main/examples/studio_demo.lua" target="_blank" rel="noopener">examples/studio_demo.lua</a> is a working demo you can drop into a LocalScript: real fly, walkspeed and jump, plus one of every element. teleport destinations are placeholders, since an empty baseplate has nowhere to go.</p>
 
 				<h3>where everything goes</h3>
@@ -929,6 +937,7 @@ end, "ws")</code></pre>
 						<tr><td>Shadow</td><td>bool</td><td><code>false</code>. set <code>true</code> for a drop shadow under the frame</td></tr>
 						<tr><td>Splash</td><td>bool</td><td><code>true</code>. the logo screen. skipped automatically when the logo cannot load</td></tr>
 						<tr><td>SplashTime</td><td>number</td><td><code>1.5</code>. seconds the logo holds before fading</td></tr>
+						<tr><td>Logo</td><td>string</td><td>your own asset id for the splash, tried before the built-in one</td></tr>
 					</tbody>
 				</table>
 
