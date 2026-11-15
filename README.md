@@ -437,9 +437,22 @@ The island is a full client on its own, not just transport buttons.
   art and play on click; lists show playlists and play the whole context. Submitting an empty
   query in `lists` mode shows your own playlists.
 - **Lyrics.** Each track is looked up on [lrclib.net](https://lrclib.net). If it has *synced*
-  lyrics, the island shows the previous, current and next line and follows along. Plain-only
-  lyrics are returned by `sp:lyrics()` but not displayed, since there is nothing to sync to.
-  Pass `lyrics = false` to turn it off.
+  lyrics the island shows the current line only, with a highlight sweeping across it as the line
+  plays and a short slide when the line changes. Plain-only lyrics are returned by `sp:lyrics()`
+  but not displayed, since there is nothing to sync to. Pass `lyrics = false` to turn it off.
+
+  lrclib sometimes has timings cut against a different master, which reads as the line landing
+  seconds early. Two things help. The lookup now falls back to `/api/search` and takes the
+  closest candidate whose duration is within 6 seconds of the track, rather than accepting
+  whatever `/api/get` returned. If one is still off, nudge it:
+
+  ```lua
+  sp:nudge(0.5)       -- line was half a second early
+  sp.lyric_offset     -- read or set directly, clamped to 15s
+  ```
+
+  With `commands = true`, `!sp sync 0.5` does the same from chat and `!sp sync` reports the
+  current offset.
 - `island_results` sets how many rows a search shows, default 5.
 - `font` and `font_bold` set the face used for the track name and the lyric lines. Either an
   `Enum.Font` or a `Font` object from `Font.fromName`.

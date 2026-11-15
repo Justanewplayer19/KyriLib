@@ -8,11 +8,9 @@ local sp = kyri.spotify({
 
 local isl = sp.island
 
-local status = isl:row("connecting")
 local words = isl:row("")
 
 local function tell(s)
-    status:set(s)
     print("[island] " .. s)
 end
 

@@ -1501,49 +1501,90 @@ function kyri.island(opts)
 
     function isl:lyrics()
         local box = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 52),
+            Size = UDim2.new(1, 0, 0, 26),
             BackgroundTransparency = 1,
+            ClipsDescendants = true,
             Visible = false,
             LayoutOrder = 8,
             Parent = ev
         })
 
-        local function line(y, h, size, col, tr)
-            return make("TextLabel", {
-                Size = UDim2.new(1, 0, 0, h),
-                Position = UDim2.fromOffset(0, y),
-                BackgroundTransparency = 1,
-                Text = "",
-                TextColor3 = col,
-                TextTransparency = tr,
-                Font = Enum.Font.GothamMedium,
-                TextSize = size,
-                TextTruncate = Enum.TextTruncate.AtEnd,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = box
-            })
-        end
+        local roll = make("Frame", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Parent = box
+        })
 
-        local prev = line(0, 14, 11, t.subtext, 0.55)
-        local cur = line(16, 20, 14, t.text, 0)
-        local nxt = line(38, 14, 11, t.subtext, 0.55)
+        local base = make("TextLabel", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Text = "",
+            TextColor3 = t.subtext,
+            TextTransparency = 0.5,
+            TextSize = 14,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = roll
+        })
 
-        setfont(prev, f_med)
-        setfont(cur, f_bold)
-        setfont(nxt, f_med)
+        local clip = make("Frame", {
+            Size = UDim2.new(0, 0, 1, 0),
+            BackgroundTransparency = 1,
+            ClipsDescendants = true,
+            Parent = roll
+        })
 
+        local hl = make("TextLabel", {
+            Size = UDim2.fromOffset(2000, 26),
+            BackgroundTransparency = 1,
+            Text = "",
+            TextColor3 = t.text,
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = clip
+        })
+
+        setfont(base, f_bold)
+        setfont(hl, f_bold)
+
+        local shown = ""
         local api = {box = box}
-        function api:set(a, b, c)
-            prev.Text = a or ""
-            cur.Text = b or ""
-            nxt.Text = c or ""
+
+        function api:set(text, pct)
+            text = text or ""
+
+            if text ~= shown then
+                shown = text
+                base.Text = text
+                hl.Text = text
+                clip.Size = UDim2.new(0, 0, 1, 0)
+                roll.Position = UDim2.fromOffset(0, 15)
+                base.TextTransparency = 1
+                hl.TextTransparency = 1
+                kyri.svc.tw:Create(roll, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                    Position = UDim2.fromOffset(0, 0)
+                }):Play()
+                kyri.svc.tw:Create(base, TweenInfo.new(0.26), {TextTransparency = 0.5}):Play()
+                kyri.svc.tw:Create(hl, TweenInfo.new(0.26), {TextTransparency = 0}):Play()
+            end
+
+            clip.Size = UDim2.new(math.clamp(pct or 0, 0, 1), 0, 1, 0)
         end
+
+        function api:clear()
+            shown = ""
+            base.Text = ""
+            hl.Text = ""
+            clip.Size = UDim2.new(0, 0, 1, 0)
+        end
+
         function api:show(v)
             local want = v and true or false
             if box.Visible == want then return end
             box.Visible = want
             isl:relayout()
         end
+
         function api:visible() return box.Visible end
         return api
     end

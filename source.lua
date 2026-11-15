@@ -1261,49 +1261,90 @@ function kyri.island(opts)
 
     function isl:lyrics()
         local box = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 52),
+            Size = UDim2.new(1, 0, 0, 26),
             BackgroundTransparency = 1,
+            ClipsDescendants = true,
             Visible = false,
             LayoutOrder = 8,
             Parent = ev
         })
 
-        local function line(y, h, size, col, tr)
-            return make("TextLabel", {
-                Size = UDim2.new(1, 0, 0, h),
-                Position = UDim2.fromOffset(0, y),
-                BackgroundTransparency = 1,
-                Text = "",
-                TextColor3 = col,
-                TextTransparency = tr,
-                Font = Enum.Font.GothamMedium,
-                TextSize = size,
-                TextTruncate = Enum.TextTruncate.AtEnd,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = box
-            })
-        end
+        local roll = make("Frame", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Parent = box
+        })
 
-        local prev = line(0, 14, 11, t.subtext, 0.55)
-        local cur = line(16, 20, 14, t.text, 0)
-        local nxt = line(38, 14, 11, t.subtext, 0.55)
+        local base = make("TextLabel", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Text = "",
+            TextColor3 = t.subtext,
+            TextTransparency = 0.5,
+            TextSize = 14,
+            TextTruncate = Enum.TextTruncate.AtEnd,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = roll
+        })
 
-        setfont(prev, f_med)
-        setfont(cur, f_bold)
-        setfont(nxt, f_med)
+        local clip = make("Frame", {
+            Size = UDim2.new(0, 0, 1, 0),
+            BackgroundTransparency = 1,
+            ClipsDescendants = true,
+            Parent = roll
+        })
 
+        local hl = make("TextLabel", {
+            Size = UDim2.fromOffset(2000, 26),
+            BackgroundTransparency = 1,
+            Text = "",
+            TextColor3 = t.text,
+            TextSize = 14,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = clip
+        })
+
+        setfont(base, f_bold)
+        setfont(hl, f_bold)
+
+        local shown = ""
         local api = {box = box}
-        function api:set(a, b, c)
-            prev.Text = a or ""
-            cur.Text = b or ""
-            nxt.Text = c or ""
+
+        function api:set(text, pct)
+            text = text or ""
+
+            if text ~= shown then
+                shown = text
+                base.Text = text
+                hl.Text = text
+                clip.Size = UDim2.new(0, 0, 1, 0)
+                roll.Position = UDim2.fromOffset(0, 15)
+                base.TextTransparency = 1
+                hl.TextTransparency = 1
+                kyri.svc.tw:Create(roll, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                    Position = UDim2.fromOffset(0, 0)
+                }):Play()
+                kyri.svc.tw:Create(base, TweenInfo.new(0.26), {TextTransparency = 0.5}):Play()
+                kyri.svc.tw:Create(hl, TweenInfo.new(0.26), {TextTransparency = 0}):Play()
+            end
+
+            clip.Size = UDim2.new(math.clamp(pct or 0, 0, 1), 0, 1, 0)
         end
+
+        function api:clear()
+            shown = ""
+            base.Text = ""
+            hl.Text = ""
+            clip.Size = UDim2.new(0, 0, 1, 0)
+        end
+
         function api:show(v)
             local want = v and true or false
             if box.Visible == want then return end
             box.Visible = want
             isl:relayout()
         end
+
         function api:visible() return box.Visible end
         return api
     end
@@ -1529,6 +1570,7 @@ function kyri.spotify(opts)
     sp.loop = "off"
     sp.track = nil
     sp.results = {}
+    sp.lyric_offset = 0
 
     local CID = opts.client_id or "035b9c837a6f46ffaffce6ada163a6ad"
     local REDIR = opts.redirect or "http://127.0.0.1:8888/callback"
@@ -1845,14 +1887,34 @@ function kyri.spotify(opts)
             .. "&album_name=" .. hs:UrlEncode(alb)
             .. "&duration=" .. tostring(math.floor(sp.dur or 0))
 
-        local ok, res = pcall(req, {Url = url, Method = "GET"})
-        if not ok or not res or res.StatusCode ~= 200 or not res.Body then
-            lyric_cache[id] = false
-            return nil
+        local function grab(u)
+            local ok, res = pcall(req, {Url = u, Method = "GET"})
+            if not ok or not res or res.StatusCode ~= 200 or not res.Body then return nil end
+            local okd, d = pcall(function() return hs:JSONDecode(res.Body) end)
+            if not okd then return nil end
+            return d
         end
 
-        local okd, d = pcall(function() return hs:JSONDecode(res.Body) end)
-        if not okd or type(d) ~= "table" then
+        local d = grab(url)
+
+        if not d or type(d.syncedLyrics) ~= "string" or d.syncedLyrics == "" then
+            local hits = grab("https://lrclib.net/api/search"
+                .. "?track_name=" .. hs:UrlEncode(sp.track.name)
+                .. "&artist_name=" .. hs:UrlEncode(sp:artists()))
+
+            if type(hits) == "table" then
+                local best, gap = nil, math.huge
+                for i,h in pairs(hits) do
+                    if type(h) == "table" and type(h.syncedLyrics) == "string" and h.syncedLyrics ~= "" then
+                        local off = math.abs((tonumber(h.duration) or 0) - (sp.dur or 0))
+                        if off < gap then best, gap = h, off end
+                    end
+                end
+                if best and gap <= 6 then d = best end
+            end
+        end
+
+        if type(d) ~= "table" then
             lyric_cache[id] = false
             return nil
         end
@@ -1860,7 +1922,9 @@ function kyri.spotify(opts)
         local out = {
             plain = d.plainLyrics,
             synced = nil,
-            instrumental = d.instrumental and true or false
+            instrumental = d.instrumental and true or false,
+            duration = tonumber(d.duration),
+            drift = d.duration and math.abs((tonumber(d.duration) or 0) - (sp.dur or 0)) or nil
         }
         if type(d.syncedLyrics) == "string" and d.syncedLyrics ~= "" then
             local lines = parse_lrc(d.syncedLyrics)
@@ -1869,6 +1933,11 @@ function kyri.spotify(opts)
 
         lyric_cache[id] = out
         return out
+    end
+
+    function sp:nudge(by)
+        sp.lyric_offset = math.clamp((sp.lyric_offset or 0) + (by or 0), -15, 15)
+        return sp.lyric_offset
     end
 
     function sp:artists()
@@ -2149,7 +2218,7 @@ function kyri.spotify(opts)
 
             task.spawn(function()
                 local for_id
-                while alive and task.wait(0.25) do
+                while alive and task.wait(0.08) do
                     if not sp.ready or not sp.track then
                         words:show(false)
                     else
@@ -2167,22 +2236,24 @@ function kyri.spotify(opts)
                         end
 
                         if cued then
-                            local now = at_pos + (sp.playing and (os.clock() - at_clock) or 0)
+                            local now = at_pos
+                                + (sp.playing and (os.clock() - at_clock) or 0)
+                                - (sp.lyric_offset or 0)
+
                             local k = 0
                             for i,ln in pairs(cued) do
                                 if ln.t <= now then k = i else break end
                             end
+
                             if k > 0 then
-                                words:set(
-                                    cued[k - 1] and cued[k - 1].text or "",
-                                    cued[k].text,
-                                    cued[k + 1] and cued[k + 1].text or ""
-                                )
-                                words:show(true)
+                                local a = cued[k].t
+                                local b = cued[k + 1] and cued[k + 1].t or (a + 4)
+                                local span = math.max(b - a, 0.25)
+                                words:set(cued[k].text, (now - a) / span)
                             else
-                                words:set("", cued[1] and cued[1].text or "", "")
-                                words:show(true)
+                                words:set(cued[1] and cued[1].text or "", 0)
                             end
+                            words:show(true)
                         else
                             words:show(false)
                         end
@@ -2420,6 +2491,14 @@ function kyri.spotify(opts)
                 say("shuffle " .. (a[1] or "off"))
             end,
             loop = function(a) local _, m = sp:setloop(a[1]) say("repeat " .. m) end,
+            sync = function(a)
+                local n = tonumber(a[1])
+                if not n then
+                    say("lyric offset " .. string.format("%.2f", sp.lyric_offset or 0) .. "s")
+                else
+                    say("lyric offset " .. string.format("%.2f", sp:nudge(n)) .. "s")
+                end
+            end,
             search = function(a)
                 local items = sp:search(table.concat(a, " "), 5)
                 for i,tr in pairs(items) do say(i .. ". " .. tr.name) end
