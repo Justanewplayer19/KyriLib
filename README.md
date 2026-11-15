@@ -9,6 +9,38 @@ a dynamic island, and one-line Spotify control.
 local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()
 ```
 
+## Roblox Studio
+
+Studio needs a different entry point, not a different call. `loadstring` is off in LocalScripts
+and `game:HttpGet` is an executor function, so there is no one-liner that can work there.
+
+Use `studiosource.lua` instead. Paste it into a ModuleScript (ReplicatedStorage is the usual
+spot, name it `KyriLib`) and require it:
+
+```lua
+local kyri = require(game.ReplicatedStorage.KyriLib)
+
+local w = kyri.new("my hub")
+w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")
+```
+
+Everything past that line is the same. `kyri.studio` is `true` so you can branch if you need to.
+
+**What degrades, and why:**
+
+| | executor | studio |
+|-|----------|--------|
+| configs, saved positions | written to disk | kept in memory, gone when the playtest stops |
+| tab icons | fetched once, cached | needs `HttpService`, which only answers on the server |
+| spotify | works | no `request()` in any Studio script, so it stays idle and says so |
+| clipboard | `setclipboard` | prints to the output instead |
+
+Nothing throws. Each of those checks for the function it needs and skips if it is missing.
+
+`studiosource.lua` is generated: `source.lua` is the only file anyone edits, and
+`python tools/build_studio.py` rebuilds the Studio copy by prepending a compatibility shim.
+The library body is byte-identical in both, so the two cannot drift apart.
+
 ## Quick Start
 
 ```lua

@@ -670,6 +670,7 @@ body {
 				<div class="sidebar-title">getting started</div>
 				<a href="#introduction" class="sidebar-link active">introduction</a>
 				<a href="#installation" class="sidebar-link">installation</a>
+				<a href="#studio" class="sidebar-link">roblox studio</a>
 				<a href="#basic-usage" class="sidebar-link">basic usage</a>
 			</div>
 
@@ -742,6 +743,30 @@ body {
 			<section id="installation">
 				<h2>installation</h2>
 				<pre><code>local kyri = loadstring(game:HttpGet("https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/source.lua"))()</code></pre>
+			</section>
+
+			<section id="studio">
+				<h2>roblox studio</h2>
+				<p>studio needs a different entry point, not a different call. <code>loadstring</code> is off in LocalScripts and <code>game:HttpGet</code> is an executor function, so no one-liner can work there.</p>
+				<p>use <code>studiosource.lua</code> instead. paste it into a ModuleScript (ReplicatedStorage is the usual spot, name it <code>KyriLib</code>) and require it.</p>
+				<pre><code>local kyri = require(game.ReplicatedStorage.KyriLib)
+
+local w = kyri.new("my hub")
+w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")</code></pre>
+				<p>everything past that line is the same. <code>kyri.studio</code> is <code>true</code> so you can branch if you need to.</p>
+
+				<h3>what degrades</h3>
+				<table>
+					<thead><tr><th></th><th>executor</th><th>studio</th></tr></thead>
+					<tbody>
+						<tr><td>configs, saved positions</td><td>written to disk</td><td>kept in memory, gone when the playtest stops</td></tr>
+						<tr><td>tab icons</td><td>fetched once, cached</td><td>needs <code>HttpService</code>, which only answers on the server</td></tr>
+						<tr><td>spotify</td><td>works</td><td>no <code>request()</code> in any Studio script, so it stays idle and says so</td></tr>
+						<tr><td>clipboard</td><td><code>setclipboard</code></td><td>prints to the output instead</td></tr>
+					</tbody>
+				</table>
+				<p>nothing throws. each of those checks for the function it needs and skips if it is missing.</p>
+				<p><code>studiosource.lua</code> is generated: <code>source.lua</code> is the only file anyone edits, and <code>python tools/build_studio.py</code> rebuilds the studio copy by prepending a compatibility shim. the library body is byte-identical in both, so the two cannot drift apart.</p>
 			</section>
 
 			<section id="basic-usage">
