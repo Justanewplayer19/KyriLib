@@ -453,6 +453,15 @@ The island is a full client on its own, not just transport buttons.
 
   With `commands = true`, `!sp sync 0.5` does the same from chat and `!sp sync` reports the
   current offset.
+
+  When lrclib has several matches, `!sp lyrics` lists the synced ones with how far each one's
+  duration sits from the track, and `!sp lyrics 2` switches to that match. `sp:lyricsalts()` and
+  `sp:uselyrics(n)` are the same thing in code.
+- **Devices.** A third chip, `on`, lists everything your account has open and moves playback when
+  you click one. The window's Now Playing tab has the same list under `find devices`.
+- **Autoplay.** Playing a bare track uri gives Spotify no context, so it stops when the track
+  ends. Picking a search result now anchors it inside its album, so playback carries on. Set
+  `autoplay = false` on `sp` to go back to single tracks.
 - `island_results` sets how many rows a search shows, default 5.
 - `font` and `font_bold` set the face used for the track name and the lyric lines. Either an
   `Enum.Font` or a `Font` object from `Font.fromName`.
@@ -539,6 +548,9 @@ sp:devices()                   -- list of connected devices
 sp:transfer(id, play)          -- move playback to a device id
 sp:playlists(limit)            -- your playlists
 sp:playcontext(uri)            -- play a playlist or album uri
+sp:features()                  -- audio features, sets sp.bpm when spotify allows it
+sp:lyricsalts()                -- other synced lrclib matches, sorted by duration gap
+sp:uselyrics(n)                -- switch to one of them
 sp.device_id                   -- the device plays are sent to, learned from sync
 sp:lyrics()                    -- lrclib lookup, {plain, synced, instrumental} or nil
 sp:sync()                 -- force a refresh now

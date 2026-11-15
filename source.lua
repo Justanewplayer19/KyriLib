@@ -1599,6 +1599,8 @@ function kyri.spotify(opts)
     sp.results = {}
     sp.lyric_offset = 0
     sp.device_id = nil
+    sp.autoplay = true
+    sp.lyric_rev = 0
 
     local CID = opts.client_id or "035b9c837a6f46ffaffce6ada163a6ad"
     local REDIR = opts.redirect or "http://127.0.0.1:8888/callback"
@@ -1882,9 +1884,25 @@ function kyri.spotify(opts)
         return report(start({context_uri = uri}), "play")
     end
 
-    function sp:playuri(uri)
+    function sp:playuri(uri, context)
         if not uri then return false end
+        if context and sp.autoplay ~= false then
+            return report(start({context_uri = context, offset = {uri = uri}}), "play")
+        end
         return report(start({uris = {uri}}), "play")
+    end
+
+    function sp:features()
+        if not sp.track or not sp.track.id then return nil end
+        local r = api("GET", "/audio-features/" .. sp.track.id)
+        if not r or r.StatusCode ~= 200 then
+            sp.bpm = nil
+            return nil
+        end
+        local ok, d = pcall(function() return hs:JSONDecode(r.Body) end)
+        if not ok or type(d) ~= "table" then return nil end
+        sp.bpm = d.tempo and math.floor(d.tempo + 0.5) or nil
+        return d
     end
 
     function sp:queue(uri)
@@ -1924,6 +1942,19 @@ function kyri.spotify(opts)
     function sp:lyrics()
         if not sp.track or not sp.track.name then return nil end
         local id = sp.track.id or sp.track.name
+
+        if sp.lyric_pick then
+            local d = sp.lyric_pick
+            local out = {plain = d.plainLyrics, synced = nil, duration = tonumber(d.duration)}
+            if type(d.syncedLyrics) == "string" then
+                local lines = parse_lrc(d.syncedLyrics)
+                if #lines > 0 then out.synced = lines end
+            end
+            lyric_cache[id] = out
+            sp.lyric_pick = nil
+            return out
+        end
+
         if lyric_cache[id] ~= nil then return lyric_cache[id] or nil end
         if not req then return nil end
 
@@ -1980,6 +2011,43 @@ function kyri.spotify(opts)
 
         lyric_cache[id] = out
         return out
+    end
+
+    function sp:lyricsalts()
+        if not sp.track or not sp.track.name or not req then return {} end
+        local ok, res = pcall(req, {
+            Url = "https://lrclib.net/api/search"
+                .. "?track_name=" .. hs:UrlEncode(sp.track.name)
+                .. "&artist_name=" .. hs:UrlEncode(sp:artists()),
+            Method = "GET"
+        })
+        if not ok or not res or res.StatusCode ~= 200 then return {} end
+        local okd, d = pcall(function() return hs:JSONDecode(res.Body) end)
+        if not okd or type(d) ~= "table" then return {} end
+
+        local out = {}
+        for i,h in pairs(d) do
+            if type(h) == "table" and type(h.syncedLyrics) == "string" and h.syncedLyrics ~= "" then
+                out[#out + 1] = {
+                    name = (h.trackName or "?") .. "  -  " .. (h.artistName or "?"),
+                    duration = tonumber(h.duration),
+                    drift = math.abs((tonumber(h.duration) or 0) - (sp.dur or 0)),
+                    raw = h
+                }
+            end
+        end
+        table.sort(out, function(a, b) return a.drift < b.drift end)
+        sp.lyric_alts = out
+        return out
+    end
+
+    function sp:uselyrics(n)
+        local pick = sp.lyric_alts and sp.lyric_alts[n]
+        if not pick then return false end
+        sp.lyric_pick = pick.raw
+        sp.lyric_rev = (sp.lyric_rev or 0) + 1
+        sp.lyric_offset = 0
+        return true
     end
 
     function sp:nudge(by)
@@ -2155,7 +2223,9 @@ function kyri.spotify(opts)
                     text = tr.name .. "  -  " .. table.concat(a, ", "),
                     icon = cover,
                     cb = function()
-                        if sp:playuri(tr.uri) then isl:notify(tr.name, 2.5) end
+                        if sp:playuri(tr.uri, tr.album and tr.album.uri) then
+                            isl:notify(tr.name, 2.5)
+                        end
                         results:clear()
                     end
                 }
@@ -2181,6 +2251,24 @@ function kyri.spotify(opts)
             results:set(rows)
         end
 
+        local function show_devices()
+            local rows = {}
+            for i,d in pairs(sp:devices()) do
+                rows[#rows + 1] = {
+                    text = d.name .. (d.is_active and "   playing here" or "   " .. (d.type or "")),
+                    icon = d.is_active and "volume-2" or "monitor",
+                    cb = function()
+                        if sp:transfer(d.id) then isl:notify("moved to " .. d.name, 2.5) end
+                        results:clear()
+                    end
+                }
+            end
+            if #rows == 0 then
+                isl:notify("no devices, open spotify somewhere", 3)
+            end
+            results:set(rows)
+        end
+
         finder = isl:input("search spotify", function(q, kind)
             if pasting then
                 pasting = false
@@ -2197,6 +2285,11 @@ function kyri.spotify(opts)
                 return
             end
 
+            if kind == "device" then
+                show_devices()
+                return
+            end
+
             if q == "" then
                 if kind == "playlist" then
                     show_lists(sp:playlists(opts.island_results or 5))
@@ -2205,6 +2298,7 @@ function kyri.spotify(opts)
                 end
                 return
             end
+
             local items = sp:search(q, opts.island_results or 5, kind)
             if #items == 0 then
                 isl:notify("no results", 2)
@@ -2212,7 +2306,7 @@ function kyri.spotify(opts)
                 return
             end
             if kind == "playlist" then show_lists(items) else show_tracks(items) end
-        end)
+        end, {{"track", "songs"}, {"playlist", "lists"}, {"device", "on"}})
 
         isl:button("search", function()
             local on = not finder:visible()
@@ -2267,14 +2361,15 @@ function kyri.spotify(opts)
             end
 
             task.spawn(function()
-                local for_id
+                local for_id, for_rev
                 while alive and task.wait(0.08) do
                     if not sp.ready or not sp.track then
                         words:show(false)
                     else
                         local id = sp.track.id or sp.track.name
-                        if id ~= for_id then
+                        if id ~= for_id or sp.lyric_rev ~= for_rev then
                             for_id = id
+                            for_rev = sp.lyric_rev
                             cued = nil
                             words:show(false)
                             task.spawn(function()
@@ -2541,6 +2636,22 @@ function kyri.spotify(opts)
                 say("shuffle " .. (a[1] or "off"))
             end,
             loop = function(a) local _, m = sp:setloop(a[1]) say("repeat " .. m) end,
+            lyrics = function(a)
+                local n = tonumber(a[1])
+                if n then
+                    say(sp:uselyrics(n) and ("using match " .. n) or "no such match")
+                    return
+                end
+                local alts = sp:lyricsalts()
+                if #alts == 0 then say("no synced matches on lrclib") return end
+                for i,v in pairs(alts) do
+                    say(i .. ". " .. v.name .. "  off by " .. string.format("%.0f", v.drift) .. "s")
+                end
+            end,
+            bpm = function()
+                sp:features()
+                say(sp.bpm and (sp.bpm .. " bpm") or "spotify did not return audio features")
+            end,
             sync = function(a)
                 local n = tonumber(a[1])
                 if not n then
