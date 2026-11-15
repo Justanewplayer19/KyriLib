@@ -76,11 +76,6 @@ kyri.presets = {
     },
 }
 
--- LucideBlox icon pack, fetched from icons.json and cached to KyriLib/icons.json
--- Usage: w:tab("Name", "icon-name") -- e.g. "sword", "users", "settings-2"
--- Loaded once here, at require time. It cannot be deferred to first lookup:
--- HttpGet yields, and yielding inside an __index metamethod throws.
--- Set getgenv().kyri_icon_source before loading the lib to use your own pack.
 local ICON_URL = "https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/icons.json"
 local ICON_FILE = "KyriLib/icons.json"
 
@@ -330,8 +325,6 @@ end
 
 local ISLAND_FILE = "KyriLib/island.json"
 
--- islands made by this load of the lib. a second one from the same run stacks,
--- one left over from a previous execute gets cleared
 local mine = {}
 
 local function island_positions()
@@ -399,8 +392,6 @@ function kyri.island(opts)
         end
     end
 
-    -- inset is NOT ignored on purpose: the roblox topbar lives in CoreGui and draws
-    -- over PlayerGui at any DisplayOrder, so y=0 here would hide the pill behind it
     local gui = make("ScreenGui", {
         Name = rnd(),
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
@@ -1045,7 +1036,6 @@ function kyri.island(opts)
 
     return isl
 end
---[[kyri:spotify-begin]]
 local sha_k = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -1477,8 +1467,6 @@ function kyri.spotify(opts)
         task.spawn(new_token)
     end
 
-    -- an island-mode window already owns a pill, so share it rather than drop a
-    -- second one on top. opts.island = true forces a separate island anyway
     own_island = opts.island ~= false
     if opts.island ~= true and opts.window and opts.window.isl then
         isl = opts.window.isl
@@ -1742,7 +1730,6 @@ function kyri.spotify(opts)
     if getgenv then getgenv().__kyri_spotify = sp end
     return sp
 end
---[[kyri:spotify-end]]
 
 function kyri.new(title, options)
     options = options or {}
@@ -1756,7 +1743,6 @@ function kyri.new(title, options)
 
     local localPlayer = kyri.svc.plr.LocalPlayer
 
-    -- gui names are randomised, so stale instances are found by attribute
     for i,g in pairs(localPlayer.PlayerGui:GetChildren()) do
         if g:IsA("ScreenGui") and g:GetAttribute("kyri") then g:Destroy() end
     end
@@ -1806,7 +1792,6 @@ function kyri.new(title, options)
 
     repeat task.wait() until loaded
 
-    -- Key system
     if options.KeySystem then
         local ks = options.KeySettings or {}
         local validKeys = ks.Key or {}
@@ -1880,7 +1865,6 @@ function kyri.new(title, options)
                 Parent = dialog
             })
 
-            -- left side: key input
             make("TextLabel", {
                 Size = UDim2.new(0.5, -30, 0, 16),
                 Position = UDim2.fromOffset(20, 80),
@@ -1916,7 +1900,6 @@ function kyri.new(title, options)
                 Parent = keyBox
             })
 
-            -- right side: note
             if ks.Note then
                 make("TextLabel", {
                     Size = UDim2.new(0.44, -22, 1, -20),
@@ -1992,7 +1975,6 @@ function kyri.new(title, options)
             if not keyAccepted then return end
         end
 
-        -- Success splash
         local splashGui = make("ScreenGui", {
             Name = rnd(),
             ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
@@ -2134,10 +2116,9 @@ function kyri.new(title, options)
 
     local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1280, 720)
 
-    -- "island" collapses to a pill you click to open, "window" is the classic
-    -- sidebar layout. phones get the island by default, the sidebar eats too
-    -- much of a narrow screen to be usable
     local mode = options.Mode
+    if options.Island == true then mode = "island" end
+    if options.Island == false and mode == nil then mode = "window" end
     if mode ~= "island" and mode ~= "window" then
         mode = w.is_mobile and "island" or "window"
     end
@@ -2189,8 +2170,6 @@ function kyri.new(title, options)
         ind_off = UDim2.new(0, 0, 0, 2)
         ind_on = UDim2.new(1, 0, 0, 2)
 
-        -- w:spotify swaps the island for one with transport chrome, so every
-        -- reference to it has to be reachable again afterwards
         rebind = function(isl)
             w.isl = isl
             main = isl.root
@@ -2282,8 +2261,6 @@ function kyri.new(title, options)
 
         make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = main})
 
-        -- inset from the corner: main clips to a 12px radius, so a flush handle
-        -- gets sliced diagonally by the rounding
         local resize_handle = make("ImageButton", {
             Size = UDim2.fromOffset(14, 14),
             Position = UDim2.new(1, -8, 1, -8),
@@ -2339,9 +2316,6 @@ function kyri.new(title, options)
             end)
         end
 
-        -- no border stroke on main: against the near-black bg it reads as a faint
-        -- grey rim. the drop shadow below carries the edge separation instead.
-
         top = make("Frame", {
             Size = UDim2.new(1, 0, 0, 52),
             BackgroundColor3 = t.container,
@@ -2350,8 +2324,6 @@ function kyri.new(title, options)
 
         make("UICorner", {CornerRadius = UDim.new(0, 12), Parent = top})
 
-        -- squares off the topbar's lower corners so it flows into the body;
-        -- hidden while minimised, otherwise the collapsed pill gets square corners
         local top_fill = make("Frame", {
             Size = UDim2.new(1, 0, 0, 12),
             Position = UDim2.new(0, 0, 1, -12),
@@ -2499,8 +2471,6 @@ function kyri.new(title, options)
 
     if mode == "window" then
 
-    -- drop shadow sits outside main, so it is a sibling: main clips its children.
-    -- off by default, any soft edge around the frame just looks like a smudge
     local want_shadow = options.Shadow == true
 
     local shadow = make("ImageLabel", {
@@ -2515,8 +2485,6 @@ function kyri.new(title, options)
         Parent = w.gui
     })
 
-    -- pads down and to the sides, barely at the top. spread evenly it haloes the
-    -- frame and reads as a transparent outline instead of a shadow
     local function sync_shadow()
         local p, s = main.Position, main.Size
         shadow.Position = UDim2.new(p.X.Scale, p.X.Offset - 13, p.Y.Scale, p.Y.Offset - 2)
@@ -2799,7 +2767,6 @@ function kyri.new(title, options)
             })
             tab.icon = icon_img
 
-            -- download https:// icons via executor request() + getcustomasset()
             if type(icon) == "string" and icon:find("^https://") then
                 task.spawn(function()
                     local ok, err = pcall(function()
@@ -2808,7 +2775,6 @@ function kyri.new(title, options)
                         local res = http({ Url = icon, Method = "GET" })
                         if not res or res.StatusCode ~= 200 or not res.Body then return end
                         if not getcustomasset then return end
-                        -- derive a stable filename from the url so the same icon isn't re-downloaded every tab switch
                         local fname = "kyrilib_icons/" .. icon:gsub("[^%w]", "_"):sub(1, 64) .. ".png"
                         if not isfolder("kyrilib_icons") then makefolder("kyrilib_icons") end
                         writefile(fname, res.Body)
@@ -2816,7 +2782,6 @@ function kyri.new(title, options)
                         icon_img.Image = asset
                     end)
                     if not ok then
-                        -- silently fail - icon stays as default
                     end
                 end)
             end
@@ -2867,8 +2832,6 @@ function kyri.new(title, options)
             Parent = page
         })
 
-        -- right gutter for the scrollbar: elements are full width, so without it
-        -- the 3px accent bar draws on top of their right edge on scrollable tabs
         make("UIPadding", {
             PaddingTop = UDim.new(0, 4),
             PaddingBottom = UDim.new(0, 8),
@@ -3312,7 +3275,6 @@ function kyri.new(title, options)
                 Parent = box
             })
 
-            -- value display: click to type a number
             local val_btn = make("TextButton", {
                 Size = UDim2.fromOffset(72, 20),
                 Position = UDim2.new(1, -16, 0, 10),
@@ -3344,7 +3306,6 @@ function kyri.new(title, options)
             make("UICorner", {CornerRadius = UDim.new(0, 4), Parent = val_inp})
             make("UIPadding", {PaddingRight = UDim.new(0, 4), Parent = val_inp})
 
-            -- track: 8px tall for easier targeting
             local track = make("Frame", {
                 Size = UDim2.new(1, -32, 0, 8),
                 Position = UDim2.fromOffset(16, 36),
@@ -3361,7 +3322,6 @@ function kyri.new(title, options)
             table.insert(w.accents, {obj = fill, prop = "BackgroundColor3"})
             make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = fill})
 
-            -- handle: 18x18 so it's easy to grab
             local handle = make("Frame", {
                 Size = UDim2.fromOffset(18, 18),
                 Position = UDim2.new((val - min) / (max - min), 0, 0.5, 0),
@@ -3372,7 +3332,6 @@ function kyri.new(title, options)
             })
             make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = handle})
 
-            -- shared apply: used by drag, type-in, api:set, and config load
             local function apply(new_val, fire_cb)
                 if step then
                     new_val = math.floor(new_val / step + 0.5) * step
@@ -3389,8 +3348,6 @@ function kyri.new(title, options)
                 if fire_cb and callback then callback(val) end
             end
 
-            -- large transparent hit zone: 36px tall covering the track + padding
-            -- makes the slider trivial to click and drag on both PC and mobile
             local hit = make("Frame", {
                 Size = UDim2.new(1, -32, 0, 36),
                 Position = UDim2.fromOffset(16, 20),
@@ -3431,7 +3388,6 @@ function kyri.new(title, options)
                 end
             end))
 
-            -- click value label → type a number → apply
             val_btn.MouseButton1Click:Connect(function()
                 val_btn.Visible = false
                 val_inp.Text = tostring(val)
@@ -3446,7 +3402,6 @@ function kyri.new(title, options)
                 val_btn.Visible = true
             end)
 
-            -- mobile: keep +/- buttons below the track for fine control
             if w.is_mobile then
                 local btn_row = make("Frame", {
                     Size = UDim2.new(1, -32, 0, 28),
@@ -4758,14 +4713,12 @@ function kyri.new(title, options)
 
         local container = notif_gui.Container
 
-        -- wrapper holds all pieces as siblings so nothing clips anything
         local wrapper = make("Frame", {
             Size = UDim2.fromOffset(320, 77),
             BackgroundTransparency = 1,
             Parent = container
         })
 
-        -- accent bar: sits to the left of the notif (bar rel X=-16, Y=4, W=13, H=63)
         local bar = make("Frame", {
             Size = UDim2.fromOffset(13, 63),
             Position = UDim2.fromOffset(-16, 4),
@@ -4808,7 +4761,6 @@ function kyri.new(title, options)
             Parent = notif
         })
 
-        -- progress bar: sits below the notif (prog rel Y=74, H=3)
         local prog_bg = make("Frame", {
             Size = UDim2.fromOffset(320, 3),
             Position = UDim2.fromOffset(0, 74),
@@ -4905,19 +4857,14 @@ function kyri.new(title, options)
         return w.isl
     end
 
-    --[[kyri:wspotify-begin]]
     function w:spotify(opts)
         opts = opts or {}
         opts.window = w
 
-        -- the hub island has no seek or volume rows, so swap in one that does
-        -- and carry the tab panel across. spotify then shares the single pill
         if w.mode == "island" and w.isl and opts.island ~= true then
             local old = w.isl
             local kept = {}
 
-            -- park them outside the island first: kyri.island is a singleton and
-            -- destroys the old ScreenGui, which would take these with it
             for i,c in pairs(old.body:GetChildren()) do
                 if c:IsA("GuiObject") then
                     c.Visible = false
@@ -4931,8 +4878,6 @@ function kyri.new(title, options)
                 id = "hub",
                 expanded_width = w.pan_w,
                 body_height = w.pan_h,
-                -- the transport, seek and volume rows eat ~200px, so the panel
-                -- grows rather than squeezing the tab pages down to a sliver
                 total_height = math.min(w.pan_h + 170, math.max(math.floor(vp.Y * 0.82), w.pan_h)),
                 on_close = function() w:destroy() end
             })
@@ -4941,8 +4886,6 @@ function kyri.new(title, options)
                 c.Visible = true
             end
 
-            -- the old pill is still up while this one is built, so the stacking
-            -- offset would push the replacement down a row
             fresh.root.AnchorPoint = old.root.AnchorPoint
             fresh.root.Position = old.root.Position
 
@@ -4953,7 +4896,6 @@ function kyri.new(title, options)
         w.sp = kyri.spotify(opts)
         return w.sp
     end
-    --[[kyri:wspotify-end]]
 
     function w:destroy()
         for _, c in ipairs(conns) do

@@ -1,8 +1,3 @@
--- Drop this in ServerScriptService as a Script if you want kyri.persist to work
--- from a LocalScript. DataStoreService only answers the server, so the client
--- half of the studio build talks to it through this RemoteFunction.
---
--- Needs Studio Access to API Services ticked in Game Settings > Security.
 
 local svc = {}
 local function call(n)
@@ -30,7 +25,6 @@ f.OnServerInvoke = function(plr, action, name, data)
     if not s then return nil end
 
     if action == "ping" then
-        -- GetDataStore works with api access off, a real call is the only proof
         local ok = pcall(function() return s:GetAsync(KEY) end)
         return ok
 
@@ -42,7 +36,6 @@ f.OnServerInvoke = function(plr, action, name, data)
     elseif action == "set" then
         if type(data) ~= "table" then return false end
 
-        -- a client can reach this, so cap what it can push into your datastore
         local n = 0
         for k,v in pairs(data) do
             if type(k) ~= "string" or type(v) ~= "string" then return false end
