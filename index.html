@@ -811,9 +811,10 @@ w:destroy()                    -- destroy the window, island and spotify loop</c
 				<pre><code>local w = kyri.new("my hub", { Mode = "island" })
 local main = w:tab("Main", "sword")
 main:toggle("fly", false, function(s) end, "fly")</code></pre>
-				<p><code>window</code> is the classic layout — a 520x400 frame with a tab sidebar, resizable from the bottom-right corner. <code>island</code> collapses to a pill at the top of the screen that expands into a 370x430 panel when you click it, with the tabs as a horizontal strip instead of a sidebar.</p>
+				<p><code>window</code> is the classic layout — a 520x400 frame with a tab sidebar, resizable from the bottom-right corner. <code>island</code> is a <code>kyri.island</code>, the same pill the spotify integration uses, with the tab strip and pages in its body — so it collapses to 230x38 and expands into a 370x430 panel.</p>
+				<p>because island mode <em>is</em> an island, <code>w:spotify()</code> shares it rather than adding a second pill: one pill holding the track, the transport buttons, the seek and volume rows and your own tabs. the panel grows to fit the extra rows. pass <code>island = true</code> to <code>w:spotify</code> if you really do want a separate music pill.</p>
 				<p>every <code>w:tab</code> and element call is identical in both, so nothing in your script changes but the one option. touch devices default to the island because the sidebar leaves only ~190px of usable width on a phone — pass <code>Mode = "window"</code> to opt back out.</p>
-				<p>position is remembered between runs, as is the window's size. both layouts have a close button in the topbar that calls <code>w:destroy()</code>.</p>
+				<p>position is remembered between runs, as is the window's size. window mode has a close button in the topbar, island mode has one beside the collapse X — both call <code>w:destroy()</code>.</p>
 
 				<h3>randomised names</h3>
 				<p>every ScreenGui the library creates is given a random name per run, as is the mobile toggle action. stale instances from a previous execute are found by a <code>kyri</code> attribute rather than a fixed name, so nothing needs to look for <code>"Kyri"</code> in PlayerGui.</p>
@@ -958,6 +959,9 @@ isl:notify("saved", 2)</code></pre>
 						<tr><td>on_volume</td><td>function</td><td>—</td><td><code>fn(percent)</code> where percent is 0-100</td></tr>
 						<tr><td>on_toggle</td><td>function</td><td>—</td><td><code>fn(expanded)</code></td></tr>
 						<tr><td>remember</td><td>bool</td><td><code>true</code></td><td>restore the position you last dragged it to</td></tr>
+						<tr><td>body_height</td><td>number</td><td>—</td><td>adds <code>isl.body</code>, a fixed-height frame you fill yourself</td></tr>
+						<tr><td>total_height</td><td>number</td><td>—</td><td>sizes <code>isl.body</code> so the whole open island lands on this height</td></tr>
+						<tr><td>on_close</td><td>function</td><td>—</td><td>adds a quit button beside the collapse X</td></tr>
 					</tbody>
 				</table>
 

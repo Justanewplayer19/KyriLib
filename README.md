@@ -74,16 +74,29 @@ main:toggle("fly", false, function(s) end, "fly")
 ```
 
 `window` is the classic layout: a 520x400 frame with a tab sidebar, resizable from the
-bottom-right corner. `island` collapses to a pill at the top of the screen that expands into
-a 370x430 panel when you click it, with the tabs as a horizontal strip instead of a sidebar.
+bottom-right corner. `island` is a `kyri.island` — the same pill the Spotify integration uses
+— with the tab strip and pages living in its body, so it collapses to a 230x38 pill and
+expands into a 370x430 panel.
 
 Every `w:tab` and element call is identical in both — nothing in your script changes but the
 one option. Touch devices default to the island because the sidebar leaves only ~190px of
 usable width on a phone; pass `Mode = "window"` to opt back out.
 
-Position is remembered between runs, as is the window's size. `w:resetpos()` clears it.
+Because island mode *is* an island, `w:spotify()` shares it rather than adding a second pill:
 
-Both layouts have a close button in the topbar, which calls `w:destroy()`.
+```lua
+local w = kyri.new("my hub", { Mode = "island" })
+w:tab("Main", "sword"):toggle("fly", false, function(s) end, "fly")
+w:spotify()
+```
+
+That gives you one pill holding the track, the transport buttons, the seek and volume rows and
+your own tabs. The panel grows to fit the extra rows. Pass `island = true` to `w:spotify` if you
+really do want a separate music pill.
+
+In island mode `w:resetpos()` clears the island's saved position; in window mode it clears the
+window's position and size. Window mode has a close button in the topbar, island mode has one
+beside the collapse X — both call `w:destroy()`.
 
 `kyri.presets` contains built-in themes: `kyri`, `midnight`, `rose`, `forest`, `slate`
 
@@ -222,6 +235,9 @@ isl:notify("saved", 2)
 | `on_volume` | function | — | `fn(percent)` where percent is 0-100 |
 | `on_toggle` | function | — | `fn(expanded)` |
 | `remember` | bool | `true` | restore the position you last dragged it to |
+| `body_height` | number | — | adds `isl.body`, a fixed-height frame you fill yourself |
+| `total_height` | number | — | sizes `isl.body` so the whole open island lands on this height |
+| `on_close` | function | — | adds a quit button beside the collapse X |
 
 **Methods:**
 ```lua
