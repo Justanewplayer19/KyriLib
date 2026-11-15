@@ -222,16 +222,33 @@ end
 
 local ISLAND_FILE = "KyriLib/island.json"
 
-local function save_island_pos(root)
+-- islands made by this load of the lib. a second one from the same run stacks,
+-- one left over from a previous execute gets cleared
+local mine = {}
+
+local function island_positions()
+    local d
+    if isfile then
+        pcall(function()
+            if isfile(ISLAND_FILE) then d = kyri.svc.http:JSONDecode(readfile(ISLAND_FILE)) end
+        end)
+    end
+    if type(d) ~= "table" then d = {} end
+    return d
+end
+
+local function save_island_pos(root, id)
     if not writefile then return end
     pcall(function()
         if isfolder and not isfolder("KyriLib") then makefolder("KyriLib") end
+        local d = island_positions()
         local p = root.Position
-        writefile(ISLAND_FILE, kyri.svc.http:JSONEncode({
+        d[id or "main"] = {
             sx = p.X.Scale, ox = p.X.Offset,
             sy = p.Y.Scale, oy = p.Y.Offset,
             ax = root.AnchorPoint.X, ay = root.AnchorPoint.Y
-        }))
+        }
+        writefile(ISLAND_FILE, kyri.svc.http:JSONEncode(d))
     end)
 end
 
@@ -255,9 +272,23 @@ function kyri.island(opts)
     local show_vol = opts.volume ~= false
     local draggable = opts.draggable ~= false
 
-    if getgenv and getgenv().__kyri_island then
-        pcall(function() getgenv().__kyri_island:Destroy() end)
-        getgenv().__kyri_island = nil
+    local id = opts.id or "main"
+
+    local stack = 0
+    for g in pairs(mine) do
+        if g.Parent then stack = stack + 1 end
+    end
+
+    if getgenv then
+        local g = getgenv()
+        g.__kyri_islands = type(g.__kyri_islands) == "table" and g.__kyri_islands or {}
+        for i = #g.__kyri_islands, 1, -1 do
+            local old = g.__kyri_islands[i]
+            if not mine[old] then
+                pcall(function() old:Destroy() end)
+                table.remove(g.__kyri_islands, i)
+            end
+        end
     end
 
     -- inset is NOT ignored on purpose: the roblox topbar lives in CoreGui and draws
@@ -271,22 +302,20 @@ function kyri.island(opts)
         Parent = lp.PlayerGui
     })
     gui:SetAttribute("kyri", true)
-    if getgenv then getgenv().__kyri_island = gui end
+    mine[gui] = true
+    if getgenv then table.insert(getgenv().__kyri_islands, gui) end
     isl.gui = gui
 
-    local ipos = opts.position or UDim2.new(0.5, 0, 0, opts.y or 10)
+    local base_y = opts.y or (10 + stack * (ch + 8))
+    local ipos = opts.position or UDim2.new(0.5, 0, 0, base_y)
     local ianc = opts.position and Vector2.new(0, 0) or Vector2.new(0.5, 0)
 
-    if opts.remember ~= false and isfile then
-        pcall(function()
-            if isfile(ISLAND_FILE) then
-                local d = kyri.svc.http:JSONDecode(readfile(ISLAND_FILE))
-                if d and d.ox then
-                    ipos = UDim2.new(d.sx, d.ox, d.sy, d.oy)
-                    ianc = Vector2.new(d.ax, d.ay)
-                end
-            end
-        end)
+    if opts.remember ~= false then
+        local d = island_positions()[id]
+        if d and d.ox then
+            ipos = UDim2.new(d.sx, d.ox, d.sy, d.oy)
+            ianc = Vector2.new(d.ax, d.ay)
+        end
     end
 
     local root = make("Frame", {
@@ -717,7 +746,7 @@ function kyri.island(opts)
                     set_expanded(true)
                 else
                     kyri.svc.tw:Create(root, TweenInfo.new(0.15), {Size = UDim2.fromOffset(cw, ch)}):Play()
-                    if opts.remember ~= false then save_island_pos(root) end
+                    if opts.remember ~= false then save_island_pos(root, id) end
                 end
             end
         end))
@@ -853,9 +882,15 @@ function kyri.island(opts)
     function isl:visible(v) root.Visible = v end
 
     function isl:resetpos()
-        if isfile and isfile(ISLAND_FILE) then pcall(function() delfile(ISLAND_FILE) end) end
+        if writefile then
+            pcall(function()
+                local d = island_positions()
+                d[id] = nil
+                writefile(ISLAND_FILE, kyri.svc.http:JSONEncode(d))
+            end)
+        end
         root.AnchorPoint = opts.position and Vector2.new(0, 0) or Vector2.new(0.5, 0)
-        root.Position = opts.position or UDim2.new(0.5, 0, 0, opts.y or 10)
+        root.Position = opts.position or UDim2.new(0.5, 0, 0, base_y)
     end
     function isl:onseek(fn) isl.on_seek = fn end
     function isl:onvolume(fn) isl.on_volume = fn end
@@ -863,6 +898,13 @@ function kyri.island(opts)
     function isl:destroy()
         for i,c in pairs(conns) do
             pcall(function() c:Disconnect() end)
+        end
+        mine[gui] = nil
+        if getgenv and type(getgenv().__kyri_islands) == "table" then
+            local l = getgenv().__kyri_islands
+            for i = #l, 1, -1 do
+                if l[i] == gui then table.remove(l, i) end
+            end
         end
         if gui and gui.Parent then gui:Destroy() end
     end
@@ -1319,6 +1361,7 @@ function kyri.spotify(opts)
 
     if own_island then
         isl = kyri.island({
+            id = "spotify",
             title = sp.ready and "spotify" or "spotify · not connected",
             subtitle = "",
             icon = "music",
@@ -2033,6 +2076,7 @@ function kyri.new(title, options)
             bars = false,
             seek = false,
             volume = false,
+            id = "hub",
             expanded_width = pan_w,
             body_height = pan_h,
             total_height = pan_h,
@@ -4754,6 +4798,7 @@ function kyri.new(title, options)
 
             local fresh = kyri.island({
                 title = w.title,
+                id = "hub",
                 expanded_width = w.pan_w,
                 body_height = w.pan_h,
                 -- the transport, seek and volume rows eat ~200px, so the panel
@@ -4765,6 +4810,11 @@ function kyri.new(title, options)
                 c.Parent = fresh.body
                 c.Visible = true
             end
+
+            -- the old pill is still up while this one is built, so the stacking
+            -- offset would push the replacement down a row
+            fresh.root.AnchorPoint = old.root.AnchorPoint
+            fresh.root.Position = old.root.Position
 
             old:destroy()
             if rebind then rebind(fresh) end
