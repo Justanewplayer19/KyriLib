@@ -1988,7 +1988,8 @@ function kyri.new(title, options)
         end)
     end
 
-    make("UIStroke", {Color = t.border, Thickness = 1, Transparency = 0.35, Parent = main})
+    -- no border stroke on main: against the near-black bg it reads as a faint
+    -- grey rim. the drop shadow below carries the edge separation instead.
 
     -- drop shadow sits outside main, so it is a sibling: main clips its children
     local shadow = make("ImageLabel", {
