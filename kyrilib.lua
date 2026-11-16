@@ -1566,6 +1566,39 @@ function kyri.island(opts)
 
     function isl:visible(v) root.Visible = v end
 
+    function isl:theme(over)
+        if type(over) == "string" then over = kyri.presets[over] end
+        if type(over) ~= "table" then return false end
+
+        for k,new in pairs(over) do
+            local was = t[k]
+            t[k] = new
+            if was and typeof(new) == "Color3" then
+                for i,o in pairs(root:GetDescendants()) do
+                    pcall(function()
+                        if o:IsA("GuiObject") and o.BackgroundColor3 == was then
+                            o.BackgroundColor3 = new
+                        end
+                        if o:IsA("TextLabel") or o:IsA("TextButton") or o:IsA("TextBox") then
+                            if o.TextColor3 == was then o.TextColor3 = new end
+                        end
+                        if o:IsA("UIStroke") and o.Color == was then o.Color = new end
+                        if o:IsA("ImageLabel") or o:IsA("ImageButton") then
+                            if o.ImageColor3 == was then o.ImageColor3 = new end
+                        end
+                        if o:IsA("Frame") and o.BackgroundColor3 == was then
+                            o.BackgroundColor3 = new
+                        end
+                    end)
+                end
+                pcall(function()
+                    if root.BackgroundColor3 == was then root.BackgroundColor3 = new end
+                end)
+            end
+        end
+        return true
+    end
+
     function isl:resetpos()
         if writefile then
             pcall(function()

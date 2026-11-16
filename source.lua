@@ -1566,6 +1566,39 @@ function kyri.island(opts)
 
     function isl:visible(v) root.Visible = v end
 
+    function isl:theme(over)
+        if type(over) == "string" then over = kyri.presets[over] end
+        if type(over) ~= "table" then return false end
+
+        for k,new in pairs(over) do
+            local was = t[k]
+            t[k] = new
+            if was and typeof(new) == "Color3" then
+                for i,o in pairs(root:GetDescendants()) do
+                    pcall(function()
+                        if o:IsA("GuiObject") and o.BackgroundColor3 == was then
+                            o.BackgroundColor3 = new
+                        end
+                        if o:IsA("TextLabel") or o:IsA("TextButton") or o:IsA("TextBox") then
+                            if o.TextColor3 == was then o.TextColor3 = new end
+                        end
+                        if o:IsA("UIStroke") and o.Color == was then o.Color = new end
+                        if o:IsA("ImageLabel") or o:IsA("ImageButton") then
+                            if o.ImageColor3 == was then o.ImageColor3 = new end
+                        end
+                        if o:IsA("Frame") and o.BackgroundColor3 == was then
+                            o.BackgroundColor3 = new
+                        end
+                    end)
+                end
+                pcall(function()
+                    if root.BackgroundColor3 == was then root.BackgroundColor3 = new end
+                end)
+            end
+        end
+        return true
+    end
+
     function isl:resetpos()
         if writefile then
             pcall(function()
@@ -2521,6 +2554,10 @@ function kyri.spotify(opts)
         own_island = false
     end
 
+    if own_island and not opts.window and opts.tabs == false and opts.splash ~= false then
+        kyri.splash({Splash = true, Logo = opts.logo, SplashTime = opts.splash_time or 1.2})
+    end
+
     if own_island then
         isl = kyri.island({
             id = "spotify",
@@ -3064,21 +3101,9 @@ function kyri.spotify(opts)
     return sp
 end
 
-function kyri.new(title, options)
+function kyri.splash(options)
     options = options or {}
-
-    if getgenv then
-        if getgenv().__kyri_inst then
-            pcall(function() getgenv().__kyri_inst:destroy() end)
-            getgenv().__kyri_inst = nil
-        end
-    end
-
     local localPlayer = kyri.svc.plr.LocalPlayer
-
-    for i,g in pairs(localPlayer.PlayerGui:GetChildren()) do
-        if g:IsA("ScreenGui") and g:GetAttribute("kyri") then g:Destroy() end
-    end
 
     local load_gui = make("ScreenGui", {
         Name = rnd(),
@@ -3181,6 +3206,25 @@ function kyri.new(title, options)
     end)
 
     repeat task.wait() until loaded
+end
+
+function kyri.new(title, options)
+    options = options or {}
+
+    if getgenv then
+        if getgenv().__kyri_inst then
+            pcall(function() getgenv().__kyri_inst:destroy() end)
+            getgenv().__kyri_inst = nil
+        end
+    end
+
+    local localPlayer = kyri.svc.plr.LocalPlayer
+
+    for i,g in pairs(localPlayer.PlayerGui:GetChildren()) do
+        if g:IsA("ScreenGui") and g:GetAttribute("kyri") then g:Destroy() end
+    end
+
+    kyri.splash(options)
 
     if options.KeySystem then
         local ks = options.KeySettings or {}

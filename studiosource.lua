@@ -1806,6 +1806,39 @@ function kyri.island(opts)
 
     function isl:visible(v) root.Visible = v end
 
+    function isl:theme(over)
+        if type(over) == "string" then over = kyri.presets[over] end
+        if type(over) ~= "table" then return false end
+
+        for k,new in pairs(over) do
+            local was = t[k]
+            t[k] = new
+            if was and typeof(new) == "Color3" then
+                for i,o in pairs(root:GetDescendants()) do
+                    pcall(function()
+                        if o:IsA("GuiObject") and o.BackgroundColor3 == was then
+                            o.BackgroundColor3 = new
+                        end
+                        if o:IsA("TextLabel") or o:IsA("TextButton") or o:IsA("TextBox") then
+                            if o.TextColor3 == was then o.TextColor3 = new end
+                        end
+                        if o:IsA("UIStroke") and o.Color == was then o.Color = new end
+                        if o:IsA("ImageLabel") or o:IsA("ImageButton") then
+                            if o.ImageColor3 == was then o.ImageColor3 = new end
+                        end
+                        if o:IsA("Frame") and o.BackgroundColor3 == was then
+                            o.BackgroundColor3 = new
+                        end
+                    end)
+                end
+                pcall(function()
+                    if root.BackgroundColor3 == was then root.BackgroundColor3 = new end
+                end)
+            end
+        end
+        return true
+    end
+
     function isl:resetpos()
         if writefile then
             pcall(function()
@@ -1866,107 +1899,7 @@ function kyri.new(title, options)
         if g:IsA("ScreenGui") and g:GetAttribute("kyri") then g:Destroy() end
     end
 
-    local load_gui = make("ScreenGui", {
-        Name = rnd(),
-        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-        ResetOnSpawn = false,
-        IgnoreGuiInset = true,
-        DisplayOrder = 999999999,
-        Parent = localPlayer.PlayerGui
-    })
-    load_gui:SetAttribute("kyri", true)
-
-    local logo = make("ImageLabel", {
-        Size = UDim2.fromOffset(300, 300),
-        Position = UDim2.fromScale(0.5, 0.5),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundTransparency = 1,
-        Image = "",
-        ImageTransparency = 1,
-        Parent = load_gui
-    })
-
-    local loaded = false
-
-    task.spawn(function()
-        if options.Splash == false then
-            load_gui:Destroy()
-            loaded = true
-            return
-        end
-
-        local url = "https://raw.githubusercontent.com/Justanewplayer19/KyriLib/refs/heads/main/kyriliblogo.png"
-        local path = "kyrilib_logo.png"
-        local shown = false
-
-        local function try(img)
-            if not img or img == "" then return false end
-
-            local probe = make("ImageLabel", {
-                Size = UDim2.fromOffset(1, 1),
-                BackgroundTransparency = 1,
-                Image = img,
-                Parent = load_gui
-            })
-
-            pcall(function() kyri.svc.cp:PreloadAsync({probe}) end)
-            local t0 = os.clock()
-            while not probe.IsLoaded and os.clock() - t0 < 1.5 do
-                task.wait(0.05)
-            end
-
-            local got = probe.IsLoaded
-            probe:Destroy()
-            if got then logo.Image = img end
-            return got
-        end
-
-        if options.Logo then
-            shown = try(options.Logo)
-        end
-
-        if not shown and isfile and writefile and not isfile(path) then
-            local data = http_get(url)
-            if data then pcall(function() writefile(path, data) end) end
-        end
-
-        if not shown and isfile and getcustomasset and isfile(path) then
-            pcall(function() shown = try(getcustomasset(path)) end)
-        end
-
-        if not shown then
-            shown = try("rbxassetid://88259917092947")
-        end
-
-        local mark = logo
-        if not shown then
-            logo:Destroy()
-            mark = make("TextLabel", {
-                Size = UDim2.fromOffset(460, 140),
-                Position = UDim2.fromScale(0.5, 0.5),
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                BackgroundTransparency = 1,
-                Text = "KyriLib",
-                TextColor3 = Color3.fromRGB(238, 236, 230),
-                TextTransparency = 1,
-                Font = Enum.Font.Merriweather,
-                TextSize = 64,
-                Parent = load_gui
-            })
-        end
-
-        local into = shown and {ImageTransparency = 0} or {TextTransparency = 0}
-        local outof = shown and {ImageTransparency = 1} or {TextTransparency = 1}
-
-        kyri.svc.tw:Create(mark, TweenInfo.new(0.4), into):Play()
-        task.wait(options.SplashTime or 1.5)
-        kyri.svc.tw:Create(mark, TweenInfo.new(0.4), outof):Play()
-        task.wait(0.4)
-        load_gui:Destroy()
-        loaded = true
-    end)
-
-    repeat task.wait() until loaded
+    kyri.splash(options)
 
     if options.KeySystem then
         local ks = options.KeySettings or {}
