@@ -1743,6 +1743,9 @@ function kyri.spotify(opts)
     sp.ready = false
     sp.playing = false
     sp.pos, sp.dur, sp.vol = 0, 0, 100
+    sp.vol_known = false
+    sp.can_volume = true
+    local idle_for = 0
     sp.shuffle = false
     sp.loop = "off"
     sp.track = nil
@@ -1958,6 +1961,10 @@ function kyri.spotify(opts)
     end
 
     function sp:volume(v)
+        if sp.can_volume == false then
+            sp.last_error = (sp.device_name or "this device") .. " does not take volume from spotify"
+            return false
+        end
         v = math.clamp(math.floor(v), 0, 100)
         local r = api("PUT", "/me/player/volume?volume_percent=" .. v)
         if good(r) then sp.vol = v end
@@ -2493,23 +2500,50 @@ function kyri.spotify(opts)
     end
 
     function sp:sync()
-        local r = api("GET", "/me/player/currently-playing")
-        if not r or r.StatusCode ~= 200 then
-            if r and r.StatusCode == 204 then
+        local function grab(ep)
+            local r = api("GET", ep)
+            if not r or r.StatusCode ~= 200 or not r.Body or #r.Body < 2 then return nil end
+            local ok, d = pcall(function() return hs:JSONDecode(r.Body) end)
+            if not ok or type(d) ~= "table" then return nil end
+            return d
+        end
+
+        local d = grab("/me/player")
+        if not d or not d.item then
+            local alt = grab("/me/player/currently-playing")
+            if alt and alt.item then
+                if d and d.device then alt.device = alt.device or d.device end
+                d = alt
+            end
+        end
+
+        if not d or not d.item then
+            sp.playing = false
+            idle_for = idle_for + 1
+            if idle_for >= 3 then
+                sp.track = nil
+                cur_id = ""
                 push({title = "nothing playing", subtitle = "", playing = false, progress = 0})
-                sp.playing = false
+            else
+                push({playing = false})
             end
             return
         end
-        local ok, d = pcall(function() return hs:JSONDecode(r.Body) end)
-        if not ok or not d or not d.item then return end
+
+        idle_for = 0
 
         sp.playing = d.is_playing and true or false
         sp.pos = math.floor((d.progress_ms or 0) / 1000)
         sp.dur = math.floor((d.item.duration_ms or 0) / 1000)
         if d.device then
             if d.device.id then sp.device_id = d.device.id end
-            if d.device.volume_percent then sp.vol = d.device.volume_percent end
+            if d.device.volume_percent then
+                sp.vol = d.device.volume_percent
+                sp.vol_known = true
+            end
+            sp.device_name = d.device.name
+            sp.device_type = d.device.type
+            sp.can_volume = d.device.supports_volume ~= false
         end
         if d.shuffle_state ~= nil then sp.shuffle = d.shuffle_state end
         if d.repeat_state then sp.loop = d.repeat_state end
@@ -2530,7 +2564,7 @@ function kyri.spotify(opts)
 
         push({
             playing = sp.playing,
-            volume = sp.vol,
+            volume = sp.vol_known and sp.vol or nil,
             progress = sp.dur > 0 and (sp.pos / sp.dur) or 0,
             left = fmt_time(sp.pos),
             right = fmt_time(sp.dur)
@@ -2552,6 +2586,10 @@ function kyri.spotify(opts)
     if opts.island ~= true and opts.window and opts.window.isl then
         isl = opts.window.isl
         own_island = false
+    end
+
+    if own_island and not opts.window and opts.tabs == false and opts.splash ~= false then
+        kyri.splash({Splash = true, Logo = opts.logo, SplashTime = opts.splash_time or 1.2})
     end
 
     if own_island then
@@ -3097,21 +3135,9 @@ function kyri.spotify(opts)
     return sp
 end
 
-function kyri.new(title, options)
+function kyri.splash(options)
     options = options or {}
-
-    if getgenv then
-        if getgenv().__kyri_inst then
-            pcall(function() getgenv().__kyri_inst:destroy() end)
-            getgenv().__kyri_inst = nil
-        end
-    end
-
     local localPlayer = kyri.svc.plr.LocalPlayer
-
-    for i,g in pairs(localPlayer.PlayerGui:GetChildren()) do
-        if g:IsA("ScreenGui") and g:GetAttribute("kyri") then g:Destroy() end
-    end
 
     local load_gui = make("ScreenGui", {
         Name = rnd(),
@@ -3214,6 +3240,25 @@ function kyri.new(title, options)
     end)
 
     repeat task.wait() until loaded
+end
+
+function kyri.new(title, options)
+    options = options or {}
+
+    if getgenv then
+        if getgenv().__kyri_inst then
+            pcall(function() getgenv().__kyri_inst:destroy() end)
+            getgenv().__kyri_inst = nil
+        end
+    end
+
+    local localPlayer = kyri.svc.plr.LocalPlayer
+
+    for i,g in pairs(localPlayer.PlayerGui:GetChildren()) do
+        if g:IsA("ScreenGui") and g:GetAttribute("kyri") then g:Destroy() end
+    end
+
+    kyri.splash(options)
 
     if options.KeySystem then
         local ks = options.KeySettings or {}
