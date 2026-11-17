@@ -2219,6 +2219,17 @@ function kyri.spotify(opts)
 
     local lyric_cache = {}
 
+    local lyr_soft = false
+
+    local function soft_check(ok, res)
+        if not ok or not res then
+            lyr_soft = true
+            return
+        end
+        local c = res.StatusCode
+        if c == 429 or c >= 500 then lyr_soft = true end
+    end
+
     local function spicy_key()
         if opts.spicy_key then return opts.spicy_key end
         local g = getgenv and getgenv()
@@ -2302,6 +2313,7 @@ function kyri.spotify(opts)
                 ["User-Agent"] = sp.agent
             }
         })
+        soft_check(ok, res)
         if not ok or not res then return nil end
 
         if res.StatusCode == 401 or res.StatusCode == 403 then
@@ -2347,6 +2359,7 @@ function kyri.spotify(opts)
             Method = "GET",
             Headers = {["User-Agent"] = sp.agent}
         })
+        soft_check(ok, res)
         if not ok or not res or res.StatusCode ~= 200 or not res.Body then return nil end
         return res.Body
     end
@@ -2408,6 +2421,8 @@ function kyri.spotify(opts)
         if lyric_cache[id] ~= nil then return lyric_cache[id] or nil end
         if not req then return nil end
 
+        lyr_soft = false
+        sp.lyric_error = nil
         local spare = nil
 
         if sp.lyric_source ~= "lrclib" and sp.lyric_source ~= "lrc.red" then
@@ -2437,6 +2452,7 @@ function kyri.spotify(opts)
 
         local function grab(u)
             local ok, res = pcall(req, {Url = u, Method = "GET"})
+            soft_check(ok, res)
             if not ok or not res or res.StatusCode ~= 200 or not res.Body then return nil end
             local okd, d = pcall(function() return hs:JSONDecode(res.Body) end)
             if not okd then return nil end
@@ -2463,7 +2479,13 @@ function kyri.spotify(opts)
         end
 
         if type(d) ~= "table" then
-            lyric_cache[id] = spare or false
+            if spare then
+                lyric_cache[id] = spare
+            elseif lyr_soft then
+                sp.lyric_error = "network"
+            else
+                lyric_cache[id] = false
+            end
             return spare
         end
 
@@ -4606,6 +4628,114 @@ function kyri.spotify(opts)
         })
         tip(f_credit, "copy the credit links")
 
+        local DISCORD = copts.discord or "https://discord.gg/y52Npnsp4G"
+
+        local blank = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 230),
+            BackgroundTransparency = 1,
+            Visible = false,
+            Parent = clip
+        })
+        local b_head = make("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 36),
+            BackgroundTransparency = 1,
+            Text = "No lyrics for this song yet",
+            TextColor3 = Color3.new(1, 1, 1),
+            Font = fb,
+            TextSize = 27,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = blank
+        })
+        local b_body = make("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 72),
+            Position = UDim2.fromOffset(0, 44),
+            BackgroundTransparency = 1,
+            Text = "We could not find lyrics for this track in any of our sources. New lyrics are"
+                .. " added all the time, so check back later. If you know this song has lyrics,"
+                .. " copy the details and send them over so we can look into it.",
+            TextColor3 = Color3.new(1, 1, 1),
+            TextTransparency = 0.38,
+            Font = fr,
+            TextSize = 14,
+            TextWrapped = true,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Top,
+            Parent = blank
+        })
+
+        local function pill(text, icon, x, cb)
+            local b = make("TextButton", {
+                Size = UDim2.fromOffset(#text * 7 + 52, 38),
+                Position = UDim2.fromOffset(x, 128),
+                BackgroundColor3 = Color3.new(1, 1, 1),
+                BackgroundTransparency = 0.88,
+                Text = "",
+                AutoButtonColor = false,
+                Parent = blank
+            })
+            make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = b})
+            make("ImageLabel", {
+                Size = UDim2.fromOffset(15, 15),
+                Position = UDim2.fromOffset(16, 11),
+                BackgroundTransparency = 1,
+                Image = ico(icon) or "",
+                ImageColor3 = Color3.new(1, 1, 1),
+                Parent = b
+            })
+            make("TextLabel", {
+                Size = UDim2.new(1, -38, 1, 0),
+                Position = UDim2.fromOffset(38, 0),
+                BackgroundTransparency = 1,
+                Text = text,
+                TextColor3 = Color3.new(1, 1, 1),
+                Font = fm,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = b
+            })
+            b.MouseEnter:Connect(function()
+                tw:Create(b, TweenInfo.new(0.12), {BackgroundTransparency = 0.78}):Play()
+            end)
+            b.MouseLeave:Connect(function()
+                tw:Create(b, TweenInfo.new(0.12), {BackgroundTransparency = 0.88}):Play()
+            end)
+            b.MouseButton1Click:Connect(cb)
+            return b
+        end
+
+        local copyb = pill("Copy details", "copy", 0, function()
+            local t = sp.track or {}
+            local bits = {
+                "track: " .. tostring(t.name),
+                "artist: " .. sp:artists(),
+                "album: " .. tostring(t.album and t.album.name),
+                "spotify id: " .. tostring(t.id),
+                "isrc: " .. tostring(t.external_ids and t.external_ids.isrc),
+                "duration: " .. fmt_time(math.floor((t.duration_ms or 0) / 1000)),
+                "tried: spicy lyrics, lrc.red, lrclib"
+            }
+            kyri.copybox(table.concat(bits, "\n"), "track details")
+        end)
+        tip(copyb, "copy what the providers were asked for")
+
+        local helpb = pill("Get help on Discord", "message-circle", copyb.Size.X.Offset + 10, function()
+            kyri.copybox(DISCORD, "discord invite")
+        end)
+        tip(helpb, DISCORD)
+
+        local b_code = make("TextLabel", {
+            Size = UDim2.new(1, 0, 0, 16),
+            Position = UDim2.fromOffset(0, 176),
+            BackgroundTransparency = 1,
+            Text = "",
+            TextColor3 = Color3.new(1, 1, 1),
+            TextTransparency = 0.66,
+            Font = fr,
+            TextSize = 11,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            Parent = blank
+        })
+
         local catch = make("TextButton", {
             Size = UDim2.fromScale(1, 1),
             BackgroundTransparency = 1,
@@ -4748,10 +4878,12 @@ function kyri.spotify(opts)
             built_sz = sz
 
             if not cued then
-                foot.Position = UDim2.fromOffset(0, 0)
-                reel.Size = UDim2.new(1, 0, 0, 60)
+                foot.Position = UDim2.fromOffset(0, blank.Visible and 238 or 0)
+                reel.Size = UDim2.new(1, 0, 0, blank.Visible and 300 or 60)
+                reel.Position = UDim2.fromOffset(0, 0)
                 return
             end
+            blank.Visible = false
 
             local lh = math.floor(sz * 1.2)
             local y = 0
@@ -4921,6 +5053,7 @@ function kyri.spotify(opts)
                 end
             end
 
+            blank.Size = UDim2.new(1, 0, 0, 230)
             cinei.Image = ico(cine and "minimize" or "maximize") or cinei.Image
             compacti.Image = ico(compact and "maximize-2" or "square") or compacti.Image
 
@@ -5281,10 +5414,31 @@ function kyri.spotify(opts)
                             f_writers.Text = (type(w) == "string" and w ~= "") and ("Written by " .. w) or ""
                             local kind = got.source == "spicy_lyrics" and "Community lyrics" or
                                 (got.words and "Word synced" or "Line synced")
-                            f_credit.Text = cued and (kind .. "  -  " .. tostring(got.credit)) or
-                                (got.plain and "plain lyrics only, nothing to follow" or "no lyrics found")
+                            f_credit.Text = cued and (kind .. "  -  " .. tostring(got.credit)) or ""
                         else
-                            f_credit.Text = "no lyrics found"
+                            f_credit.Text = ""
+                        end
+
+                        if not cued then
+                            local net = sp.lyric_error == "network"
+                            b_head.Text = net and "Could not reach the lyric servers"
+                                or (got and got.plain) and "Only plain lyrics for this song"
+                                or "No lyrics for this song yet"
+                            b_body.Text = net
+                                and ("A provider did not answer, so this is not a miss. It will try"
+                                    .. " again on its own, or skip away and back to retry now.")
+                                or (got and got.plain)
+                                and ("This track has lyrics but nobody has timed them yet, so there is"
+                                    .. " nothing to follow along to. Copy the details and send them over"
+                                    .. " if you want it synced.")
+                                or ("We could not find lyrics for this track in any of our sources. New"
+                                    .. " lyrics are added all the time, so check back later. If you know"
+                                    .. " this song has lyrics, copy the details and send them over so we"
+                                    .. " can look into it.")
+                            b_code.Text = net and "Code: provider-unreachable"
+                                or (got and got.plain) and "Code: lyrics-not-synced"
+                                or "Code: lyrics-not-found (404)"
+                            blank.Visible = true
                         end
                         build()
                         active = 0
