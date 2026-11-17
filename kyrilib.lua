@@ -3657,10 +3657,12 @@ function kyri.spotify(opts)
                 end)
             end
             drop.Visible = true
+            shut_pop.Visible = true
             tw:Create(drop, TweenInfo.new(0.16), {Size = UDim2.fromOffset(380, math.min(#r * 48 + 34, 300))}):Play()
         end
 
         local function hide_drop()
+            shut_pop.Visible = false
             tw:Create(drop, TweenInfo.new(0.12), {Size = UDim2.fromOffset(380, 0)}):Play()
             task.delay(0.13, function() drop.Visible = false end)
         end
@@ -3893,6 +3895,16 @@ function kyri.spotify(opts)
         tip(vol_ic, "volume")
         tip(np_art_btn, "go to artist")
 
+        local shut_pop = make("TextButton", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Text = "",
+            Visible = false,
+            AutoButtonColor = false,
+            ZIndex = 28,
+            Parent = win
+        })
+
         local devpop = make("Frame", {
             Size = UDim2.fromOffset(224, 0),
             Position = UDim2.new(1, -206, 1, -164),
@@ -3910,16 +3922,35 @@ function kyri.spotify(opts)
             ZIndex = 30
         })
 
+        local function devhide()
+            shut_pop.Visible = false
+            tw:Create(devpop, TweenInfo.new(0.12), {Size = UDim2.fromOffset(224, 0)}):Play()
+            task.delay(0.13, function() devpop.Visible = false end)
+        end
+
+        shut_pop.MouseButton1Click:Connect(devhide)
+
+        local function devplace(h)
+            local ws = win.AbsoluteSize
+            local bx = devb.AbsolutePosition.X - win.AbsolutePosition.X - 104
+            local by = devb.AbsolutePosition.Y - win.AbsolutePosition.Y
+            local y = by - h - 10
+            if y < 10 then y = math.min(by + 28, ws.Y - h - 10) end
+            devpop.Position = UDim2.fromOffset(math.clamp(bx, 10, math.max(ws.X - 234, 10)), y)
+            tw:Create(devpop, TweenInfo.new(0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+                {Size = UDim2.fromOffset(224, h)}):Play()
+        end
+
         devb.MouseButton1Click:Connect(function()
-            if devpop.Visible then
-                tw:Create(devpop, TweenInfo.new(0.12), {Size = UDim2.fromOffset(224, 0)}):Play()
-                task.delay(0.13, function() devpop.Visible = false end)
-                return
-            end
+            if devpop.Visible then return devhide() end
             wipe(devlist)
             devpop.Visible = true
+            shut_pop.Visible = true
+            devplace(60)
             task.spawn(function()
                 local ds = sp:devices()
+                if not devpop.Visible then return end
+                wipe(devlist)
                 lbl(devlist, {
                     Size = UDim2.new(1, 0, 0, 22),
                     Text = "Connect to a device",
@@ -3960,11 +3991,20 @@ function kyri.spotify(opts)
                     })
                     b.MouseButton1Click:Connect(function()
                         sp:transfer(d.id, sp.playing)
-                        tw:Create(devpop, TweenInfo.new(0.12), {Size = UDim2.fromOffset(224, 0)}):Play()
-                        task.delay(0.13, function() devpop.Visible = false end)
+                        devhide()
                     end)
                 end
-                tw:Create(devpop, TweenInfo.new(0.16), {Size = UDim2.fromOffset(224, math.min(#ds * 44 + 34, 260))}):Play()
+                if #ds == 0 then
+                    lbl(devlist, {
+                        Size = UDim2.new(1, 0, 0, 30),
+                        Text = "no devices, open spotify somewhere",
+                        TextColor3 = c.sub,
+                        TextSize = 11,
+                        ZIndex = 31,
+                        LayoutOrder = 1
+                    })
+                end
+                devplace(math.min(math.max(#ds, 1) * 44 + 34, 260))
             end)
         end)
 
