@@ -1828,6 +1828,16 @@ function kyri.spotify(opts)
     local ART = DIR .. "/art"
 
     local token, refresh, alive = "", "", true
+    local grant = nil
+
+    local function missing(s)
+        local have = {}
+        for w in tostring(s or ""):gmatch("[^ ]+") do have[w] = true end
+        for w in SCOPES:gmatch("[^ ]+") do
+            if not have[w] then return true end
+        end
+        return false
+    end
     local cur_id, seeking, last_seek = "", false, 0
 
     local function dirs()
@@ -1836,12 +1846,13 @@ function kyri.spotify(opts)
         if not isfolder(ART) then makefolder(ART) end
     end
 
-    local function save_tokens(a, r)
+    local function save_tokens(a, r, gr)
         dirs()
         if a then token = a end
         if r then refresh = r end
-        writefile(TOK, hs:JSONEncode({access_token = token, refresh_token = refresh, scope = SCOPES}))
-        sp.stale_scopes = false
+        if gr and gr ~= "" then grant = gr end
+        writefile(TOK, hs:JSONEncode({access_token = token, refresh_token = refresh, scope = grant}))
+        sp.stale_scopes = grant ~= nil and missing(grant)
     end
 
     local function load_tokens()
@@ -1850,7 +1861,9 @@ function kyri.spotify(opts)
         if not ok or type(d) ~= "table" then return false end
         token = d.access_token or ""
         refresh = d.refresh_token or ""
-        sp.stale_scopes = (d.scope or "") ~= SCOPES
+        grant = d.scope
+        if grant == "stale" or grant == "" then grant = nil end
+        sp.stale_scopes = grant ~= nil and missing(grant)
         return refresh ~= ""
     end
 
@@ -1872,16 +1885,7 @@ function kyri.spotify(opts)
         })
         if res and res.StatusCode == 200 then
             local d = hs:JSONDecode(res.Body)
-            local was = sp.stale_scopes
-            save_tokens(d.access_token, d.refresh_token)
-            if was then
-                sp.stale_scopes = true
-                pcall(function()
-                    local j = hs:JSONDecode(readfile(TOK))
-                    j.scope = "stale"
-                    writefile(TOK, hs:JSONEncode(j))
-                end)
-            end
+            save_tokens(d.access_token, d.refresh_token, d.scope)
             sp.ready = true
             return true
         end
@@ -1922,7 +1926,7 @@ function kyri.spotify(opts)
         })
         if res and res.StatusCode == 200 then
             local d = hs:JSONDecode(res.Body)
-            save_tokens(d.access_token, d.refresh_token)
+            save_tokens(d.access_token, d.refresh_token, d.scope)
             pcall(function() delfile(PK) end)
             sp.ready = true
             return true
@@ -1950,6 +1954,13 @@ function kyri.spotify(opts)
             rd.Headers = headers
             local ok2, res2 = pcall(req, rd)
             if ok2 then res = res2 end
+        end
+        if res and (ep:find("^/me/top") or ep:find("^/me/following")) then
+            if res.StatusCode == 403 then
+                sp.stale_scopes = true
+            elseif res.StatusCode == 200 then
+                sp.stale_scopes = false
+            end
         end
         return res
     end
@@ -3289,8 +3300,10 @@ function kyri.spotify(opts)
             tip(chip("album", "Albums"), "only albums")
         end
 
+        local nagged = false
         local function nag()
-            if not sp.stale_scopes then return end
+            if not sp.stale_scopes or nagged then return end
+            nagged = true
             wipe(mid_scroll)
             lbl(mid_scroll, {
                 Size = UDim2.new(1, 0, 0, 30),
@@ -3619,6 +3632,15 @@ function kyri.spotify(opts)
             Parent = win
         })
         round(drop, 7)
+        local shut_drop = make("TextButton", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Text = "",
+            Visible = false,
+            AutoButtonColor = false,
+            ZIndex = 19,
+            Parent = win
+        })
         local drop_list = scroller(drop, {
             Size = UDim2.new(1, -8, 1, -12),
             Position = UDim2.fromOffset(4, 6),
@@ -3679,15 +3701,17 @@ function kyri.spotify(opts)
                 end)
             end
             drop.Visible = true
-            shut_pop.Visible = true
+            shut_drop.Visible = true
             tw:Create(drop, TweenInfo.new(0.16), {Size = UDim2.fromOffset(380, math.min(#r * 48 + 34, 300))}):Play()
         end
 
         local function hide_drop()
-            shut_pop.Visible = false
+            shut_drop.Visible = false
             tw:Create(drop, TweenInfo.new(0.12), {Size = UDim2.fromOffset(380, 0)}):Play()
             task.delay(0.13, function() drop.Visible = false end)
         end
+
+        shut_drop.MouseButton1Click:Connect(hide_drop)
 
         sfield.Focused:Connect(function()
             if sfield.Text == "" then show_drop() end
@@ -4180,7 +4204,12 @@ function kyri.spotify(opts)
                 loaded = true
                 load_library()
                 show_home()
-                if sp.stale_scopes then task.delay(0.6, nag) end
+                task.delay(0.8, function()
+                    if sp.stale_scopes then nag() end
+                end)
+                task.delay(3.5, function()
+                    if sp.stale_scopes then nag() end
+                end)
             end
             pcall(refresh)
             task.spawn(function() sp:sync() end)
