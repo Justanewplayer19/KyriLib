@@ -4610,6 +4610,22 @@ function kyri.spotify(opts)
         local setb = toolbtn("settings", "settings", 5)
         local closeb = toolbtn("x", "close", 6)
 
+        local lyrbg = make("Frame", {
+            Size = UDim2.fromOffset(420, 526),
+            BackgroundColor3 = Color3.fromRGB(16, 15, 18),
+            BackgroundTransparency = 0.08,
+            Visible = false,
+            Active = true,
+            Parent = stage
+        })
+        make("UICorner", {CornerRadius = UDim.new(0, 14), Parent = lyrbg})
+        local lyrbg_s = make("UIStroke", {
+            Color = Color3.new(1, 1, 1),
+            Thickness = 1,
+            Transparency = 0.9,
+            Parent = lyrbg
+        })
+
         local clip = make("Frame", {
             Size = UDim2.fromOffset(600, 600),
             BackgroundTransparency = 1,
@@ -5027,14 +5043,23 @@ function kyri.spotify(opts)
             local edge = compact and 40 or 64
 
             local ch = ah + (cine and 108 or 120)
-            local cx, cy
+            local gap = 14
+            local lwn = compact and 280 or 420
+            if not cine then
+                local room = vp.X - cw - edge * 2 - gap
+                if room < lwn then lwn = math.max(room, 200) end
+            end
+
+            local cx, cy, lx
+            cy = math.floor((vp.Y - ch) / 2)
 
             if cine then
                 cx = side == "left" and edge or (vp.X - cw - edge)
-                cy = math.floor((vp.Y - ch) / 2)
             else
-                cx = side == "left" and edge or (vp.X - cw - edge)
-                cy = math.floor((vp.Y - ch) / 2)
+                local total = cw + gap + lwn
+                local gx = side == "left" and edge or math.max(vp.X - total - edge, edge)
+                cx = side == "left" and gx or (gx + lwn + gap)
+                lx = side == "left" and (gx + cw + gap) or gx
             end
 
             local goal_card = {
@@ -5078,26 +5103,42 @@ function kyri.spotify(opts)
             tool.Size = UDim2.fromOffset(tw_, compact and 42 or 48)
             tool.Position = UDim2.new(0.5, -math.floor(tw_ / 2), 0, compact and 8 or 12)
 
-            clip.Visible = cine
+            clip.Visible = true
             vign.Visible = cine
             wash.Visible = cine
             wash2.Visible = cine
+            lyrbg.Visible = not cine
 
+            local goal_clip
             if cine then
                 local lpad = compact and 54 or 78
-                local lx = side == "left" and (cx + cw + lpad) or edge
+                local clx = side == "left" and (cx + cw + lpad) or edge
                 local lw = vp.X - cw - edge * 2 - lpad
                 if lw < 260 then lw = 260 end
-
-                local goal_clip = {
+                goal_clip = {
                     Size = UDim2.fromOffset(lw, math.floor(vp.Y * 0.8)),
-                    Position = UDim2.fromOffset(lx, math.floor(vp.Y * 0.1))
+                    Position = UDim2.fromOffset(clx, math.floor(vp.Y * 0.1))
+                }
+            else
+                local inn = compact and 14 or 20
+                goal_clip = {
+                    Size = UDim2.fromOffset(lwn - inn * 2, ch - inn * 2),
+                    Position = UDim2.fromOffset(lx + inn, cy + inn)
+                }
+                local goal_bg = {
+                    Size = UDim2.fromOffset(lwn, ch),
+                    Position = UDim2.fromOffset(lx, cy)
                 }
                 if anim then
-                    tw:Create(clip, EASE, goal_clip):Play()
+                    tw:Create(lyrbg, EASE, goal_bg):Play()
                 else
-                    for k,v in pairs(goal_clip) do clip[k] = v end
+                    for k,v in pairs(goal_bg) do lyrbg[k] = v end
                 end
+            end
+            if anim then
+                tw:Create(clip, EASE, goal_clip):Play()
+            else
+                for k,v in pairs(goal_clip) do clip[k] = v end
             end
 
             blank.Size = UDim2.fromOffset(math.min(clip.AbsoluteSize.X - 20, 540), 226)
@@ -5134,7 +5175,7 @@ function kyri.spotify(opts)
         end
 
         local function doze()
-            if hidden then return end
+            if hidden or mode ~= "cinema" then return end
             hidden = true
             local slow = TweenInfo.new(0.5)
             tw:Create(tool, slow, {BackgroundTransparency = 1}):Play()
@@ -5181,6 +5222,7 @@ function kyri.spotify(opts)
         end)
         cineb.MouseButton1Click:Connect(function()
             mode = mode == "cinema" and "nowbar" or "cinema"
+            wake()
             pophide()
             place(true)
         end)
@@ -5425,7 +5467,7 @@ function kyri.spotify(opts)
                     end)
                 end
 
-                if not cued or mode ~= "cinema" then continue end
+                if not cued then continue end
 
                 local now = sp:now()
                 local k = 0
