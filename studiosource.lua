@@ -978,6 +978,15 @@ function kyri.island(opts)
 
     tip(close, "collapse")
 
+    local grab = make("TextButton", {
+        Size = UDim2.new(1, -96, 0, 52),
+        BackgroundTransparency = 1,
+        Text = "",
+        ZIndex = 6,
+        Visible = false,
+        Parent = head
+    })
+
     local quit
     if opts.on_close then
         quit = make("ImageButton", {
@@ -1184,19 +1193,43 @@ function kyri.island(opts)
         Parent = root
     })
 
+    local function fit(w, h)
+        local vp = gui.AbsoluteSize
+        if vp.X < 8 or vp.Y < 8 then return nil end
+        local p = root.Position
+        local ax, ay = root.AnchorPoint.X, root.AnchorPoint.Y
+        local x = p.X.Scale * vp.X + p.X.Offset - ax * w
+        local y = p.Y.Scale * vp.Y + p.Y.Offset - ay * h
+        local nx = math.clamp(x, 8, math.max(vp.X - w - 8, 8))
+        local ny = math.clamp(y, 8, math.max(vp.Y - h - 8, 8))
+        if math.abs(nx - x) < 1 and math.abs(ny - y) < 1 then return nil end
+        return UDim2.new(p.X.Scale, p.X.Offset + (nx - x), p.Y.Scale, p.Y.Offset + (ny - y))
+    end
+
     local function set_expanded(state)
         if isl.expanded == state then return end
         isl.expanded = state
         tap.Visible = not state
+        grab.Visible = state
         local ti = TweenInfo.new(0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         if state then
             ev.Visible = true
-            kyri.svc.tw:Create(root, ti, {Size = UDim2.fromOffset(ew, exp_h())}):Play()
+            local eh = exp_h()
+            local goal = {Size = UDim2.fromOffset(ew, eh)}
+            local np = fit(ew, eh)
+            if np then goal.Position = np end
+            kyri.svc.tw:Create(root, ti, goal):Play()
             kyri.svc.tw:Create(rc, TweenInfo.new(0.3), {CornerRadius = UDim.new(0, 22)}):Play()
             fade(cv, 1, 0.12)
             fade(ev, 0, 0.26)
         else
-            kyri.svc.tw:Create(root, ti, {Size = UDim2.fromOffset(cw, ch)}):Play()
+            local goal = {Size = UDim2.fromOffset(cw, ch)}
+            local np = fit(cw, ch)
+            if np then goal.Position = np end
+            kyri.svc.tw:Create(root, ti, goal):Play()
+            if opts.remember ~= false then
+                task.delay(0.36, function() save_island_pos(root, id) end)
+            end
             kyri.svc.tw:Create(rc, TweenInfo.new(0.3), {CornerRadius = UDim.new(0, math.floor(ch / 2))}):Play()
             fade(ev, 1, 0.12)
             fade(cv, 0, 0.26)
@@ -1217,18 +1250,28 @@ function kyri.island(opts)
         kyri.svc.tw:Create(close, TweenInfo.new(0.15), {ImageColor3 = t.subtext}):Play()
     end)
 
-    do
-        local held, moved, start, origin = false, 0, nil, nil
+    table.insert(conns, gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        local np = fit(root.Size.X.Offset, root.Size.Y.Offset)
+        if np then root.Position = np end
+    end))
 
-        tap.InputBegan:Connect(function(i)
-            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                held = true
-                moved = 0
-                start = i.Position
-                origin = root.Position
+    do
+        local held, moved, start, origin, pill = false, 0, nil, nil, false
+
+        local function press(i, squish)
+            if i.UserInputType ~= Enum.UserInputType.MouseButton1 and i.UserInputType ~= Enum.UserInputType.Touch then return end
+            held = true
+            moved = 0
+            pill = squish
+            start = i.Position
+            origin = root.Position
+            if squish then
                 kyri.svc.tw:Create(root, TweenInfo.new(0.12), {Size = UDim2.fromOffset(cw + 6, ch + 2)}):Play()
             end
-        end)
+        end
+
+        tap.InputBegan:Connect(function(i) press(i, true) end)
+        grab.InputBegan:Connect(function(i) press(i, false) end)
 
         table.insert(conns, kyri.svc.inp.InputChanged:Connect(function(i)
             if not held or not draggable then return end
@@ -1246,11 +1289,19 @@ function kyri.island(opts)
             if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                 held = false
                 if moved <= 6 then
-                    root.Size = UDim2.fromOffset(cw, ch)
-                    set_expanded(true)
+                    if pill then
+                        root.Size = UDim2.fromOffset(cw, ch)
+                        set_expanded(true)
+                    end
                 else
-                    kyri.svc.tw:Create(root, TweenInfo.new(0.15), {Size = UDim2.fromOffset(cw, ch)}):Play()
-                    if opts.remember ~= false then save_island_pos(root, id) end
+                    if pill then
+                        kyri.svc.tw:Create(root, TweenInfo.new(0.15), {Size = UDim2.fromOffset(cw, ch)}):Play()
+                    end
+                    local np = fit(root.Size.X.Offset, root.Size.Y.Offset)
+                    if np then kyri.svc.tw:Create(root, TweenInfo.new(0.18), {Position = np}):Play() end
+                    if opts.remember ~= false then
+                        task.delay(np and 0.2 or 0, function() save_island_pos(root, id) end)
+                    end
                 end
             end
         end))
