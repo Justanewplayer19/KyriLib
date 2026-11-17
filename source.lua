@@ -4257,34 +4257,33 @@ function kyri.spotify(opts)
             Parent = gui
         })
 
-        local wash = make("Frame", {
-            Size = UDim2.fromScale(1.4, 1.4),
+        local wash = make("ImageLabel", {
+            Size = UDim2.fromScale(7, 7),
             Position = UDim2.fromScale(0.5, 0.5),
             AnchorPoint = Vector2.new(0.5, 0.5),
-            BackgroundColor3 = Color3.fromRGB(70, 64, 78),
             BackgroundTransparency = 1,
+            Image = "",
+            ImageTransparency = 1,
+            ScaleType = Enum.ScaleType.Crop,
             Parent = back
         })
-        local wash_g = make("UIGradient", {
-            Color = ColorSequence.new(Color3.fromRGB(70, 64, 78), Color3.fromRGB(38, 34, 44)),
-            Rotation = 35,
-            Parent = wash
-        })
 
-        local wash2 = make("Frame", {
-            Size = UDim2.fromScale(1.4, 1.4),
+        local wash2 = make("ImageLabel", {
+            Size = UDim2.fromScale(12, 12),
             Position = UDim2.fromScale(0.5, 0.5),
             AnchorPoint = Vector2.new(0.5, 0.5),
-            BackgroundColor3 = Color3.fromRGB(90, 70, 70),
             BackgroundTransparency = 1,
+            Image = "",
+            ImageTransparency = 1,
+            Rotation = 180,
+            ScaleType = Enum.ScaleType.Crop,
             Parent = back
         })
         local wash2_g = make("UIGradient", {
-            Color = ColorSequence.new(Color3.fromRGB(90, 70, 70), Color3.fromRGB(40, 40, 60)),
             Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0, 0.25),
-                NumberSequenceKeypoint.new(0.5, 0.8),
-                NumberSequenceKeypoint.new(1, 0.25)
+                NumberSequenceKeypoint.new(0, 0.15),
+                NumberSequenceKeypoint.new(0.5, 0.75),
+                NumberSequenceKeypoint.new(1, 0.15)
             }),
             Rotation = -40,
             Parent = wash2
@@ -4631,7 +4630,9 @@ function kyri.spotify(opts)
         local DISCORD = copts.discord or "https://discord.gg/y52Npnsp4G"
 
         local blank = make("Frame", {
-            Size = UDim2.new(1, 0, 0, 230),
+            Size = UDim2.fromOffset(540, 226),
+            Position = UDim2.fromScale(0.5, 0.5),
+            AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundTransparency = 1,
             Visible = false,
             Parent = clip
@@ -4643,7 +4644,7 @@ function kyri.spotify(opts)
             TextColor3 = Color3.new(1, 1, 1),
             Font = fb,
             TextSize = 27,
-            TextXAlignment = Enum.TextXAlignment.Left,
+            TextXAlignment = Enum.TextXAlignment.Center,
             Parent = blank
         })
         local b_body = make("TextLabel", {
@@ -4658,20 +4659,35 @@ function kyri.spotify(opts)
             Font = fr,
             TextSize = 14,
             TextWrapped = true,
-            TextXAlignment = Enum.TextXAlignment.Left,
+            TextXAlignment = Enum.TextXAlignment.Center,
             TextYAlignment = Enum.TextYAlignment.Top,
             Parent = blank
         })
 
-        local function pill(text, icon, x, cb)
+        local brow = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 38),
+            Position = UDim2.fromOffset(0, 130),
+            BackgroundTransparency = 1,
+            Parent = blank
+        })
+        make("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            HorizontalAlignment = Enum.HorizontalAlignment.Center,
+            VerticalAlignment = Enum.VerticalAlignment.Center,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 10),
+            Parent = brow
+        })
+
+        local function pill(text, icon, ord, cb)
             local b = make("TextButton", {
                 Size = UDim2.fromOffset(#text * 7 + 52, 38),
-                Position = UDim2.fromOffset(x, 128),
+                LayoutOrder = ord,
                 BackgroundColor3 = Color3.new(1, 1, 1),
                 BackgroundTransparency = 0.88,
                 Text = "",
                 AutoButtonColor = false,
-                Parent = blank
+                Parent = brow
             })
             make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = b})
             make("ImageLabel", {
@@ -4703,7 +4719,7 @@ function kyri.spotify(opts)
             return b
         end
 
-        local copyb = pill("Copy details", "copy", 0, function()
+        local copyb = pill("Copy details", "copy", 1, function()
             local t = sp.track or {}
             local bits = {
                 "track: " .. tostring(t.name),
@@ -4718,21 +4734,21 @@ function kyri.spotify(opts)
         end)
         tip(copyb, "copy what the providers were asked for")
 
-        local helpb = pill("Get help on Discord", "message-circle", copyb.Size.X.Offset + 10, function()
+        local helpb = pill("Get help on Discord", "message-circle", 2, function()
             kyri.copybox(DISCORD, "discord invite")
         end)
         tip(helpb, DISCORD)
 
         local b_code = make("TextLabel", {
             Size = UDim2.new(1, 0, 0, 16),
-            Position = UDim2.fromOffset(0, 176),
+            Position = UDim2.fromOffset(0, 180),
             BackgroundTransparency = 1,
             Text = "",
             TextColor3 = Color3.new(1, 1, 1),
             TextTransparency = 0.66,
             Font = fr,
             TextSize = 11,
-            TextXAlignment = Enum.TextXAlignment.Left,
+            TextXAlignment = Enum.TextXAlignment.Center,
             Parent = blank
         })
 
@@ -4878,12 +4894,14 @@ function kyri.spotify(opts)
             built_sz = sz
 
             if not cued then
-                foot.Position = UDim2.fromOffset(0, blank.Visible and 238 or 0)
-                reel.Size = UDim2.new(1, 0, 0, blank.Visible and 300 or 60)
+                foot.Position = UDim2.fromOffset(0, 0)
+                reel.Size = UDim2.new(1, 0, 0, 60)
                 reel.Position = UDim2.fromOffset(0, 0)
+                reel.Visible = not blank.Visible
                 return
             end
             blank.Visible = false
+            reel.Visible = true
 
             local lh = math.floor(sz * 1.2)
             local y = 0
@@ -5053,90 +5071,16 @@ function kyri.spotify(opts)
                 end
             end
 
-            blank.Size = UDim2.new(1, 0, 0, 230)
+            blank.Size = UDim2.fromOffset(math.min(clip.AbsoluteSize.X - 20, 540), 226)
             cinei.Image = ico(cine and "minimize" or "maximize") or cinei.Image
             compacti.Image = ico(compact and "maximize-2" or "square") or compacti.Image
 
             tw:Create(back, FADE, {BackgroundTransparency = cine and 0 or 1}):Play()
-            tw:Create(wash, FADE, {BackgroundTransparency = cine and 0.1 or 1}):Play()
-            tw:Create(wash2, FADE, {BackgroundTransparency = cine and 0.35 or 1}):Play()
+            tw:Create(wash, FADE, {ImageTransparency = (cine and wash.Image ~= "") and 0.28 or 1}):Play()
+            tw:Create(wash2, FADE, {ImageTransparency = (cine and wash2.Image ~= "") and 0.5 or 1}):Play()
             tw:Create(vign, FADE, {BackgroundTransparency = cine and 0 or 1}):Play()
 
             task.delay(anim and 0.46 or 0.06, rebuild_if_needed)
-        end
-
-        local function hue(c1, c2, c3)
-            wash.BackgroundColor3 = c1
-            wash_g.Color = ColorSequence.new(c1, c2)
-            wash2.BackgroundColor3 = c3
-            wash2_g.Color = ColorSequence.new(c3, c2)
-            card.BackgroundColor3 = c2:Lerp(Color3.new(0, 0, 0), 0.72)
-            back.BackgroundColor3 = c2:Lerp(Color3.new(0, 0, 0), 0.6)
-        end
-
-        local function colors_from(asset)
-            task.spawn(function()
-                local ok, got = pcall(function()
-                    local as = game:GetService("AssetService")
-                    local img
-                    local fine = pcall(function()
-                        img = as:CreateEditableImageAsync(Content.fromUri(asset), {Size = Vector2.new(48, 48)})
-                    end)
-                    if not fine or not img then
-                        img = as:CreateEditableImageAsync(Content.fromUri(asset))
-                    end
-                    local sz = img.Size
-                    local buf = img:ReadPixelsBuffer(Vector2.zero, sz)
-                    local n = math.floor(sz.X * sz.Y)
-                    local bins = {}
-                    local step = math.max(math.floor(n / 1800), 1)
-
-                    for i = 0, n - 1, step do
-                        local o = i * 4
-                        local r = buffer.readu8(buf, o)
-                        local g = buffer.readu8(buf, o + 1)
-                        local b = buffer.readu8(buf, o + 2)
-                        local a = buffer.readu8(buf, o + 3)
-                        if a > 120 then
-                            local mx = math.max(r, g, b)
-                            local mn = math.min(r, g, b)
-                            if mx > 28 and (mx - mn) > 14 then
-                                local k = math.floor(r / 36) * 64 + math.floor(g / 36) * 8 + math.floor(b / 36)
-                                local e = bins[k]
-                                if e then
-                                    e.n = e.n + 1
-                                    e.r = e.r + r
-                                    e.g = e.g + g
-                                    e.b = e.b + b
-                                else
-                                    bins[k] = {n = 1, r = r, g = g, b = b}
-                                end
-                            end
-                        end
-                    end
-
-                    local rank = {}
-                    for k,e in pairs(bins) do rank[#rank + 1] = e end
-                    table.sort(rank, function(x, y) return x.n > y.n end)
-                    if #rank == 0 then return nil end
-
-                    local out = {}
-                    for i = 1, math.min(3, #rank) do
-                        local e = rank[i]
-                        out[i] = Color3.fromRGB(
-                            math.floor(e.r / e.n),
-                            math.floor(e.g / e.n),
-                            math.floor(e.b / e.n))
-                    end
-                    return out
-                end)
-
-                if not ok or not got or not got[1] then return end
-                local c1 = got[1]
-                local c2 = got[2] or c1:Lerp(Color3.new(0, 0, 0), 0.4)
-                local c3 = got[3] or c1
-                hue(c1, c2, c3)
-            end)
         end
 
         local idle, hidden = os.clock(), false
@@ -5355,7 +5299,12 @@ function kyri.spotify(opts)
                     load_art(u, t.id, function(a)
                         if shown_id ~= t.id then return end
                         art.Image = a
-                        colors_from(a)
+                        wash.Image = a
+                        wash2.Image = a
+                        if gui.Enabled and mode == "cinema" then
+                            tw:Create(wash, TweenInfo.new(0.6), {ImageTransparency = 0.28}):Play()
+                            tw:Create(wash2, TweenInfo.new(0.6), {ImageTransparency = 0.5}):Play()
+                        end
                     end)
                 end
             end
@@ -5388,9 +5337,10 @@ function kyri.spotify(opts)
 
                 if not hidden and os.clock() - idle > 3 and not pop_open then doze() end
 
-                local drift = os.clock() * 4
-                wash_g.Rotation = 35 + math.sin(drift / 9) * 18
-                wash2_g.Rotation = -40 + math.cos(drift / 11) * 22
+                local drift = os.clock()
+                wash.Rotation = math.sin(drift / 11) * 4
+                wash2.Rotation = 180 + math.cos(drift / 14) * 5
+                wash2_g.Rotation = -40 + math.cos(drift / 9) * 20
 
                 if not sp.ready or not sp.track then continue end
 
@@ -5439,6 +5389,7 @@ function kyri.spotify(opts)
                                 or (got and got.plain) and "Code: lyrics-not-synced"
                                 or "Code: lyrics-not-found (404)"
                             blank.Visible = true
+                            reel.Visible = false
                         end
                         build()
                         active = 0
