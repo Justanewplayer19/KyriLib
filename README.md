@@ -436,11 +436,11 @@ The island is a full client on its own, not just transport buttons.
 - **Search.** The magnifier opens a field with a `songs` / `lists` toggle. Songs show their album
   art and play on click; lists show playlists and play the whole context. Submitting an empty
   query in `lists` mode shows your own playlists.
-- **Two windows.** The island carries two extra buttons. One opens `sp:desktop()`, a client in
+- **Two windows.** The island carries a button that opens `sp:desktop()`, a client in
   Spotify's own three column shape: a library sidebar that collapses to a rail of covers, a
   centre pane that switches between home, playlist, album, artist and search, a now playing
   panel with an about-the-artist card, and a player bar with seek, volume, shuffle, repeat and
-  a device picker. The other opens `sp:cinema()`, the lyric view: the cover with its transport
+  a device picker. Its player bar carries the lyric button, `sp:cinema()`: the cover with its transport
   laid over it, a vertical volume slider down its edge, and the lyrics beside it at reading
   size. Its toolbar toggles compact mode, swaps the card to the other side, switches to cinema
   view, and opens the queue and the lyric settings. Pass `desktop = false` or `cinema = false`

@@ -3873,6 +3873,13 @@ function kyri.spotify(opts)
             Parent = vtrack
         })
 
+        local lyrb = iconbtn(bar, "quote", 16)
+        lyrb.Position = UDim2.new(1, -212, 0, 30)
+        tip(lyrb, "lyrics")
+        lyrb.MouseButton1Click:Connect(function()
+            sp:cinema(dopts.cinema_options):toggle()
+        end)
+
         local devb = iconbtn(bar, "monitor", 16)
         devb.Position = UDim2.new(1, -182, 0, 30)
         tip(devb, "connect to a device")
@@ -5218,12 +5225,6 @@ function kyri.spotify(opts)
         end, "toggle")
 
         isl:button("skip-forward", function() sp:next() end, "next")
-
-        if opts.cinema ~= false then
-            isl:button("quote", function()
-                sp:cinema(opts.cinema_options):toggle()
-            end, "lyrics")
-        end
 
         if opts.desktop ~= false then
             local ob = isl:button("music", function()
