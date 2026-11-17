@@ -3020,22 +3020,37 @@ function kyri.spotify(opts)
             return im
         end
 
-        local function sect(title)
-            local h = lbl(mid_scroll, {
+        local function band(ord)
+            local f = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1,
+                LayoutOrder = ord or #mid_scroll:GetChildren(),
+                Parent = mid_scroll
+            })
+            make("UIListLayout", {
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Padding = UDim.new(0, 6),
+                Parent = f
+            })
+            return f
+        end
+
+        local function sect(title, into)
+            return lbl(into or mid_scroll, {
                 Size = UDim2.new(1, 0, 0, 26),
                 Text = title,
                 Font = fb,
                 TextSize = 17,
-                LayoutOrder = #mid_scroll:GetChildren()
+                LayoutOrder = #(into or mid_scroll):GetChildren()
             })
-            return h
         end
 
         local open_playlist, open_album, open_artist, show_home, do_search
 
-        local function track_row(t, ctx, n)
+        local function track_row(t, ctx, n, into)
             if not t or not t.id then return end
-            local b = row(mid_scroll, 46)
+            local b = row(into or mid_scroll, 46)
 
             lbl(b, {
                 Size = UDim2.fromOffset(26, 46),
@@ -3171,13 +3186,13 @@ function kyri.spotify(opts)
             end)
         end
 
-        local function card_grid(items, kind, per)
+        local function card_grid(items, kind, per, into)
             local holder = make("Frame", {
                 Size = UDim2.new(1, 0, 0, 0),
                 AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundTransparency = 1,
-                LayoutOrder = #mid_scroll:GetChildren(),
-                Parent = mid_scroll
+                LayoutOrder = #(into or mid_scroll):GetChildren(),
+                Parent = into or mid_scroll
             })
             local grid = make("UIGridLayout", {
                 CellSize = UDim2.fromOffset(136, 176),
@@ -3335,7 +3350,7 @@ function kyri.spotify(opts)
                 local f = a.followers and a.followers.total
                 page_head(a, "Artist", f and (commas(f) .. " followers") or "")
 
-                local t = fetch("/artists/" .. aid .. "/top-tracks?market=from_token")
+                local t = fetch("/artists/" .. aid .. "/top-tracks")
                 if t and t.tracks and #t.tracks > 0 then
                     sect("Popular")
                     for i,v in pairs(t.tracks) do
@@ -3355,6 +3370,7 @@ function kyri.spotify(opts)
         function show_home()
             view_fn = show_home
             wipe(mid_scroll)
+            local b1, b2, b3 = band(1), band(2), band(3)
             task.spawn(function()
                 local d = fetch("/me/player/recently-played?limit=12")
                 local seen, items = {}, {}
@@ -3366,22 +3382,22 @@ function kyri.spotify(opts)
                     end
                 end
                 if #items > 0 then
-                    sect("Recently played")
-                    card_grid(items, "track", 10)
+                    sect("Recently played", b1)
+                    card_grid(items, "track", 10, b1)
                 end
             end)
             task.spawn(function()
                 local d = fetch("/me/top/tracks?limit=10&time_range=short_term")
                 if d and d.items and #d.items > 0 then
-                    sect("On repeat lately")
-                    for i,t in pairs(d.items) do track_row(t, nil, i) end
+                    sect("On repeat lately", b2)
+                    for i,t in pairs(d.items) do track_row(t, nil, i, b2) end
                 end
             end)
             task.spawn(function()
                 local d = fetch("/me/top/artists?limit=10&time_range=medium_term")
                 if d and d.items and #d.items > 0 then
-                    sect("Your top artists")
-                    card_grid(d.items, "artist", 10)
+                    sect("Your top artists", b3)
+                    card_grid(d.items, "artist", 10, b3)
                 end
             end)
         end
@@ -3529,6 +3545,9 @@ function kyri.spotify(opts)
 
         sfield.FocusLost:Connect(function(enter)
             if enter and sfield.Text ~= "" then do_search(sfield.Text) end
+            task.delay(0.25, function()
+                if not sfield:IsFocused() then hide_drop() end
+            end)
         end)
 
         homeb.MouseButton1Click:Connect(function()
