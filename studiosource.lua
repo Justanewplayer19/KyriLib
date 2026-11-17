@@ -540,7 +540,7 @@ end
 local function ico(ic)
     if not ic then return nil end
     if kyri.icons[ic] then return kyri.icons[ic] end
-    if type(ic) == "string" and (ic:find("^rbxassetid://") or ic:find("^rbxthumb://") or ic:find("^rbxasset://")) then return ic end
+    if type(ic) == "string" and ic:find("://") then return ic end
     return nil
 end
 

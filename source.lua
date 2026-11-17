@@ -300,7 +300,7 @@ end
 local function ico(ic)
     if not ic then return nil end
     if kyri.icons[ic] then return kyri.icons[ic] end
-    if type(ic) == "string" and (ic:find("^rbxassetid://") or ic:find("^rbxthumb://") or ic:find("^rbxasset://")) then return ic end
+    if type(ic) == "string" and ic:find("://") then return ic end
     return nil
 end
 
@@ -2635,9 +2635,10 @@ function kyri.spotify(opts)
             if not (writefile and getcustomasset) then return end
             dirs()
             local f = CONFIG_FOLDER .. "/spotify.png"
-            if not isfile or not isfile(f) then
+            local have = isfile and isfile(f) and readfile and #readfile(f) > 500
+            if not have then
                 local res = req({Url = SPOT_PNG, Method = "GET"})
-                if not res or res.StatusCode ~= 200 then return end
+                if not res or res.StatusCode ~= 200 or #res.Body < 500 then return end
                 writefile(f, res.Body)
             end
             spot_img = getcustomasset(f)
@@ -2723,6 +2724,7 @@ function kyri.spotify(opts)
             Position = UDim2.fromScale(0.5, 0.5),
             AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundColor3 = c.bg,
+            Active = true,
             ClipsDescendants = true,
             Parent = gui
         })
@@ -2815,6 +2817,7 @@ function kyri.spotify(opts)
         local top = make("Frame", {
             Size = UDim2.new(1, 0, 0, 56),
             BackgroundColor3 = c.bg,
+            Active = true,
             Parent = win
         })
 
@@ -2886,6 +2889,7 @@ function kyri.spotify(opts)
             Size = UDim2.new(1, 0, 0, 76),
             Position = UDim2.new(0, 0, 1, -76),
             BackgroundColor3 = c.bg,
+            Active = true,
             Parent = win
         })
         make("Frame", {
@@ -2904,6 +2908,7 @@ function kyri.spotify(opts)
         local side = make("Frame", {
             Size = UDim2.new(0, 248, 1, 0),
             BackgroundColor3 = c.panel,
+            Active = true,
             Parent = body
         })
         round(side, 8)
@@ -2912,6 +2917,7 @@ function kyri.spotify(opts)
             Size = UDim2.new(0, 300, 1, 0),
             Position = UDim2.new(1, -300, 0, 0),
             BackgroundColor3 = c.panel,
+            Active = true,
             ClipsDescendants = true,
             Parent = body
         })
@@ -2921,6 +2927,7 @@ function kyri.spotify(opts)
             Size = UDim2.new(1, -564, 1, 0),
             Position = UDim2.fromOffset(256, 0),
             BackgroundColor3 = c.panel,
+            Active = true,
             ClipsDescendants = true,
             Parent = body
         })
@@ -3451,6 +3458,7 @@ function kyri.spotify(opts)
             Position = UDim2.new(0.5, -190, 0, 50),
             BackgroundColor3 = c.raise,
             Visible = false,
+            Active = true,
             ZIndex = 20,
             ClipsDescendants = true,
             Parent = win
@@ -3740,6 +3748,7 @@ function kyri.spotify(opts)
             Position = UDim2.new(1, -206, 1, -164),
             BackgroundColor3 = c.raise,
             Visible = false,
+            Active = true,
             ClipsDescendants = true,
             ZIndex = 30,
             Parent = win
@@ -3983,6 +3992,9 @@ function kyri.spotify(opts)
 
         closeb.MouseButton1Click:Connect(function() dk:hide() end)
         shade.MouseButton1Click:Connect(function()
+            local m = kyri.svc.inp:GetMouseLocation()
+            local tl, sz = win.AbsolutePosition, win.AbsoluteSize
+            if m.X >= tl.X and m.X <= tl.X + sz.X and m.Y >= tl.Y and m.Y <= tl.Y + sz.Y then return end
             hide_drop()
             dk:hide()
         end)
@@ -4057,9 +4069,11 @@ function kyri.spotify(opts)
             end, "open spotify")
             task.spawn(function()
                 local a = spot_logo()
-                if a then
-                    ob:icon(a)
-                    ob:tint(Color3.new(1, 1, 1))
+                if a and ob.img then
+                    ob.img.Image = a
+                    ob.img.ImageColor3 = Color3.new(1, 1, 1)
+                    ob.img.Size = UDim2.fromOffset(18, 18)
+                    ob.img.Position = UDim2.new(0.5, -9, 0.5, -9)
                 end
             end)
         end
