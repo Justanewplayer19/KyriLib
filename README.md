@@ -436,6 +436,26 @@ The island is a full client on its own, not just transport buttons.
 - **Search.** The magnifier opens a field with a `songs` / `lists` toggle. Songs show their album
   art and play on click; lists show playlists and play the whole context. Submitting an empty
   query in `lists` mode shows your own playlists.
+- **Two windows.** The island carries two extra buttons. One opens `sp:desktop()`, a client in
+  Spotify's own three column shape: a library sidebar that collapses to a rail of covers, a
+  centre pane that switches between home, playlist, album, artist and search, a now playing
+  panel with an about-the-artist card, and a player bar with seek, volume, shuffle, repeat and
+  a device picker. The other opens `sp:cinema()`, the lyric view: the cover with its transport
+  laid over it, a vertical volume slider down its edge, and the lyrics beside it at reading
+  size. Its toolbar toggles compact mode, swaps the card to the other side, switches to cinema
+  view, and opens the queue and the lyric settings. Pass `desktop = false` or `cinema = false`
+  to leave either off.
+
+  Each line is laid out one syllable at a time, measured with `TextService:GetTextSize` and
+  wrapped by hand, so the highlight sweeps word by word and keeps sweeping correctly across a
+  wrapped line rather than restarting. The credits sit after the last line and scroll up with
+  it.
+
+  Panels with no Web API behind them are not invented. Featured playlists and the Made For You
+  rows were deprecated for new apps in November 2024, so home shows recently played, top tracks
+  and top artists instead, and the artist card shows followers and genres, because monthly
+  listeners is not exposed.
+
 - **Lyrics.** Three providers are tried in order, and the first one that answers with timings
   wins. An answer without timings is kept aside and only used if nobody else has a synced one.
 
@@ -577,6 +597,10 @@ sp:transfer(id, play)          -- move playback to a device id
 sp:playlists(limit)            -- your playlists
 sp:playcontext(uri)            -- play a playlist or album uri
 sp:features()                  -- audio features, sets sp.bpm when spotify allows it
+sp:desktop()                   -- the full client window, returns {show, hide, toggle, refresh, destroy}
+sp:cinema()                    -- the lyric view, returns {show, hide, toggle, mode, side, compact, destroy}
+sp:now()                       -- playback position in seconds, interpolated between syncs
+sp.stale_scopes                -- true when the saved sign in predates the current scope list
 sp.lyric_source                -- pin one provider: "spicy", "lrc.red" or "lrclib"
 sp:lyricsalts()                -- other synced lrclib matches, sorted by duration gap
 sp:uselyrics(n)                -- switch to one of them
