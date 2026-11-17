@@ -446,6 +446,16 @@ The island is a full client on its own, not just transport buttons.
   view, and opens the queue and the lyric settings. Pass `desktop = false` or `cinema = false`
   to leave either off.
 
+  The two modes are different views, not two sizes of one. NowBar is the card alone, floating
+  over the game. Cinema fills the screen, brings in the lyric column at reading size and washes
+  the background with the cover. Every change between them is tweened, and the controls fade
+  out after three seconds without input and return on the next mouse move.
+
+  When a track has no timed lyrics the column says so rather than sitting empty, and it
+  separates the three cases: nothing found, found but never timed, and a provider that did not
+  answer. Only the first two are cached. A timeout, a 429 or a 5xx used to be cached as a miss,
+  which left a track silently lyricless for the rest of the session; it is retried now.
+
   Each line is laid out one syllable at a time, measured with `TextService:GetTextSize` and
   wrapped by hand, so the highlight sweeps word by word and keeps sweeping correctly across a
   wrapped line rather than restarting. The credits sit after the last line and scroll up with
