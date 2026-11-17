@@ -1810,7 +1810,18 @@ function kyri.spotify(opts)
 
     local CID = opts.client_id or "035b9c837a6f46ffaffce6ada163a6ad"
     local REDIR = opts.redirect or "http://127.0.0.1:8888/callback"
-    local SCOPES = opts.scopes or "user-read-playback-state user-modify-playback-state user-read-currently-playing user-read-recently-played user-library-modify user-library-read"
+    local SCOPES = opts.scopes or table.concat({
+        "user-read-playback-state",
+        "user-modify-playback-state",
+        "user-read-currently-playing",
+        "user-read-recently-played",
+        "user-library-modify",
+        "user-library-read",
+        "user-follow-read",
+        "user-top-read",
+        "playlist-read-private",
+        "playlist-read-collaborative"
+    }, " ")
     local DIR = "KyriLib/spotify"
     local TOK = DIR .. "/tokens.json"
     local PK = DIR .. "/pkce.txt"
@@ -1829,7 +1840,8 @@ function kyri.spotify(opts)
         dirs()
         if a then token = a end
         if r then refresh = r end
-        writefile(TOK, hs:JSONEncode({access_token = token, refresh_token = refresh}))
+        writefile(TOK, hs:JSONEncode({access_token = token, refresh_token = refresh, scope = SCOPES}))
+        sp.stale_scopes = false
     end
 
     local function load_tokens()
@@ -1838,6 +1850,7 @@ function kyri.spotify(opts)
         if not ok or type(d) ~= "table" then return false end
         token = d.access_token or ""
         refresh = d.refresh_token or ""
+        sp.stale_scopes = (d.scope or "") ~= SCOPES
         return refresh ~= ""
     end
 
@@ -1859,7 +1872,16 @@ function kyri.spotify(opts)
         })
         if res and res.StatusCode == 200 then
             local d = hs:JSONDecode(res.Body)
+            local was = sp.stale_scopes
             save_tokens(d.access_token, d.refresh_token)
+            if was then
+                sp.stale_scopes = true
+                pcall(function()
+                    local j = hs:JSONDecode(readfile(TOK))
+                    j.scope = "stale"
+                    writefile(TOK, hs:JSONEncode(j))
+                end)
+            end
             sp.ready = true
             return true
         end
@@ -3245,6 +3267,45 @@ function kyri.spotify(opts)
             tip(chip("album", "Albums"), "only albums")
         end
 
+        local function nag()
+            if not sp.stale_scopes then return end
+            wipe(mid_scroll)
+            lbl(mid_scroll, {
+                Size = UDim2.new(1, 0, 0, 30),
+                Text = "reconnect spotify to finish setting up",
+                Font = fb,
+                TextSize = 19,
+                LayoutOrder = 1
+            })
+            lbl(mid_scroll, {
+                Size = UDim2.new(1, 0, 0, 52),
+                Text = "your saved sign in predates followed artists and top tracks, so spotify "
+                    .. "answers 403 for both. signing in again grants them and nothing else changes.",
+                TextColor3 = c.sub,
+                TextSize = 12,
+                TextWrapped = true,
+                TextYAlignment = Enum.TextYAlignment.Top,
+                LayoutOrder = 2
+            })
+            local b = make("TextButton", {
+                Size = UDim2.fromOffset(150, 36),
+                BackgroundColor3 = c.green,
+                Text = "reconnect",
+                TextColor3 = Color3.new(0, 0, 0),
+                Font = fb,
+                TextSize = 13,
+                AutoButtonColor = false,
+                LayoutOrder = 3,
+                Parent = mid_scroll
+            })
+            round(b, 18)
+            tip(b, "opens the spotify sign in page")
+            b.MouseButton1Click:Connect(function()
+                local url = sp:authurl()
+                if url then kyri.copybox(url, "open this to reconnect") end
+            end)
+        end
+
         local function load_library()
             task.spawn(function()
                 local d = fetch("/me/playlists?limit=50")
@@ -4050,6 +4111,7 @@ function kyri.spotify(opts)
                 loaded = true
                 load_library()
                 show_home()
+                if sp.stale_scopes then task.delay(0.6, nag) end
             end
             pcall(refresh)
             task.spawn(function() sp:sync() end)
