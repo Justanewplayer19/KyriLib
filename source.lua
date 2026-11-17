@@ -2545,9 +2545,12 @@ function kyri.spotify(opts)
     local own_island = true
     sp.on_track = opts.on_track
 
+    local hooks = {}
+
     local function push(d)
         if isl then isl:set(d) end
         if ui then ui(d) end
+        for i,h in pairs(hooks) do pcall(h, d) end
     end
 
     function sp:sync()
@@ -2622,8 +2625,1358 @@ function kyri.spotify(opts)
         })
     end
 
+    local SPOT_PNG = "https://raw.githubusercontent.com/Justanewplayer19/KyriLib/main/spotify.png"
+    local spot_img
+
+    local function spot_logo()
+        if spot_img ~= nil then return spot_img end
+        spot_img = false
+        pcall(function()
+            if not (writefile and getcustomasset) then return end
+            dirs()
+            local f = CONFIG_FOLDER .. "/spotify.png"
+            if not isfile or not isfile(f) then
+                local res = req({Url = SPOT_PNG, Method = "GET"})
+                if not res or res.StatusCode ~= 200 then return end
+                writefile(f, res.Body)
+            end
+            spot_img = getcustomasset(f)
+        end)
+        return spot_img
+    end
+
+    sp.logo = spot_logo
+
+    local RECENT_FILE = CONFIG_FOLDER .. "/spotify_recents.json"
+
+    local function recents_load()
+        local d
+        pcall(function()
+            if isfile and isfile(RECENT_FILE) then d = hs:JSONDecode(readfile(RECENT_FILE)) end
+        end)
+        return type(d) == "table" and d or {}
+    end
+
+    local function recents_add(it)
+        if not writefile or not it.uri then return end
+        pcall(function()
+            dirs()
+            local d = recents_load()
+            for i = #d, 1, -1 do
+                if d[i].uri == it.uri then table.remove(d, i) end
+            end
+            table.insert(d, 1, it)
+            while #d > 8 do table.remove(d) end
+            writefile(RECENT_FILE, hs:JSONEncode(d))
+        end)
+    end
+
+    local dk
+
+    function sp:desktop(dopts)
+        if dk then return dk end
+        dopts = dopts or {}
+
+        local lp = kyri.svc.plr.LocalPlayer
+        local tw = kyri.svc.tw
+
+        local c = {
+            bg = Color3.fromRGB(0, 0, 0),
+            panel = Color3.fromRGB(18, 18, 18),
+            raise = Color3.fromRGB(26, 26, 26),
+            hover = Color3.fromRGB(44, 44, 44),
+            green = Color3.fromRGB(30, 215, 96),
+            text = Color3.fromRGB(255, 255, 255),
+            sub = Color3.fromRGB(179, 179, 179),
+            line = Color3.fromRGB(40, 40, 40)
+        }
+        if dopts.colors then
+            for k,v in pairs(dopts.colors) do c[k] = v end
+        end
+
+        local fb = Enum.Font.GothamBold
+        local fm = Enum.Font.GothamMedium
+        local fr = Enum.Font.Gotham
+
+        local gui = make("ScreenGui", {
+            Name = rnd(),
+            ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+            ResetOnSpawn = false,
+            IgnoreGuiInset = true,
+            DisplayOrder = 999999998,
+            Enabled = false,
+            Parent = gethui and gethui() or lp:WaitForChild("PlayerGui")
+        })
+        gui:SetAttribute("kyri", true)
+
+        local shade = make("TextButton", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundColor3 = Color3.new(0, 0, 0),
+            BackgroundTransparency = 0.45,
+            Text = "",
+            AutoButtonColor = false,
+            Parent = gui
+        })
+
+        local win = make("Frame", {
+            Size = UDim2.fromScale(0.86, 0.88),
+            Position = UDim2.fromScale(0.5, 0.5),
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            BackgroundColor3 = c.bg,
+            ClipsDescendants = true,
+            Parent = gui
+        })
+        make("UICorner", {CornerRadius = UDim.new(0, 10), Parent = win})
+        make("UIStroke", {Color = c.line, Thickness = 1, Transparency = 0.4, Parent = win})
+
+        local function round(o, r)
+            make("UICorner", {CornerRadius = UDim.new(0, r or 6), Parent = o})
+            return o
+        end
+
+        local function lbl(p, props)
+            props = props or {}
+            props.BackgroundTransparency = 1
+            props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
+            props.TextColor3 = props.TextColor3 or c.text
+            props.Font = props.Font or fr
+            props.TextSize = props.TextSize or 13
+            props.Parent = p
+            return make("TextLabel", props)
+        end
+
+        local function hoverable(o, from, to)
+            o.MouseEnter:Connect(function()
+                tw:Create(o, TweenInfo.new(0.12), {BackgroundColor3 = to}):Play()
+            end)
+            o.MouseLeave:Connect(function()
+                tw:Create(o, TweenInfo.new(0.12), {BackgroundColor3 = from}):Play()
+            end)
+            return o
+        end
+
+        local function iconbtn(p, name, size, tint)
+            local b = make("ImageButton", {
+                Size = UDim2.fromOffset(size, size),
+                BackgroundTransparency = 1,
+                Image = ico(name) or "",
+                ImageColor3 = tint or c.sub,
+                AutoButtonColor = false,
+                Parent = p
+            })
+            b.MouseEnter:Connect(function()
+                tw:Create(b, TweenInfo.new(0.12), {ImageColor3 = c.text}):Play()
+            end)
+            b.MouseLeave:Connect(function()
+                tw:Create(b, TweenInfo.new(0.12), {ImageColor3 = tint or c.sub}):Play()
+            end)
+            return b
+        end
+
+        local function scroller(p, props)
+            props = props or {}
+            props.BackgroundTransparency = 1
+            props.ScrollBarThickness = 4
+            props.ScrollBarImageColor3 = Color3.fromRGB(90, 90, 90)
+            props.CanvasSize = UDim2.new()
+            props.AutomaticCanvasSize = Enum.AutomaticSize.Y
+            props.ScrollingDirection = Enum.ScrollingDirection.Y
+            props.Parent = p
+            local s = make("ScrollingFrame", props)
+            make("UIListLayout", {
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Padding = UDim.new(0, 6),
+                Parent = s
+            })
+            return s
+        end
+
+        local function art_of(obj)
+            if not obj then return nil end
+            local im = obj.images or (obj.album and obj.album.images)
+            if im and im[1] then return im[1].url end
+            return nil
+        end
+
+        local function paint(img, obj, id)
+            local u = art_of(obj)
+            if not u or not id then return end
+            load_art(u, id, function(a)
+                if img and img.Parent then img.Image = a end
+            end)
+        end
+
+        local function wipe(f)
+            for i,v in pairs(f:GetChildren()) do
+                if not v:IsA("UIListLayout") and not v:IsA("UIPadding") then v:Destroy() end
+            end
+        end
+
+        local top = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 56),
+            BackgroundColor3 = c.bg,
+            Parent = win
+        })
+
+        local logo = make("ImageLabel", {
+            Size = UDim2.fromOffset(28, 28),
+            Position = UDim2.fromOffset(14, 14),
+            BackgroundTransparency = 1,
+            Image = "",
+            Parent = top
+        })
+        task.spawn(function()
+            local a = spot_logo()
+            logo.Image = a or ico("music") or ""
+        end)
+
+        local homeb = make("ImageButton", {
+            Size = UDim2.fromOffset(36, 36),
+            Position = UDim2.fromOffset(54, 10),
+            BackgroundColor3 = c.raise,
+            Image = "",
+            AutoButtonColor = false,
+            Parent = top
+        })
+        round(homeb, 18)
+        hoverable(homeb, c.raise, c.hover)
+        make("ImageLabel", {
+            Size = UDim2.fromOffset(17, 17),
+            Position = UDim2.new(0.5, -8, 0.5, -8),
+            BackgroundTransparency = 1,
+            Image = ico("home") or "",
+            ImageColor3 = c.text,
+            Parent = homeb
+        })
+
+        local sbox = make("Frame", {
+            Size = UDim2.fromOffset(380, 38),
+            Position = UDim2.new(0.5, -190, 0, 9),
+            BackgroundColor3 = c.raise,
+            Parent = top
+        })
+        round(sbox, 19)
+        make("ImageLabel", {
+            Size = UDim2.fromOffset(16, 16),
+            Position = UDim2.fromOffset(14, 11),
+            BackgroundTransparency = 1,
+            Image = ico("search") or "",
+            ImageColor3 = c.sub,
+            Parent = sbox
+        })
+        local sfield = make("TextBox", {
+            Size = UDim2.new(1, -46, 1, 0),
+            Position = UDim2.fromOffset(38, 0),
+            BackgroundTransparency = 1,
+            Text = "",
+            PlaceholderText = "What do you want to play?",
+            PlaceholderColor3 = c.sub,
+            TextColor3 = c.text,
+            Font = fr,
+            TextSize = 13,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ClearTextOnFocus = false,
+            Parent = sbox
+        })
+
+        local closeb = iconbtn(top, "x", 18)
+        closeb.Position = UDim2.new(1, -34, 0, 19)
+
+        local bar = make("Frame", {
+            Size = UDim2.new(1, 0, 0, 76),
+            Position = UDim2.new(0, 0, 1, -76),
+            BackgroundColor3 = c.bg,
+            Parent = win
+        })
+        make("Frame", {
+            Size = UDim2.new(1, 0, 0, 1),
+            BackgroundColor3 = c.line,
+            Parent = bar
+        })
+
+        local body = make("Frame", {
+            Size = UDim2.new(1, -16, 1, -142),
+            Position = UDim2.fromOffset(8, 58),
+            BackgroundTransparency = 1,
+            Parent = win
+        })
+
+        local side = make("Frame", {
+            Size = UDim2.new(0, 248, 1, 0),
+            BackgroundColor3 = c.panel,
+            Parent = body
+        })
+        round(side, 8)
+
+        local right = make("Frame", {
+            Size = UDim2.new(0, 300, 1, 0),
+            Position = UDim2.new(1, -300, 0, 0),
+            BackgroundColor3 = c.panel,
+            ClipsDescendants = true,
+            Parent = body
+        })
+        round(right, 8)
+
+        local mid = make("Frame", {
+            Size = UDim2.new(1, -564, 1, 0),
+            Position = UDim2.fromOffset(256, 0),
+            BackgroundColor3 = c.panel,
+            ClipsDescendants = true,
+            Parent = body
+        })
+        round(mid, 8)
+
+        lbl(side, {
+            Size = UDim2.new(1, -32, 0, 20),
+            Position = UDim2.fromOffset(16, 14),
+            Text = "Your Library",
+            Font = fb,
+            TextSize = 15
+        })
+
+        local chips = make("Frame", {
+            Size = UDim2.new(1, -24, 0, 26),
+            Position = UDim2.fromOffset(12, 40),
+            BackgroundTransparency = 1,
+            Parent = side
+        })
+        make("UIListLayout", {
+            FillDirection = Enum.FillDirection.Horizontal,
+            Padding = UDim.new(0, 6),
+            Parent = chips
+        })
+
+        local lib_list = scroller(side, {
+            Size = UDim2.new(1, -10, 1, -80),
+            Position = UDim2.fromOffset(5, 74)
+        })
+
+        local mid_scroll = scroller(mid, {
+            Size = UDim2.new(1, -8, 1, -8),
+            Position = UDim2.fromOffset(4, 4)
+        })
+        make("UIPadding", {
+            PaddingLeft = UDim.new(0, 14),
+            PaddingRight = UDim.new(0, 14),
+            PaddingTop = UDim.new(0, 12),
+            PaddingBottom = UDim.new(0, 16),
+            Parent = mid_scroll
+        })
+
+        local lib = {playlist = {}, album = {}, artist = {}}
+        local filter = "all"
+        local view_fn
+
+        local function fetch(ep)
+            local r = api("GET", ep)
+            if not r or r.StatusCode ~= 200 then return nil end
+            local ok, d = pcall(function() return hs:JSONDecode(r.Body) end)
+            if not ok then return nil end
+            return d
+        end
+
+        local function names(arts)
+            local out = {}
+            for i,a in pairs(arts or {}) do out[#out + 1] = a.name end
+            return table.concat(out, ", ")
+        end
+
+        local function commas(n)
+            local s = tostring(math.floor(tonumber(n) or 0))
+            local out = s:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+            return (out:gsub("^,", ""))
+        end
+
+        local function row(parent, h)
+            local b = make("TextButton", {
+                Size = UDim2.new(1, 0, 0, h),
+                BackgroundColor3 = c.panel,
+                BackgroundTransparency = 1,
+                Text = "",
+                AutoButtonColor = false,
+                LayoutOrder = #parent:GetChildren(),
+                Parent = parent
+            })
+            round(b, 5)
+            b.MouseEnter:Connect(function()
+                tw:Create(b, TweenInfo.new(0.1), {BackgroundTransparency = 0, BackgroundColor3 = c.hover}):Play()
+            end)
+            b.MouseLeave:Connect(function()
+                tw:Create(b, TweenInfo.new(0.1), {BackgroundTransparency = 1}):Play()
+            end)
+            return b
+        end
+
+        local function cover(parent, size, x, y, rad)
+            local im = make("ImageLabel", {
+                Size = UDim2.fromOffset(size, size),
+                Position = UDim2.fromOffset(x, y),
+                BackgroundColor3 = c.raise,
+                Image = "",
+                ScaleType = Enum.ScaleType.Crop,
+                Parent = parent
+            })
+            round(im, rad or 4)
+            return im
+        end
+
+        local function sect(title)
+            local h = lbl(mid_scroll, {
+                Size = UDim2.new(1, 0, 0, 26),
+                Text = title,
+                Font = fb,
+                TextSize = 17,
+                LayoutOrder = #mid_scroll:GetChildren()
+            })
+            return h
+        end
+
+        local open_playlist, open_album, open_artist, show_home, do_search
+
+        local function track_row(t, ctx, n)
+            if not t or not t.id then return end
+            local b = row(mid_scroll, 46)
+
+            lbl(b, {
+                Size = UDim2.fromOffset(26, 46),
+                Position = UDim2.fromOffset(2, 0),
+                Text = tostring(n),
+                TextColor3 = c.sub,
+                TextSize = 12,
+                TextXAlignment = Enum.TextXAlignment.Center
+            })
+
+            local im = cover(b, 34, 34, 6)
+            paint(im, t, t.id)
+
+            lbl(b, {
+                Size = UDim2.new(1, -200, 0, 17),
+                Position = UDim2.fromOffset(78, 6),
+                Text = t.name or "",
+                Font = fm,
+                TextSize = 13,
+                TextTruncate = Enum.TextTruncate.AtEnd
+            })
+            lbl(b, {
+                Size = UDim2.new(1, -200, 0, 15),
+                Position = UDim2.fromOffset(78, 24),
+                Text = names(t.artists),
+                TextColor3 = c.sub,
+                TextSize = 11,
+                TextTruncate = Enum.TextTruncate.AtEnd
+            })
+            lbl(b, {
+                Size = UDim2.fromOffset(50, 46),
+                Position = UDim2.new(1, -58, 0, 0),
+                Text = fmt_time(math.floor((t.duration_ms or 0) / 1000)),
+                TextColor3 = c.sub,
+                TextSize = 11,
+                TextXAlignment = Enum.TextXAlignment.Right
+            })
+
+            b.MouseButton1Click:Connect(function()
+                sp:playuri(t.uri, ctx)
+            end)
+        end
+
+        local function lib_row(it, kind)
+            local b = row(lib_list, 56)
+            local im = cover(b, 42, 7, 7, kind == "artist" and 21 or 4)
+            paint(im, it, it.id)
+
+            lbl(b, {
+                Size = UDim2.new(1, -62, 0, 17),
+                Position = UDim2.fromOffset(58, 10),
+                Text = it.name or "",
+                Font = fm,
+                TextSize = 13,
+                TextTruncate = Enum.TextTruncate.AtEnd
+            })
+
+            local sub = kind == "playlist" and ("Playlist  -  " .. ((it.owner and it.owner.display_name) or "you"))
+                or kind == "album" and ("Album  -  " .. names(it.artists))
+                or "Artist"
+
+            lbl(b, {
+                Size = UDim2.new(1, -62, 0, 15),
+                Position = UDim2.fromOffset(58, 28),
+                Text = sub,
+                TextColor3 = c.sub,
+                TextSize = 11,
+                TextTruncate = Enum.TextTruncate.AtEnd
+            })
+
+            b.MouseButton1Click:Connect(function()
+                if kind == "playlist" then open_playlist(it)
+                elseif kind == "album" then open_album(it)
+                else open_artist(it.id, it) end
+            end)
+        end
+
+        local function fill_library()
+            wipe(lib_list)
+            local kinds = filter == "all" and {"playlist", "artist", "album"} or {filter}
+            for i,k in pairs(kinds) do
+                for j,it in pairs(lib[k]) do lib_row(it, k) end
+            end
+        end
+
+        do
+            local btns = {}
+            local function chip(key, text)
+                local b = make("TextButton", {
+                    Size = UDim2.fromOffset(#text * 7 + 22, 26),
+                    BackgroundColor3 = c.raise,
+                    Text = text,
+                    TextColor3 = c.text,
+                    Font = fr,
+                    TextSize = 12,
+                    AutoButtonColor = false,
+                    Parent = chips
+                })
+                round(b, 13)
+                btns[key] = b
+                b.MouseButton1Click:Connect(function()
+                    filter = filter == key and "all" or key
+                    for k,v in pairs(btns) do
+                        v.BackgroundColor3 = filter == k and c.text or c.raise
+                        v.TextColor3 = filter == k and Color3.new(0, 0, 0) or c.text
+                    end
+                    fill_library()
+                end)
+                return b
+            end
+            chip("playlist", "Playlists")
+            chip("artist", "Artists")
+            chip("album", "Albums")
+        end
+
+        local function load_library()
+            task.spawn(function()
+                local d = fetch("/me/playlists?limit=50")
+                lib.playlist = (d and d.items) or {}
+                fill_library()
+            end)
+            task.spawn(function()
+                local d = fetch("/me/following?type=artist&limit=50")
+                lib.artist = (d and d.artists and d.artists.items) or {}
+                fill_library()
+            end)
+            task.spawn(function()
+                local d = fetch("/me/albums?limit=50")
+                local out = {}
+                for i,v in pairs((d and d.items) or {}) do out[#out + 1] = v.album end
+                lib.album = out
+                fill_library()
+            end)
+        end
+
+        local function card_grid(items, kind, per)
+            local holder = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1,
+                LayoutOrder = #mid_scroll:GetChildren(),
+                Parent = mid_scroll
+            })
+            local grid = make("UIGridLayout", {
+                CellSize = UDim2.fromOffset(136, 176),
+                CellPadding = UDim2.fromOffset(12, 12),
+                SortOrder = Enum.SortOrder.LayoutOrder,
+                Parent = holder
+            })
+
+            for i,it in pairs(items) do
+                if i > (per or 10) then break end
+                local b = make("TextButton", {
+                    BackgroundColor3 = c.raise,
+                    BackgroundTransparency = 1,
+                    Text = "",
+                    AutoButtonColor = false,
+                    LayoutOrder = i,
+                    Parent = holder
+                })
+                round(b, 7)
+                b.MouseEnter:Connect(function()
+                    tw:Create(b, TweenInfo.new(0.12), {BackgroundTransparency = 0}):Play()
+                end)
+                b.MouseLeave:Connect(function()
+                    tw:Create(b, TweenInfo.new(0.12), {BackgroundTransparency = 1}):Play()
+                end)
+
+                local im = cover(b, 112, 12, 12, kind == "artist" and 56 or 5)
+                paint(im, it, it.id)
+
+                lbl(b, {
+                    Size = UDim2.new(1, -20, 0, 17),
+                    Position = UDim2.fromOffset(12, 130),
+                    Text = it.name or "",
+                    Font = fm,
+                    TextSize = 12,
+                    TextTruncate = Enum.TextTruncate.AtEnd
+                })
+                lbl(b, {
+                    Size = UDim2.new(1, -20, 0, 15),
+                    Position = UDim2.fromOffset(12, 148),
+                    Text = kind == "artist" and "Artist" or names(it.artists),
+                    TextColor3 = c.sub,
+                    TextSize = 11,
+                    TextTruncate = Enum.TextTruncate.AtEnd
+                })
+
+                b.MouseButton1Click:Connect(function()
+                    if kind == "artist" then open_artist(it.id, it)
+                    elseif kind == "album" then open_album(it)
+                    elseif kind == "playlist" then open_playlist(it)
+                    else sp:playuri(it.uri, it.album and it.album.uri) end
+                end)
+            end
+            return holder
+        end
+
+        local function page_head(it, kind, subline)
+            local h = make("Frame", {
+                Size = UDim2.new(1, 0, 0, 172),
+                BackgroundTransparency = 1,
+                LayoutOrder = #mid_scroll:GetChildren(),
+                Parent = mid_scroll
+            })
+            local im = cover(h, 148, 0, 10, kind == "artist" and 74 or 6)
+            paint(im, it, it.id)
+
+            lbl(h, {
+                Size = UDim2.new(1, -176, 0, 15),
+                Position = UDim2.fromOffset(164, 48),
+                Text = kind,
+                TextColor3 = c.sub,
+                TextSize = 11
+            })
+            lbl(h, {
+                Size = UDim2.new(1, -176, 0, 42),
+                Position = UDim2.fromOffset(164, 66),
+                Text = it.name or "",
+                Font = fb,
+                TextSize = 30,
+                TextTruncate = Enum.TextTruncate.AtEnd
+            })
+            lbl(h, {
+                Size = UDim2.new(1, -176, 0, 16),
+                Position = UDim2.fromOffset(164, 112),
+                Text = subline or "",
+                TextColor3 = c.sub,
+                TextSize = 12,
+                TextTruncate = Enum.TextTruncate.AtEnd
+            })
+
+            local play = make("TextButton", {
+                Size = UDim2.fromOffset(46, 46),
+                Position = UDim2.fromOffset(164, 136),
+                BackgroundColor3 = c.green,
+                Text = "",
+                AutoButtonColor = false,
+                Parent = h
+            })
+            round(play, 23)
+            make("ImageLabel", {
+                Size = UDim2.fromOffset(19, 19),
+                Position = UDim2.new(0.5, -9, 0.5, -9),
+                BackgroundTransparency = 1,
+                Image = ico("play") or "",
+                ImageColor3 = Color3.new(0, 0, 0),
+                Parent = play
+            })
+            play.MouseButton1Click:Connect(function()
+                sp:playcontext(it.uri)
+            end)
+            h.Size = UDim2.new(1, 0, 0, 196)
+            return h
+        end
+
+        function open_playlist(it)
+            view_fn = function() open_playlist(it) end
+            recents_add({uri = it.uri, name = it.name, kind = "playlist", id = it.id})
+            wipe(mid_scroll)
+            page_head(it, "Playlist", (it.owner and it.owner.display_name or "") ..
+                (it.tracks and it.tracks.total and ("  -  " .. it.tracks.total .. " songs") or ""))
+            task.spawn(function()
+                local d = fetch("/playlists/" .. it.id .. "/tracks?limit=50")
+                local n = 0
+                for i,v in pairs((d and d.items) or {}) do
+                    if v.track and v.track.id then
+                        n = n + 1
+                        track_row(v.track, it.uri, n)
+                    end
+                end
+            end)
+        end
+
+        function open_album(it)
+            view_fn = function() open_album(it) end
+            recents_add({uri = it.uri, name = it.name, kind = "album", id = it.id})
+            wipe(mid_scroll)
+            page_head(it, "Album", names(it.artists))
+            task.spawn(function()
+                local d = fetch("/albums/" .. it.id .. "/tracks?limit=50")
+                for i,t in pairs((d and d.items) or {}) do
+                    t.album = t.album or it
+                    track_row(t, it.uri, i)
+                end
+            end)
+        end
+
+        function open_artist(aid, seed)
+            if not aid then return end
+            view_fn = function() open_artist(aid, seed) end
+            wipe(mid_scroll)
+            task.spawn(function()
+                local a = fetch("/artists/" .. aid) or seed
+                if not a then return end
+                recents_add({uri = a.uri, name = a.name, kind = "artist", id = a.id})
+                local f = a.followers and a.followers.total
+                page_head(a, "Artist", f and (commas(f) .. " followers") or "")
+
+                local t = fetch("/artists/" .. aid .. "/top-tracks?market=from_token")
+                if t and t.tracks and #t.tracks > 0 then
+                    sect("Popular")
+                    for i,v in pairs(t.tracks) do
+                        if i > 10 then break end
+                        track_row(v, nil, i)
+                    end
+                end
+
+                local al = fetch("/artists/" .. aid .. "/albums?limit=10&include_groups=album,single")
+                if al and al.items and #al.items > 0 then
+                    sect("Discography")
+                    card_grid(al.items, "album", 10)
+                end
+            end)
+        end
+
+        function show_home()
+            view_fn = show_home
+            wipe(mid_scroll)
+            task.spawn(function()
+                local d = fetch("/me/player/recently-played?limit=12")
+                local seen, items = {}, {}
+                for i,v in pairs((d and d.items) or {}) do
+                    local t = v.track
+                    if t and t.id and not seen[t.id] then
+                        seen[t.id] = true
+                        items[#items + 1] = t
+                    end
+                end
+                if #items > 0 then
+                    sect("Recently played")
+                    card_grid(items, "track", 10)
+                end
+            end)
+            task.spawn(function()
+                local d = fetch("/me/top/tracks?limit=10&time_range=short_term")
+                if d and d.items and #d.items > 0 then
+                    sect("On repeat lately")
+                    for i,t in pairs(d.items) do track_row(t, nil, i) end
+                end
+            end)
+            task.spawn(function()
+                local d = fetch("/me/top/artists?limit=10&time_range=medium_term")
+                if d and d.items and #d.items > 0 then
+                    sect("Your top artists")
+                    card_grid(d.items, "artist", 10)
+                end
+            end)
+        end
+
+        function do_search(q)
+            view_fn = function() do_search(q) end
+            wipe(mid_scroll)
+            task.spawn(function()
+                local d = fetch("/search?q=" .. hs:UrlEncode(q) .. "&type=track,artist,album,playlist&limit=10")
+                if not d then return end
+                local tr = d.tracks and d.tracks.items or {}
+                if #tr > 0 then
+                    sect("Songs")
+                    for i,t in pairs(tr) do
+                        if i > 6 then break end
+                        track_row(t, nil, i)
+                    end
+                end
+                local ar = d.artists and d.artists.items or {}
+                if #ar > 0 then
+                    sect("Artists")
+                    card_grid(ar, "artist", 6)
+                end
+                local ab = d.albums and d.albums.items or {}
+                if #ab > 0 then
+                    sect("Albums")
+                    card_grid(ab, "album", 6)
+                end
+                local pl = d.playlists and d.playlists.items or {}
+                local clean = {}
+                for i,v in pairs(pl) do
+                    if type(v) == "table" and v.id then clean[#clean + 1] = v end
+                end
+                if #clean > 0 then
+                    sect("Playlists")
+                    card_grid(clean, "playlist", 6)
+                end
+                if #tr == 0 and #ar == 0 and #ab == 0 and #clean == 0 then
+                    lbl(mid_scroll, {
+                        Size = UDim2.new(1, 0, 0, 40),
+                        Text = "nothing found for " .. q,
+                        TextColor3 = c.sub,
+                        LayoutOrder = 1
+                    })
+                end
+            end)
+        end
+
+        local drop = make("Frame", {
+            Size = UDim2.fromOffset(380, 0),
+            Position = UDim2.new(0.5, -190, 0, 50),
+            BackgroundColor3 = c.raise,
+            Visible = false,
+            ZIndex = 20,
+            ClipsDescendants = true,
+            Parent = win
+        })
+        round(drop, 7)
+        local drop_list = scroller(drop, {
+            Size = UDim2.new(1, -8, 1, -12),
+            Position = UDim2.fromOffset(4, 6),
+            ZIndex = 20
+        })
+
+        local function show_drop()
+            local r = recents_load()
+            wipe(drop_list)
+            if #r == 0 then
+                drop.Visible = false
+                return
+            end
+            lbl(drop_list, {
+                Size = UDim2.new(1, 0, 0, 22),
+                Text = "Recent searches",
+                Font = fb,
+                TextSize = 13,
+                ZIndex = 21,
+                LayoutOrder = 0
+            })
+            for i,it in pairs(r) do
+                local b = row(drop_list, 42)
+                b.ZIndex = 21
+                local im = cover(b, 32, 6, 5, it.kind == "artist" and 16 or 4)
+                im.ZIndex = 21
+                lbl(b, {
+                    Size = UDim2.new(1, -52, 0, 16),
+                    Position = UDim2.fromOffset(46, 5),
+                    Text = it.name or "",
+                    Font = fm,
+                    TextSize = 12,
+                    ZIndex = 21,
+                    TextTruncate = Enum.TextTruncate.AtEnd
+                })
+                lbl(b, {
+                    Size = UDim2.new(1, -52, 0, 14),
+                    Position = UDim2.fromOffset(46, 22),
+                    Text = (it.kind or ""):gsub("^%l", string.upper),
+                    TextColor3 = c.sub,
+                    TextSize = 10,
+                    ZIndex = 21
+                })
+                task.spawn(function()
+                    local obj = fetch("/" .. (it.kind == "playlist" and "playlists" or it.kind == "album" and "albums" or "artists") .. "/" .. it.id)
+                    if obj then paint(im, obj, it.id) end
+                end)
+                b.MouseButton1Click:Connect(function()
+                    drop.Visible = false
+                    sfield.Text = ""
+                    if it.kind == "artist" then open_artist(it.id)
+                    else
+                        local obj = fetch("/" .. (it.kind == "playlist" and "playlists" or "albums") .. "/" .. it.id)
+                        if obj then
+                            if it.kind == "playlist" then open_playlist(obj) else open_album(obj) end
+                        end
+                    end
+                end)
+            end
+            drop.Visible = true
+            tw:Create(drop, TweenInfo.new(0.16), {Size = UDim2.fromOffset(380, math.min(#r * 48 + 34, 300))}):Play()
+        end
+
+        local function hide_drop()
+            tw:Create(drop, TweenInfo.new(0.12), {Size = UDim2.fromOffset(380, 0)}):Play()
+            task.delay(0.13, function() drop.Visible = false end)
+        end
+
+        sfield.Focused:Connect(function()
+            if sfield.Text == "" then show_drop() end
+        end)
+
+        local stamp = 0
+        sfield:GetPropertyChangedSignal("Text"):Connect(function()
+            local q = sfield.Text
+            stamp = stamp + 1
+            local mine = stamp
+            if q == "" then
+                show_drop()
+                return
+            end
+            hide_drop()
+            task.delay(0.45, function()
+                if mine == stamp and sfield.Text == q then do_search(q) end
+            end)
+        end)
+
+        sfield.FocusLost:Connect(function(enter)
+            if enter and sfield.Text ~= "" then do_search(sfield.Text) end
+        end)
+
+        homeb.MouseButton1Click:Connect(function()
+            sfield.Text = ""
+            hide_drop()
+            show_home()
+        end)
+
+        local np_art = cover(right, 268, 16, 16, 7)
+        local np_title = lbl(right, {
+            Size = UDim2.new(1, -32, 0, 24),
+            Position = UDim2.fromOffset(16, 294),
+            Text = "nothing playing",
+            Font = fb,
+            TextSize = 19,
+            TextTruncate = Enum.TextTruncate.AtEnd
+        })
+        local np_art_btn = make("TextButton", {
+            Size = UDim2.new(1, -32, 0, 18),
+            Position = UDim2.fromOffset(16, 320),
+            BackgroundTransparency = 1,
+            Text = "",
+            Parent = right
+        })
+        local np_artist = lbl(np_art_btn, {
+            Size = UDim2.fromScale(1, 1),
+            Text = "",
+            TextColor3 = c.sub,
+            TextSize = 13,
+            TextTruncate = Enum.TextTruncate.AtEnd
+        })
+
+        local about = make("Frame", {
+            Size = UDim2.new(1, -32, 0, 148),
+            Position = UDim2.fromOffset(16, 352),
+            BackgroundColor3 = c.raise,
+            ClipsDescendants = true,
+            Parent = right
+        })
+        round(about, 8)
+        lbl(about, {
+            Size = UDim2.new(1, -24, 0, 18),
+            Position = UDim2.fromOffset(12, 10),
+            Text = "About the artist",
+            Font = fb,
+            TextSize = 13
+        })
+        local ab_img = cover(about, 56, 12, 34, 28)
+        local ab_name = lbl(about, {
+            Size = UDim2.new(1, -92, 0, 18),
+            Position = UDim2.fromOffset(78, 42),
+            Text = "",
+            Font = fm,
+            TextSize = 14,
+            TextTruncate = Enum.TextTruncate.AtEnd
+        })
+        local ab_foll = lbl(about, {
+            Size = UDim2.new(1, -92, 0, 16),
+            Position = UDim2.fromOffset(78, 62),
+            Text = "",
+            TextColor3 = c.sub,
+            TextSize = 11
+        })
+        local ab_gen = lbl(about, {
+            Size = UDim2.new(1, -24, 0, 32),
+            Position = UDim2.fromOffset(12, 100),
+            Text = "",
+            TextColor3 = c.sub,
+            TextSize = 11,
+            TextWrapped = true,
+            TextYAlignment = Enum.TextYAlignment.Top
+        })
+
+        local b_art = cover(bar, 56, 14, 10, 5)
+        local b_title = lbl(bar, {
+            Size = UDim2.fromOffset(190, 18),
+            Position = UDim2.fromOffset(80, 18),
+            Text = "nothing playing",
+            Font = fm,
+            TextSize = 13,
+            TextTruncate = Enum.TextTruncate.AtEnd
+        })
+        local b_artist = lbl(bar, {
+            Size = UDim2.fromOffset(190, 16),
+            Position = UDim2.fromOffset(80, 38),
+            Text = "",
+            TextColor3 = c.sub,
+            TextSize = 11,
+            TextTruncate = Enum.TextTruncate.AtEnd
+        })
+
+        local ctr = make("Frame", {
+            Size = UDim2.fromOffset(190, 32),
+            Position = UDim2.new(0.5, -95, 0, 8),
+            BackgroundTransparency = 1,
+            Parent = bar
+        })
+
+        local shuf = iconbtn(ctr, "shuffle", 16)
+        shuf.Position = UDim2.fromOffset(0, 8)
+        local prev = iconbtn(ctr, "skip-back", 18)
+        prev.Position = UDim2.fromOffset(38, 7)
+        local playb = make("TextButton", {
+            Size = UDim2.fromOffset(32, 32),
+            Position = UDim2.fromOffset(79, 0),
+            BackgroundColor3 = c.text,
+            Text = "",
+            AutoButtonColor = false,
+            Parent = ctr
+        })
+        round(playb, 16)
+        local playi = make("ImageLabel", {
+            Size = UDim2.fromOffset(15, 15),
+            Position = UDim2.new(0.5, -7, 0.5, -7),
+            BackgroundTransparency = 1,
+            Image = ico("play") or "",
+            ImageColor3 = Color3.new(0, 0, 0),
+            Parent = playb
+        })
+        local nextb = iconbtn(ctr, "skip-forward", 18)
+        nextb.Position = UDim2.fromOffset(125, 7)
+        local loopb = iconbtn(ctr, "repeat", 16)
+        loopb.Position = UDim2.fromOffset(170, 8)
+
+        local t_left = lbl(bar, {
+            Size = UDim2.fromOffset(40, 14),
+            Position = UDim2.new(0.5, -268, 0, 47),
+            Text = "0:00",
+            TextColor3 = c.sub,
+            TextSize = 10,
+            TextXAlignment = Enum.TextXAlignment.Right
+        })
+        local t_right = lbl(bar, {
+            Size = UDim2.fromOffset(40, 14),
+            Position = UDim2.new(0.5, 228, 0, 47),
+            Text = "0:00",
+            TextColor3 = c.sub,
+            TextSize = 10
+        })
+
+        local strack = make("Frame", {
+            Size = UDim2.fromOffset(440, 4),
+            Position = UDim2.new(0.5, -220, 0, 52),
+            BackgroundColor3 = c.hover,
+            Parent = bar
+        })
+        round(strack, 2)
+        local sfill = make("Frame", {
+            Size = UDim2.fromScale(0, 1),
+            BackgroundColor3 = c.text,
+            Parent = strack
+        })
+        round(sfill, 2)
+        local shit = make("TextButton", {
+            Size = UDim2.new(1, 0, 0, 18),
+            Position = UDim2.fromOffset(0, -7),
+            BackgroundTransparency = 1,
+            Text = "",
+            Parent = strack
+        })
+
+        local vol_ic = iconbtn(bar, "volume-2", 16)
+        vol_ic.Position = UDim2.new(1, -152, 0, 30)
+        local vtrack = make("Frame", {
+            Size = UDim2.fromOffset(96, 4),
+            Position = UDim2.new(1, -128, 0, 36),
+            BackgroundColor3 = c.hover,
+            Parent = bar
+        })
+        round(vtrack, 2)
+        local vfill = make("Frame", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundColor3 = c.text,
+            Parent = vtrack
+        })
+        round(vfill, 2)
+        local vhit = make("TextButton", {
+            Size = UDim2.new(1, 0, 0, 18),
+            Position = UDim2.fromOffset(0, -7),
+            BackgroundTransparency = 1,
+            Text = "",
+            Parent = vtrack
+        })
+
+        local devb = iconbtn(bar, "monitor", 16)
+        devb.Position = UDim2.new(1, -182, 0, 30)
+
+        local devpop = make("Frame", {
+            Size = UDim2.fromOffset(224, 0),
+            Position = UDim2.new(1, -206, 1, -164),
+            BackgroundColor3 = c.raise,
+            Visible = false,
+            ClipsDescendants = true,
+            ZIndex = 30,
+            Parent = win
+        })
+        round(devpop, 8)
+        local devlist = scroller(devpop, {
+            Size = UDim2.new(1, -10, 1, -12),
+            Position = UDim2.fromOffset(5, 6),
+            ZIndex = 30
+        })
+
+        devb.MouseButton1Click:Connect(function()
+            if devpop.Visible then
+                tw:Create(devpop, TweenInfo.new(0.12), {Size = UDim2.fromOffset(224, 0)}):Play()
+                task.delay(0.13, function() devpop.Visible = false end)
+                return
+            end
+            wipe(devlist)
+            devpop.Visible = true
+            task.spawn(function()
+                local ds = sp:devices()
+                lbl(devlist, {
+                    Size = UDim2.new(1, 0, 0, 22),
+                    Text = "Connect to a device",
+                    Font = fb,
+                    TextSize = 13,
+                    ZIndex = 31,
+                    LayoutOrder = 0
+                })
+                for i,d in pairs(ds) do
+                    local b = row(devlist, 38)
+                    b.ZIndex = 31
+                    make("ImageLabel", {
+                        Size = UDim2.fromOffset(16, 16),
+                        Position = UDim2.fromOffset(8, 11),
+                        BackgroundTransparency = 1,
+                        Image = ico(d.type == "Smartphone" and "smartphone" or d.type == "Computer" and "laptop" or "speaker") or "",
+                        ImageColor3 = d.is_active and c.green or c.sub,
+                        ZIndex = 31,
+                        Parent = b
+                    })
+                    lbl(b, {
+                        Size = UDim2.new(1, -40, 0, 16),
+                        Position = UDim2.fromOffset(32, 4),
+                        Text = d.name or "",
+                        TextColor3 = d.is_active and c.green or c.text,
+                        Font = fm,
+                        TextSize = 12,
+                        ZIndex = 31,
+                        TextTruncate = Enum.TextTruncate.AtEnd
+                    })
+                    lbl(b, {
+                        Size = UDim2.new(1, -40, 0, 14),
+                        Position = UDim2.fromOffset(32, 20),
+                        Text = d.type or "",
+                        TextColor3 = c.sub,
+                        TextSize = 10,
+                        ZIndex = 31
+                    })
+                    b.MouseButton1Click:Connect(function()
+                        sp:transfer(d.id, sp.playing)
+                        tw:Create(devpop, TweenInfo.new(0.12), {Size = UDim2.fromOffset(224, 0)}):Play()
+                        task.delay(0.13, function() devpop.Visible = false end)
+                    end)
+                end
+                tw:Create(devpop, TweenInfo.new(0.16), {Size = UDim2.fromOffset(224, math.min(#ds * 44 + 34, 260))}):Play()
+            end)
+        end)
+
+        playb.MouseButton1Click:Connect(function()
+            sp:toggle()
+            playi.Image = ico(sp.playing and "pause" or "play") or playi.Image
+        end)
+        prev.MouseButton1Click:Connect(function() sp:prev() end)
+        nextb.MouseButton1Click:Connect(function() sp:next() end)
+        shuf.MouseButton1Click:Connect(function()
+            sp:setshuffle(not sp.shuffle)
+            shuf.ImageColor3 = sp.shuffle and c.green or c.sub
+        end)
+        loopb.MouseButton1Click:Connect(function()
+            local nx = sp.loop == "off" and "context" or sp.loop == "context" and "track" or "off"
+            sp:setloop(nx)
+            loopb.Image = ico(nx == "track" and "repeat-1" or "repeat") or loopb.Image
+            loopb.ImageColor3 = nx == "off" and c.sub or c.green
+        end)
+
+        local seeking = false
+        do
+            local function to(x)
+                local p = math.clamp((x - strack.AbsolutePosition.X) / math.max(strack.AbsoluteSize.X, 1), 0, 1)
+                sfill.Size = UDim2.fromScale(p, 1)
+                return p
+            end
+            shit.InputBegan:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    seeking = true
+                    to(i.Position.X)
+                end
+            end)
+            kyri.svc.inp.InputChanged:Connect(function(i)
+                if not seeking then return end
+                if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
+                    to(i.Position.X)
+                end
+            end)
+            kyri.svc.inp.InputEnded:Connect(function(i)
+                if not seeking then return end
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    seeking = false
+                    sp:seek(to(i.Position.X) * 100)
+                end
+            end)
+        end
+
+        do
+            local vdrag = false
+            local function to(x)
+                local p = math.clamp((x - vtrack.AbsolutePosition.X) / math.max(vtrack.AbsoluteSize.X, 1), 0, 1)
+                vfill.Size = UDim2.fromScale(p, 1)
+                return math.floor(p * 100 + 0.5)
+            end
+            vhit.InputBegan:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    vdrag = true
+                    to(i.Position.X)
+                end
+            end)
+            kyri.svc.inp.InputChanged:Connect(function(i)
+                if not vdrag then return end
+                if i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch then
+                    to(i.Position.X)
+                end
+            end)
+            kyri.svc.inp.InputEnded:Connect(function(i)
+                if not vdrag then return end
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+                    vdrag = false
+                    sp:volume(to(i.Position.X))
+                end
+            end)
+        end
+
+        local cur_artist = ""
+
+        local function refresh_about()
+            local t = sp.track
+            if not t or not t.artists or not t.artists[1] then return end
+            local a1 = t.artists[1]
+            if a1.id == cur_artist then return end
+            cur_artist = a1.id
+            ab_name.Text = a1.name or ""
+            ab_foll.Text = ""
+            ab_gen.Text = ""
+            ab_img.Image = ""
+            task.spawn(function()
+                local a = fetch("/artists/" .. a1.id)
+                if not a or cur_artist ~= a1.id then return end
+                paint(ab_img, a, a.id)
+                if a.followers and a.followers.total then
+                    ab_foll.Text = commas(a.followers.total) .. " followers"
+                end
+                if a.genres and #a.genres > 0 then
+                    ab_gen.Text = table.concat(a.genres, ", ")
+                end
+            end)
+        end
+
+        np_art_btn.MouseButton1Click:Connect(function()
+            local t = sp.track
+            if t and t.artists and t.artists[1] then open_artist(t.artists[1].id, t.artists[1]) end
+        end)
+
+        local shown_id = ""
+
+        local function refresh()
+            local t = sp.track
+            if not t then return end
+            np_title.Text = t.name or ""
+            b_title.Text = t.name or ""
+            local who = sp:artists()
+            np_artist.Text = who
+            b_artist.Text = who
+            playi.Image = ico(sp.playing and "pause" or "play") or playi.Image
+            shuf.ImageColor3 = sp.shuffle and c.green or c.sub
+            loopb.ImageColor3 = (sp.loop and sp.loop ~= "off") and c.green or c.sub
+
+            if t.id ~= shown_id then
+                shown_id = t.id
+                paint(np_art, t, t.id)
+                paint(b_art, t, t.id)
+                refresh_about()
+            end
+            if sp.dur > 0 and not seeking then
+                sfill.Size = UDim2.fromScale(math.clamp(sp.pos / sp.dur, 0, 1), 1)
+            end
+            t_left.Text = fmt_time(sp.pos)
+            t_right.Text = fmt_time(sp.dur)
+            if sp.vol_known then vfill.Size = UDim2.fromScale(sp.vol / 100, 1) end
+        end
+
+        hooks[#hooks + 1] = function()
+            if gui.Enabled then pcall(refresh) end
+        end
+
+        local loaded = false
+
+        dk = {gui = gui, win = win, colors = c}
+
+        function dk:show()
+            gui.Enabled = true
+            win.Size = UDim2.fromScale(0.82, 0.84)
+            shade.BackgroundTransparency = 1
+            tw:Create(shade, TweenInfo.new(0.2), {BackgroundTransparency = 0.45}):Play()
+            tw:Create(win, TweenInfo.new(0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+                {Size = UDim2.fromScale(0.86, 0.88)}):Play()
+            if not loaded then
+                loaded = true
+                load_library()
+                show_home()
+            end
+            pcall(refresh)
+            task.spawn(function() sp:sync() end)
+        end
+
+        function dk:hide()
+            tw:Create(shade, TweenInfo.new(0.16), {BackgroundTransparency = 1}):Play()
+            tw:Create(win, TweenInfo.new(0.18), {Size = UDim2.fromScale(0.82, 0.84)}):Play()
+            task.delay(0.19, function() gui.Enabled = false end)
+        end
+
+        function dk:toggle()
+            if gui.Enabled then dk:hide() else dk:show() end
+        end
+
+        function dk:open() dk:show() end
+        function dk:refresh() if view_fn then view_fn() end end
+        function dk:destroy()
+            pcall(function() gui:Destroy() end)
+            dk = nil
+        end
+
+        closeb.MouseButton1Click:Connect(function() dk:hide() end)
+        shade.MouseButton1Click:Connect(function()
+            hide_drop()
+            dk:hide()
+        end)
+        win.InputBegan:Connect(function(i)
+            if i.UserInputType == Enum.UserInputType.MouseButton1 then hide_drop() end
+        end)
+
+        return dk
+    end
+
     function sp:destroy()
         alive = false
+        if dk then pcall(function() dk:destroy() end) end
         if isl and own_island then pcall(function() isl:destroy() end) end
     end
 
@@ -2678,6 +4031,19 @@ function kyri.spotify(opts)
         end, "toggle")
 
         isl:button("skip-forward", function() sp:next() end, "next")
+
+        if opts.desktop ~= false then
+            local ob = isl:button("music", function()
+                sp:desktop(opts.desktop_options):toggle()
+            end, "open spotify")
+            task.spawn(function()
+                local a = spot_logo()
+                if a then
+                    ob:icon(a)
+                    ob:tint(Color3.new(1, 1, 1))
+                end
+            end)
+        end
 
         local lb
         lb = isl:button("repeat", function()
