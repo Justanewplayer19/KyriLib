@@ -4568,6 +4568,8 @@ function kyri.spotify(opts)
 
         local EASE = TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         local FADE = TweenInfo.new(0.26)
+        local RISE = TweenInfo.new(0.44, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+        local SINK = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
 
         local gui = make("ScreenGui", {
             Name = rnd(),
@@ -5364,6 +5366,15 @@ function kyri.spotify(opts)
             end
         end
 
+        local function wash_slide(up, anim)
+            local goal = UDim2.fromScale(0, up and 0 or 1)
+            if anim then
+                tw:Create(back, up and RISE or SINK, {Position = goal}):Play()
+            else
+                back.Position = goal
+            end
+        end
+
         local function wash_fade()
             local on = mount ~= nil or mode == "cinema"
             local has = wash.Image ~= ""
@@ -5455,6 +5466,8 @@ function kyri.spotify(opts)
                 tool.Size = UDim2.fromOffset(276, 48)
                 tool.Position = UDim2.new(0.5, -138, 0, 18)
                 vign.BackgroundTransparency = 0
+                back.Position = UDim2.fromScale(0, 0)
+                stage.Position = UDim2.fromScale(0, 0)
                 wash_fade()
 
                 blank.Size = UDim2.fromOffset(math.min(clip.AbsoluteSize.X - 20, 540), 226)
@@ -5587,6 +5600,7 @@ function kyri.spotify(opts)
             compacti.Image = ico(compact and "maximize-2" or "square") or compacti.Image
 
             wash_fade()
+            wash_slide(cine, anim)
             tw:Create(vign, FADE, {BackgroundTransparency = cine and 0 or 1}):Play()
 
             task.delay(anim and 0.46 or 0.06, rebuild_if_needed)
@@ -5670,6 +5684,10 @@ function kyri.spotify(opts)
                 gui.Enabled = true
                 wake()
                 place(false)
+                stage.Position = UDim2.fromScale(0, 1)
+                back.Position = UDim2.fromScale(0, 1)
+                tw:Create(stage, RISE, {Position = UDim2.fromScale(0, 0)}):Play()
+                tw:Create(back, RISE, {Position = UDim2.fromScale(0, 0)}):Play()
                 return
             end
             if mode == "cinema" and back_to then
@@ -5953,14 +5971,32 @@ function kyri.spotify(opts)
             gui.Enabled = true
             wake()
             place(false)
-            card.Size = UDim2.fromOffset(card.Size.X.Offset * 0.94, card.Size.Y.Offset * 0.94)
-            place(true)
+            if mode == "cinema" then
+                stage.Position = UDim2.fromScale(0, 1)
+                back.Position = UDim2.fromScale(0, 1)
+                tw:Create(stage, RISE, {Position = UDim2.fromScale(0, 0)}):Play()
+                tw:Create(back, RISE, {Position = UDim2.fromScale(0, 0)}):Play()
+            else
+                card.Size = UDim2.fromOffset(card.Size.X.Offset * 0.94, card.Size.Y.Offset * 0.94)
+                place(true)
+            end
             pcall(refresh_track)
             task.spawn(function() sp:sync() end)
         end
 
         function cin:hide()
             pophide()
+            if mode == "cinema" then
+                tw:Create(back, SINK, {Position = UDim2.fromScale(0, 1)}):Play()
+                local t = tw:Create(stage, SINK, {Position = UDim2.fromScale(0, 1)})
+                t.Completed:Connect(function()
+                    if not gui then return end
+                    gui.Enabled = false
+                    stage.Position = UDim2.fromScale(0, 0)
+                end)
+                t:Play()
+                return
+            end
             tw:Create(back, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
             tw:Create(card, TweenInfo.new(0.2), {
                 Size = UDim2.fromOffset(card.Size.X.Offset * 0.94, card.Size.Y.Offset * 0.94),
