@@ -3057,7 +3057,7 @@ function kyri.spotify(opts)
             Size = UDim2.new(1, -8, 1, -8),
             Position = UDim2.fromOffset(4, 4)
         })
-        local lyr_off
+        local lyr_off, lyr_toggle, rl_fetch, rl_sync
         make("UIPadding", {
             PaddingLeft = UDim.new(0, 14),
             PaddingRight = UDim.new(0, 14),
@@ -3818,6 +3818,206 @@ function kyri.spotify(opts)
             TextYAlignment = Enum.TextYAlignment.Top
         })
 
+        local rl_open, rl_big = true, false
+        local rl_times, rl_labels, rl_id, rl_active = {}, {}, "", -1
+
+        local rlyr = make("Frame", {
+            Size = UDim2.new(1, -32, 1, -528),
+            Position = UDim2.fromOffset(16, 512),
+            BackgroundColor3 = c.raise,
+            ClipsDescendants = true,
+            Active = true,
+            ZIndex = 3,
+            Parent = right
+        })
+        round(rlyr, 8)
+
+        local rl_wash = make("ImageLabel", {
+            Size = UDim2.fromScale(5, 5),
+            Position = UDim2.fromScale(0.5, 0.5),
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            BackgroundTransparency = 1,
+            Image = "",
+            ImageTransparency = 1,
+            ScaleType = Enum.ScaleType.Crop,
+            ZIndex = 3,
+            Parent = rlyr
+        })
+
+        local rl_title = lbl(rlyr, {
+            Size = UDim2.new(1, -120, 0, 18),
+            Position = UDim2.fromOffset(14, 12),
+            Text = "Lyrics",
+            Font = fb,
+            TextSize = 14,
+            ZIndex = 6
+        })
+
+        local rl_scroll = scroller(rlyr, {
+            Size = UDim2.new(1, -22, 1, -48),
+            Position = UDim2.fromOffset(11, 40),
+            ZIndex = 4
+        })
+
+        local rl_page = iconbtn(rlyr, "panel-left", 15)
+        rl_page.Position = UDim2.new(1, -94, 0, 13)
+        rl_page.ZIndex = 6
+        tip(rl_page, "open the lyrics page")
+
+        local rl_exp = iconbtn(rlyr, "chevrons-up-down", 15)
+        rl_exp.Position = UDim2.new(1, -62, 0, 13)
+        rl_exp.ZIndex = 6
+        tip(rl_exp, "expand")
+
+        local rl_fold = iconbtn(rlyr, "chevron-up", 15)
+        rl_fold.Position = UDim2.new(1, -30, 0, 13)
+        rl_fold.ZIndex = 6
+        tip(rl_fold, "hide lyrics")
+
+        local function rl_size()
+            return rl_big and 22 or 15
+        end
+
+        local function rl_place(anim)
+            local goal
+            if not rl_open then
+                goal = {Size = UDim2.new(1, -32, 0, 44), Position = UDim2.fromOffset(16, 512)}
+            elseif rl_big then
+                goal = {Size = UDim2.new(1, 0, 1, 0), Position = UDim2.fromOffset(0, 0)}
+            else
+                goal = {Size = UDim2.new(1, -32, 1, -528), Position = UDim2.fromOffset(16, 512)}
+            end
+            if anim then
+                tw:Create(rlyr, TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), goal):Play()
+            else
+                for k,v in pairs(goal) do rlyr[k] = v end
+            end
+            tw:Create(rl_wash, TweenInfo.new(0.3), {
+                ImageTransparency = (rl_big and rl_wash.Image ~= "") and 0.42 or 1
+            }):Play()
+            rl_exp.Image = ico(rl_big and "chevrons-down-up" or "chevrons-up-down") or rl_exp.Image
+            rl_fold.Image = ico(rl_open and "chevron-up" or "chevron-down") or rl_fold.Image
+            rl_exp.Visible = rl_open
+            rl_page.Visible = rl_open
+            for i,v in pairs(rl_labels) do
+                v.TextSize = rl_size()
+            end
+            np_art.Visible = not rl_big
+            np_title.Visible = not rl_big
+            np_art_btn.Visible = not rl_big
+            about.Visible = not rl_big
+        end
+
+        local function rl_say(text)
+            wipe(rl_scroll)
+            rl_labels = {}
+            rl_times = {}
+            lbl(rl_scroll, {
+                Size = UDim2.new(1, 0, 0, 0),
+                AutomaticSize = Enum.AutomaticSize.Y,
+                Text = text,
+                TextColor3 = c.sub,
+                TextSize = 12,
+                TextWrapped = true,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                LayoutOrder = 1,
+                ZIndex = 4
+            })
+        end
+
+        local function rl_build(got)
+            if type(got) ~= "table" then
+                return rl_say(sp.lyric_error == "network"
+                    and "Could not reach the lyric servers. It will try again on its own."
+                    or "No lyrics for this song yet.")
+            end
+            if got.instrumental then return rl_say("Instrumental.") end
+            if not got.synced then
+                return rl_say("This track has lyrics but nobody has timed them yet.")
+            end
+            wipe(rl_scroll)
+            rl_labels = {}
+            rl_times = {}
+            for i,L in pairs(got.synced) do
+                local tx = tostring(L.text or ""):gsub("^%s+", ""):gsub("%s+$", "")
+                if tx ~= "" then
+                    local n = lbl(rl_scroll, {
+                        Size = UDim2.new(1, 0, 0, 0),
+                        AutomaticSize = Enum.AutomaticSize.Y,
+                        Text = tx,
+                        Font = fb,
+                        TextSize = rl_size(),
+                        TextTransparency = 0.6,
+                        TextWrapped = true,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        LayoutOrder = i,
+                        ZIndex = 4
+                    })
+                    rl_times[#rl_times + 1] = L.t
+                    rl_labels[#rl_labels + 1] = n
+                end
+            end
+            if #rl_labels == 0 then rl_say("No lyrics for this song yet.") end
+        end
+
+        rl_fetch = function()
+            local t = sp.track
+            local id = t and t.id or ""
+            if id == rl_id then return end
+            rl_id = id
+            rl_active = -1
+            rl_scroll.CanvasPosition = Vector2.new(0, 0)
+            if id == "" then return rl_say("Nothing playing.") end
+            rl_say("Looking for lyrics")
+            task.spawn(function()
+                local got = sp:lyrics()
+                if rl_id ~= id then return end
+                rl_build(got)
+            end)
+        end
+
+        rl_sync = function()
+            if rl_wash.Image ~= np_art.Image then
+                rl_wash.Image = np_art.Image
+                rl_wash.ImageTransparency = (rl_big and rl_wash.Image ~= "") and 0.42 or 1
+            end
+            if not rl_open or #rl_labels == 0 then return end
+            local now = sp:now()
+            local k = 0
+            for i,tt in pairs(rl_times) do
+                if tt <= now then k = i else break end
+            end
+            if k == rl_active then return end
+            rl_active = k
+            for i,v in pairs(rl_labels) do
+                tw:Create(v, TweenInfo.new(0.18), {TextTransparency = i == k and 0 or 0.6}):Play()
+            end
+            local n = rl_labels[k]
+            if not n then return end
+            local y = n.AbsolutePosition.Y - rl_scroll.AbsolutePosition.Y + rl_scroll.CanvasPosition.Y
+            tw:Create(rl_scroll, TweenInfo.new(0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+                {CanvasPosition = Vector2.new(0, math.max(y - (rl_big and 120 or 56), 0))}):Play()
+        end
+
+        rl_exp.MouseButton1Click:Connect(function()
+            rl_big = not rl_big
+            rl_place(true)
+            rl_active = -1
+        end)
+
+        rl_fold.MouseButton1Click:Connect(function()
+            rl_open = not rl_open
+            if not rl_open then rl_big = false end
+            rl_place(true)
+        end)
+
+        rl_page.MouseButton1Click:Connect(function()
+            if lyr_toggle then lyr_toggle() end
+        end)
+
+        rl_place(false)
+        rl_say("Nothing playing.")
+
         local b_art = cover(bar, 56, 14, 10, 5)
         local b_title = lbl(bar, {
             Size = UDim2.fromOffset(190, 18),
@@ -3956,7 +4156,7 @@ function kyri.spotify(opts)
             pcall(function() sp:cinema(dopts.cinema_options):detach() end)
         end
 
-        lyrb.MouseButton1Click:Connect(function()
+        lyr_toggle = function()
             if lyr_on then return lyr_off() end
             lyr_on = true
             mid_scroll.Visible = false
@@ -3965,7 +4165,9 @@ function kyri.spotify(opts)
             local cv = sp:cinema(dopts.cinema_options)
             cv.on_close = lyr_off
             cv:attach(lyr_host)
-        end)
+        end
+
+        lyrb.MouseButton1Click:Connect(function() lyr_toggle() end)
 
         local devb = iconbtn(bar, "monitor", 16)
         devb.Position = UDim2.new(1, -182, 0, 30)
@@ -4215,6 +4417,7 @@ function kyri.spotify(opts)
                 paint(np_art, t, t.id)
                 paint(b_art, t, t.id)
                 refresh_about()
+                if rl_fetch then rl_fetch() end
             end
             if sp.dur > 0 and not seeking then
                 sfill.Size = UDim2.fromScale(math.clamp(sp.pos / sp.dur, 0, 1), 1)
@@ -4227,6 +4430,12 @@ function kyri.spotify(opts)
         hooks[#hooks + 1] = function()
             if gui.Enabled then pcall(refresh) end
         end
+
+        kyri.svc.run.RenderStepped:Connect(function()
+            if not alive then return end
+            if not gui or not gui.Enabled then return end
+            pcall(rl_sync)
+        end)
 
         local loaded = false
 
