@@ -2581,18 +2581,27 @@ function kyri.spotify(opts)
             return
         end
         task.spawn(function()
-            pcall(function()
-                dirs()
-                local f = ART .. "/" .. id .. ".jpg"
-                if not isfile(f) then
-                    local res = req({Url = url, Method = "GET"})
-                    if not res or res.StatusCode ~= 200 then return end
-                    writefile(f, res.Body)
+            for i = 1, 4 do
+                pcall(function()
+                    dirs()
+                    local f = ART .. "/" .. id .. ".jpg"
+                    if isfile(f) then
+                        local ok, cur = pcall(readfile, f)
+                        if not ok or #cur < 256 then pcall(function() delfile(f) end) end
+                    end
+                    if not isfile(f) then
+                        local res = req({Url = url, Method = "GET"})
+                        if not res or res.StatusCode ~= 200 or #res.Body < 256 then return end
+                        writefile(f, res.Body)
+                    end
+                    art_cache[id] = getcustomasset(f)
+                end)
+                if art_cache[id] then
+                    cb(art_cache[id])
+                    return
                 end
-                local asset = getcustomasset(f)
-                art_cache[id] = asset
-                cb(asset)
-            end)
+                task.wait(i * 1.5)
+            end
         end)
     end
 
@@ -5837,7 +5846,7 @@ function kyri.spotify(opts)
         end
 
         hooks[#hooks + 1] = function()
-            if gui.Enabled then pcall(refresh_track) end
+            if gui.Enabled or mount then pcall(refresh_track) end
         end
 
         gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function() place(false) end)
@@ -5852,6 +5861,8 @@ function kyri.spotify(opts)
                 if not gui.Enabled and not mount then continue end
 
                 if not hidden and os.clock() - idle > 1.8 and not pop_open then doze() end
+
+                pcall(refresh_track)
 
                 local drift = os.clock()
                 local spin = math.sin(drift / 11) * 3
