@@ -5077,26 +5077,74 @@ function kyri.spotify(opts)
             if mount then
                 local ms = mount.AbsoluteSize
                 if ms.X < 40 then return end
-                card.Visible = false
+                card.Visible = true
                 lyrbg.Visible = false
                 clip.Visible = true
                 vign.Visible = true
                 wash.Visible = true
                 wash2.Visible = true
 
-                local lw = math.min(ms.X - 56, 760)
-                local goal = {
+                local edge = 30
+                local gap = 26
+                local ch = math.min(ms.Y - 96, 520)
+                local ah = ch - 110
+                local cw = ah
+                local capw = math.floor(ms.X * 0.42)
+                if cw > capw then
+                    cw = capw
+                    ah = cw
+                    ch = ah + 110
+                end
+                local cy = math.floor((ms.Y - ch) / 2) + 14
+                local lw = ms.X - cw - edge * 2 - gap
+                local lyr_left = side == "left"
+                local lx = lyr_left and edge or (ms.X - lw - edge)
+                local cx = lyr_left and (ms.X - cw - edge) or edge
+
+                local goal_card = {
+                    Size = UDim2.fromOffset(cw, ch),
+                    Position = UDim2.fromOffset(cx, cy),
+                    BackgroundTransparency = 1
+                }
+                local goal_clip = {
                     Size = UDim2.fromOffset(lw, math.max(ms.Y - 112, 120)),
-                    Position = UDim2.fromOffset(math.floor((ms.X - lw) / 2), 88)
+                    Position = UDim2.fromOffset(lx, 84)
                 }
                 if anim then
-                    tw:Create(clip, EASE, goal):Play()
+                    tw:Create(card, EASE, goal_card):Play()
+                    tw:Create(clip, EASE, goal_clip):Play()
                 else
-                    for k,v in pairs(goal) do clip[k] = v end
+                    for k,v in pairs(goal_card) do card[k] = v end
+                    for k,v in pairs(goal_clip) do clip[k] = v end
                 end
+                card_s.Transparency = 1
+
+                pad.Size = UDim2.new(1, 0, 1, 0)
+                pad.Position = UDim2.fromOffset(0, 0)
+                art.Size = UDim2.new(1, 0, 0, ah)
+                srow.Position = UDim2.fromOffset(0, ah + 12)
+                c_title.Position = UDim2.fromOffset(12, ah + 38)
+                c_artist.Position = UDim2.fromOffset(12, ah + 70)
+                c_title.TextSize = 23
+                c_artist.TextSize = 14
+
+                local hs_ = math.floor(ah * 0.38)
+                heart.Size = UDim2.fromOffset(hs_, hs_)
+                heart.Position = UDim2.new(0.5, -math.floor(hs_ / 2), 0.5, -math.floor(hs_ * 0.58))
+
+                vtrack.Size = UDim2.fromOffset(7, math.floor(ah * 0.4))
+                vtrack.Position = UDim2.new(1, -24, 0.5, -math.floor(ah * 0.27))
+
+                trow.Position = UDim2.new(0, 0, 0, ah - 54)
+                trow_l.Padding = UDim.new(0, 20)
+                playb.Size = UDim2.fromOffset(34, 34)
+                prevb.Size = UDim2.fromOffset(25, 25)
+                nextb.Size = UDim2.fromOffset(25, 25)
+                shufb.Size = UDim2.fromOffset(21, 21)
+                loopb.Size = UDim2.fromOffset(21, 21)
 
                 tool.Size = UDim2.fromOffset(276, 48)
-                tool.Position = UDim2.new(0.5, -138, 0, 20)
+                tool.Position = UDim2.new(0.5, -138, 0, 18)
                 back.BackgroundTransparency = 0
                 vign.BackgroundTransparency = 0
                 wash.ImageTransparency = wash.Image ~= "" and 0.28 or 1
@@ -5104,6 +5152,7 @@ function kyri.spotify(opts)
 
                 blank.Size = UDim2.fromOffset(math.min(clip.AbsoluteSize.X - 20, 540), 226)
                 cinei.Image = ico("maximize") or cinei.Image
+                compacti.Image = ico(compact and "maximize-2" or "square") or compacti.Image
                 task.delay(anim and 0.46 or 0.06, rebuild_if_needed)
                 return
             end
