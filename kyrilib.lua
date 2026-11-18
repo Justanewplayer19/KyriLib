@@ -5286,7 +5286,30 @@ function kyri.spotify(opts)
             end
         end
 
+        local function wash_fade()
+            local on = mount ~= nil or mode == "cinema"
+            tw:Create(back, FADE, {BackgroundTransparency = on and 0 or 1}):Play()
+            tw:Create(wash, FADE, {
+                ImageTransparency = (on and wash.Image ~= "") and 0.28 or 1
+            }):Play()
+            tw:Create(wash2, FADE, {
+                ImageTransparency = (on and wash2.Image ~= "") and 0.5 or 1
+            }):Play()
+        end
+
+        local twmap = {}
+        local function tgo(obj, info, goal)
+            local old = twmap[obj]
+            if old then pcall(function() old:Cancel() end) end
+            local t = tw:Create(obj, info, goal)
+            twmap[obj] = t
+            t:Play()
+        end
+
+        local NOW = TweenInfo.new(0)
+
         local function place(anim)
+            local step = anim and EASE or NOW
             if mount then
                 local ms = mount.AbsoluteSize
                 if ms.X < 40 then return end
@@ -5323,14 +5346,9 @@ function kyri.spotify(opts)
                     Size = UDim2.fromOffset(lw, math.max(ms.Y - 112, 120)),
                     Position = UDim2.fromOffset(lx, 84)
                 }
-                if anim then
-                    tw:Create(card, EASE, goal_card):Play()
-                    tw:Create(clip, EASE, goal_clip):Play()
-                else
-                    for k,v in pairs(goal_card) do card[k] = v end
-                    for k,v in pairs(goal_clip) do clip[k] = v end
-                end
-                card_s.Transparency = 1
+                tgo(card, step, goal_card)
+                tgo(clip, step, goal_clip)
+                tgo(card_s, FADE, {Transparency = 1})
 
                 pad.Size = UDim2.new(1, 0, 1, 0)
                 pad.Position = UDim2.fromOffset(0, 0)
@@ -5358,10 +5376,8 @@ function kyri.spotify(opts)
 
                 tool.Size = UDim2.fromOffset(276, 48)
                 tool.Position = UDim2.new(0.5, -138, 0, 18)
-                back.BackgroundTransparency = 0
                 vign.BackgroundTransparency = 0
-                wash.ImageTransparency = wash.Image ~= "" and 0.28 or 1
-                wash2.ImageTransparency = wash2.Image ~= "" and 0.5 or 1
+                wash_fade()
 
                 blank.Size = UDim2.fromOffset(math.min(clip.AbsoluteSize.X - 20, 540), 226)
                 cinei.Image = ico("maximize") or cinei.Image
@@ -5405,12 +5421,8 @@ function kyri.spotify(opts)
                 Position = UDim2.fromOffset(cx, cy),
                 BackgroundTransparency = cine and 1 or 0.08
             }
-            if anim then
-                tw:Create(card, EASE, goal_card):Play()
-            else
-                for k,v in pairs(goal_card) do card[k] = v end
-            end
-            tw:Create(card_s, FADE, {Transparency = cine and 1 or 0.9}):Play()
+            tgo(card, step, goal_card)
+            tgo(card_s, FADE, {Transparency = cine and 1 or 0.9})
 
             pad.Size = UDim2.new(1, -inset * 2, 1, -inset * 2)
             pad.Position = UDim2.fromOffset(inset, inset)
@@ -5463,29 +5475,18 @@ function kyri.spotify(opts)
                     Size = UDim2.fromOffset(lwn - inn * 2, ch - inn * 2),
                     Position = UDim2.fromOffset(lx + inn, cy + inn)
                 }
-                local goal_bg = {
+                tgo(lyrbg, step, {
                     Size = UDim2.fromOffset(lwn, ch),
                     Position = UDim2.fromOffset(lx, cy)
-                }
-                if anim then
-                    tw:Create(lyrbg, EASE, goal_bg):Play()
-                else
-                    for k,v in pairs(goal_bg) do lyrbg[k] = v end
-                end
+                })
             end
-            if anim then
-                tw:Create(clip, EASE, goal_clip):Play()
-            else
-                for k,v in pairs(goal_clip) do clip[k] = v end
-            end
+            tgo(clip, step, goal_clip)
 
             blank.Size = UDim2.fromOffset(math.min(clip.AbsoluteSize.X - 20, 540), 226)
             cinei.Image = ico(cine and "minimize" or "maximize") or cinei.Image
             compacti.Image = ico(compact and "maximize-2" or "square") or compacti.Image
 
-            tw:Create(back, FADE, {BackgroundTransparency = cine and 0 or 1}):Play()
-            tw:Create(wash, FADE, {ImageTransparency = (cine and wash.Image ~= "") and 0.28 or 1}):Play()
-            tw:Create(wash2, FADE, {ImageTransparency = (cine and wash2.Image ~= "") and 0.5 or 1}):Play()
+            wash_fade()
             tw:Create(vign, FADE, {BackgroundTransparency = cine and 0 or 1}):Play()
 
             task.delay(anim and 0.46 or 0.06, rebuild_if_needed)
@@ -5513,7 +5514,8 @@ function kyri.spotify(opts)
         end
 
         local function doze()
-            if hidden or mode ~= "cinema" then return end
+            if hidden then return end
+            if mode ~= "cinema" and not mount then return end
             hidden = true
             local slow = TweenInfo.new(0.5)
             tw:Create(tool, slow, {BackgroundTransparency = 1}):Play()
@@ -5532,10 +5534,11 @@ function kyri.spotify(opts)
         end
 
         kyri.svc.inp.InputChanged:Connect(function(i)
-            if gui.Enabled and i.UserInputType == Enum.UserInputType.MouseMovement then wake() end
+            if not gui.Enabled and not mount then return end
+            if i.UserInputType == Enum.UserInputType.MouseMovement then wake() end
         end)
         kyri.svc.inp.InputBegan:Connect(function()
-            if gui.Enabled then wake() end
+            if gui.Enabled or mount then wake() end
         end)
 
         heart.MouseButton1Click:Connect(function()
@@ -5727,10 +5730,7 @@ function kyri.spotify(opts)
                         art.Image = a
                         wash.Image = a
                         wash2.Image = a
-                        if gui.Enabled and mode == "cinema" then
-                            tw:Create(wash, TweenInfo.new(0.6), {ImageTransparency = 0.28}):Play()
-                            tw:Create(wash2, TweenInfo.new(0.6), {ImageTransparency = 0.5}):Play()
-                        end
+                        wash_fade()
                     end)
                 end
             end
@@ -5761,7 +5761,7 @@ function kyri.spotify(opts)
             while alive_cin and task.wait(0.07) do
                 if not gui.Enabled and not mount then continue end
 
-                if not hidden and os.clock() - idle > 3 and not pop_open then doze() end
+                if not hidden and os.clock() - idle > 1.8 and not pop_open then doze() end
 
                 local drift = os.clock()
                 wash.Rotation = math.sin(drift / 11) * 4
