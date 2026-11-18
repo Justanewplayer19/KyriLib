@@ -3057,6 +3057,7 @@ function kyri.spotify(opts)
             Size = UDim2.new(1, -8, 1, -8),
             Position = UDim2.fromOffset(4, 4)
         })
+        local lyr_off
         make("UIPadding", {
             PaddingLeft = UDim.new(0, 14),
             PaddingRight = UDim.new(0, 14),
@@ -3304,6 +3305,7 @@ function kyri.spotify(opts)
         local function nag()
             if not sp.stale_scopes or nagged then return end
             nagged = true
+            if lyr_off then lyr_off() end
             wipe(mid_scroll)
             lbl(mid_scroll, {
                 Size = UDim2.new(1, 0, 0, 30),
@@ -3485,6 +3487,7 @@ function kyri.spotify(opts)
         function open_playlist(it)
             view_fn = function() open_playlist(it) end
             recents_add({uri = it.uri, name = it.name, kind = "playlist", id = it.id})
+            if lyr_off then lyr_off() end
             wipe(mid_scroll)
             page_head(it, "Playlist", (it.owner and it.owner.display_name or "") ..
                 (it.tracks and it.tracks.total and ("  -  " .. it.tracks.total .. " songs") or ""))
@@ -3503,6 +3506,7 @@ function kyri.spotify(opts)
         function open_album(it)
             view_fn = function() open_album(it) end
             recents_add({uri = it.uri, name = it.name, kind = "album", id = it.id})
+            if lyr_off then lyr_off() end
             wipe(mid_scroll)
             page_head(it, "Album", names(it.artists))
             task.spawn(function()
@@ -3517,6 +3521,7 @@ function kyri.spotify(opts)
         function open_artist(aid, seed)
             if not aid then return end
             view_fn = function() open_artist(aid, seed) end
+            if lyr_off then lyr_off() end
             wipe(mid_scroll)
             task.spawn(function()
                 local a = fetch("/artists/" .. aid) or seed
@@ -3544,6 +3549,7 @@ function kyri.spotify(opts)
 
         function show_home()
             view_fn = show_home
+            if lyr_off then lyr_off() end
             wipe(mid_scroll)
             local b1, b2, b3 = band(1), band(2), band(3)
             task.spawn(function()
@@ -3579,6 +3585,7 @@ function kyri.spotify(opts)
 
         function do_search(q)
             view_fn = function() do_search(q) end
+            if lyr_off then lyr_off() end
             wipe(mid_scroll)
             task.spawn(function()
                 local d = fetch("/search?q=" .. hs:UrlEncode(q) .. "&type=track,artist,album,playlist&limit=10")
@@ -3742,6 +3749,7 @@ function kyri.spotify(opts)
         homeb.MouseButton1Click:Connect(function()
             sfield.Text = ""
             hide_drop()
+            if lyr_off then lyr_off() end
             show_home()
         end)
 
@@ -3921,11 +3929,42 @@ function kyri.spotify(opts)
             Parent = vtrack
         })
 
+        local lyr_host = make("Frame", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundColor3 = c.panel,
+            Visible = false,
+            Active = true,
+            ClipsDescendants = true,
+            ZIndex = 4,
+            Parent = mid
+        })
+        round(lyr_host, 8)
+
+        local lyr_on = false
+
         local lyrb = iconbtn(bar, "quote", 16)
         lyrb.Position = UDim2.new(1, -212, 0, 30)
+        lyrb.ImageTransparency = 0.25
         tip(lyrb, "lyrics")
+
+        lyr_off = function()
+            if not lyr_on then return end
+            lyr_on = false
+            lyr_host.Visible = false
+            mid_scroll.Visible = true
+            lyrb.ImageTransparency = 0.25
+            pcall(function() sp:cinema(dopts.cinema_options):detach() end)
+        end
+
         lyrb.MouseButton1Click:Connect(function()
-            sp:cinema(dopts.cinema_options):toggle()
+            if lyr_on then return lyr_off() end
+            lyr_on = true
+            mid_scroll.Visible = false
+            lyr_host.Visible = true
+            lyrb.ImageTransparency = 0
+            local cv = sp:cinema(dopts.cinema_options)
+            cv.on_close = lyr_off
+            cv:attach(lyr_host)
         end)
 
         local devb = iconbtn(bar, "monitor", 16)
@@ -4264,6 +4303,7 @@ function kyri.spotify(opts)
         local mode = copts.mode or "nowbar"
         local compact = copts.compact == true
         local side = copts.side or "left"
+        local mount, mount_con, back_to = nil, nil, nil
 
         local EASE = TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
         local FADE = TweenInfo.new(0.26)
@@ -4920,6 +4960,7 @@ function kyri.spotify(opts)
         end
 
         local function tsize()
+            if mount then return 32 end
             if mode ~= "cinema" then return 26 end
             return compact and 30 or 40
         end
@@ -5033,10 +5074,45 @@ function kyri.spotify(opts)
         end
 
         local function place(anim)
+            if mount then
+                local ms = mount.AbsoluteSize
+                if ms.X < 40 then return end
+                card.Visible = false
+                lyrbg.Visible = false
+                clip.Visible = true
+                vign.Visible = true
+                wash.Visible = true
+                wash2.Visible = true
+
+                local lw = math.min(ms.X - 56, 760)
+                local goal = {
+                    Size = UDim2.fromOffset(lw, math.max(ms.Y - 112, 120)),
+                    Position = UDim2.fromOffset(math.floor((ms.X - lw) / 2), 88)
+                }
+                if anim then
+                    tw:Create(clip, EASE, goal):Play()
+                else
+                    for k,v in pairs(goal) do clip[k] = v end
+                end
+
+                tool.Size = UDim2.fromOffset(276, 48)
+                tool.Position = UDim2.new(0.5, -138, 0, 20)
+                back.BackgroundTransparency = 0
+                vign.BackgroundTransparency = 0
+                wash.ImageTransparency = wash.Image ~= "" and 0.28 or 1
+                wash2.ImageTransparency = wash2.Image ~= "" and 0.5 or 1
+
+                blank.Size = UDim2.fromOffset(math.min(clip.AbsoluteSize.X - 20, 540), 226)
+                cinei.Image = ico("maximize") or cinei.Image
+                task.delay(anim and 0.46 or 0.06, rebuild_if_needed)
+                return
+            end
+
             local vp = gui.AbsoluteSize
             if vp.X < 40 then return end
 
             local cine = mode == "cinema"
+            card.Visible = true
             local cw = compact and 250 or (cine and 360 or 430)
             local ah = cw - (cine and 0 or 24)
             local inset = cine and 0 or 12
@@ -5221,9 +5297,26 @@ function kyri.spotify(opts)
             place(true)
         end)
         cineb.MouseButton1Click:Connect(function()
+            pophide()
+            if mount then
+                back_to = mount
+                cin:detach()
+                mode = "cinema"
+                gui.Enabled = true
+                wake()
+                place(false)
+                return
+            end
+            if mode == "cinema" and back_to then
+                local h = back_to
+                back_to = nil
+                mode = "nowbar"
+                gui.Enabled = false
+                cin:attach(h)
+                return
+            end
             mode = mode == "cinema" and "nowbar" or "cinema"
             wake()
-            pophide()
             place(true)
         end)
 
@@ -5517,6 +5610,34 @@ function kyri.spotify(opts)
             if gui.Enabled then cin:hide() else cin:show() end
         end
 
+        function cin:attach(host)
+            if mount == host then return end
+            mount = host
+            mode = "nowbar"
+            back.Parent = host
+            stage.Parent = host
+            tool.Parent = stage
+            gui.Enabled = false
+            wake()
+            if mount_con then mount_con:Disconnect() end
+            mount_con = host:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+                if mount then place(false) end
+            end)
+            place(false)
+            pcall(refresh_track)
+            task.spawn(function() sp:sync() end)
+        end
+
+        function cin:detach()
+            if not mount then return end
+            mount = nil
+            if mount_con then mount_con:Disconnect() mount_con = nil end
+            back.Parent = gui
+            stage.Parent = gui
+            tool.Parent = pad
+            place(false)
+        end
+
         function cin:mode(m)
             mode = m or mode
             place(true)
@@ -5538,7 +5659,13 @@ function kyri.spotify(opts)
             cin = nil
         end
 
-        closeb.MouseButton1Click:Connect(function() cin:hide() end)
+        closeb.MouseButton1Click:Connect(function()
+            if mount or back_to then
+                back_to = nil
+                if cin.on_close then return cin.on_close() end
+            end
+            cin:hide()
+        end)
 
         place(false)
         return cin
