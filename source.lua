@@ -5100,12 +5100,16 @@ function kyri.spotify(opts)
         end
 
         local function popshow(h)
-            local vp = gui.AbsoluteSize
-            local bx = tool.AbsolutePosition.X + tool.AbsoluteSize.X / 2 - 125
-            local below = tool.AbsolutePosition.Y + tool.AbsoluteSize.Y + 8
+            local base = pop.Parent
+            local org = base.AbsolutePosition
+            local vp = base.AbsoluteSize
+            local tx = tool.AbsolutePosition.X - org.X
+            local ty = tool.AbsolutePosition.Y - org.Y
+            local bx = tx + tool.AbsoluteSize.X / 2 - 125
+            local below = ty + tool.AbsoluteSize.Y + 10
             local y = below
             if below + h > vp.Y - 12 then
-                y = math.max(tool.AbsolutePosition.Y - h - 8, 12)
+                y = math.max(ty - h - 10, 12)
             end
             pop.Position = UDim2.fromOffset(math.clamp(bx, 12, math.max(vp.X - 262, 12)), y)
             pop.Visible = true
@@ -5755,7 +5759,7 @@ function kyri.spotify(opts)
         task.spawn(function()
             local for_id, for_rev
             while alive_cin and task.wait(0.07) do
-                if not gui.Enabled then continue end
+                if not gui.Enabled and not mount then continue end
 
                 if not hidden and os.clock() - idle > 3 and not pop_open then doze() end
 
