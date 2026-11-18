@@ -4427,6 +4427,49 @@ function kyri.spotify(opts)
             if sp.vol_known then vfill.Size = UDim2.fromScale(sp.vol / 100, 1) end
         end
 
+        local function relayout()
+            local bw = body.AbsoluteSize.X
+            local ww = win.AbsoluteSize.X
+            if bw < 40 then return end
+
+            local sw = bw < 560 and 0 or (bw < 880 and 196 or 248)
+            local rw = bw < 1000 and 0 or 300
+            side.Visible = sw > 0
+            right.Visible = rw > 0
+            if sw > 0 then side.Size = UDim2.new(0, sw, 1, 0) end
+            if rw > 0 then
+                right.Size = UDim2.new(0, rw, 1, 0)
+                right.Position = UDim2.new(1, -rw, 0, 0)
+            end
+            local lft = sw > 0 and sw + 8 or 0
+            local rgt = rw > 0 and rw + 8 or 0
+            mid.Position = UDim2.fromOffset(lft, 0)
+            mid.Size = UDim2.new(1, -(lft + rgt), 1, 0)
+
+            local sb = math.clamp(ww - 420, 180, 380)
+            sbox.Size = UDim2.fromOffset(sb, 38)
+            sbox.Position = UDim2.new(0.5, -math.floor(sb / 2), 0, 9)
+
+            local sk = math.clamp(ww - 560, 140, 440)
+            strack.Size = UDim2.fromOffset(sk, 4)
+            strack.Position = UDim2.new(0.5, -math.floor(sk / 2), 0, 52)
+            t_left.Position = UDim2.new(0.5, -math.floor(sk / 2) - 48, 0, 47)
+            t_right.Position = UDim2.new(0.5, math.floor(sk / 2) + 8, 0, 47)
+
+            local vol_on = ww > 760
+            vol_ic.Visible = vol_on
+            vtrack.Visible = vol_on
+            lyrb.Position = UDim2.new(1, vol_on and -212 or -92, 0, 30)
+            devb.Position = UDim2.new(1, vol_on and -182 or -62, 0, 30)
+
+            local wide = ww > 540
+            b_title.Visible = wide
+            b_artist.Visible = wide
+        end
+
+        relayout()
+        win:GetPropertyChangedSignal("AbsoluteSize"):Connect(relayout)
+
         hooks[#hooks + 1] = function()
             if gui.Enabled then pcall(refresh) end
         end
@@ -4630,9 +4673,10 @@ function kyri.spotify(opts)
         make("UICorner", {CornerRadius = UDim.new(0, 8), Parent = veil})
         make("UIGradient", {
             Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0, 0.75),
-                NumberSequenceKeypoint.new(0.45, 1),
-                NumberSequenceKeypoint.new(1, 0.4)
+                NumberSequenceKeypoint.new(0, 0.82),
+                NumberSequenceKeypoint.new(0.38, 0.96),
+                NumberSequenceKeypoint.new(0.72, 0.52),
+                NumberSequenceKeypoint.new(1, 0.08)
             }),
             Rotation = 90,
             Parent = veil
@@ -4710,7 +4754,7 @@ function kyri.spotify(opts)
                 BackgroundTransparency = 1,
                 Image = ico(icon) or "",
                 ImageColor3 = Color3.new(1, 1, 1),
-                ImageTransparency = 0.15,
+                ImageTransparency = 0,
                 AutoButtonColor = false,
                 LayoutOrder = ord,
                 Parent = trow
@@ -5390,25 +5434,48 @@ function kyri.spotify(opts)
             if vp.X < 40 then return end
 
             local cine = mode == "cinema"
-            card.Visible = true
+            local tight = vp.X < 760
+            local edge = (compact or tight) and 26 or 64
+            local gap = 14
+
             local cw = compact and 250 or (cine and 360 or 430)
+            local room_w = vp.X - edge * 2
+            if cw > room_w then cw = math.max(room_w, 150) end
             local ah = cw - (cine and 0 or 24)
             local inset = cine and 0 or 12
-            local edge = compact and 40 or 64
-
             local ch = ah + (cine and 108 or 120)
-            local gap = 14
+
+            local stack = not cine and (vp.X - cw - edge * 2 - gap) < 240
+            card.Visible = not (cine and tight)
+
             local lwn = compact and 280 or 420
             if not cine then
-                local room = vp.X - cw - edge * 2 - gap
-                if room < lwn then lwn = math.max(room, 200) end
+                if stack then
+                    lwn = cw
+                else
+                    local room = vp.X - cw - edge * 2 - gap
+                    if room < lwn then lwn = math.max(room, 200) end
+                end
             end
 
-            local cx, cy, lx
+            local cx, cy, lx, ly, lh
             cy = math.floor((vp.Y - ch) / 2)
 
             if cine then
                 cx = side == "left" and edge or (vp.X - cw - edge)
+            elseif stack then
+                local room_h = vp.Y - edge * 2 - gap
+                if ch > room_h * 0.56 then
+                    ch = math.floor(room_h * 0.56)
+                    ah = ch - 120
+                    cw = math.min(ah + 24, room_w)
+                    lwn = cw
+                end
+                cx = math.floor((vp.X - cw) / 2)
+                cy = edge
+                lx = math.floor((vp.X - lwn) / 2)
+                ly = cy + ch + gap
+                lh = math.max(vp.Y - ly - edge, 120)
             else
                 local total = cw + gap + lwn
                 local gx = side == "left" and edge or math.max(vp.X - total - edge, edge)
@@ -5472,12 +5539,12 @@ function kyri.spotify(opts)
             else
                 local inn = compact and 14 or 20
                 goal_clip = {
-                    Size = UDim2.fromOffset(lwn - inn * 2, ch - inn * 2),
-                    Position = UDim2.fromOffset(lx + inn, cy + inn)
+                    Size = UDim2.fromOffset(lwn - inn * 2, (lh or ch) - inn * 2),
+                    Position = UDim2.fromOffset(lx + inn, (ly or cy) + inn)
                 }
                 tgo(lyrbg, step, {
-                    Size = UDim2.fromOffset(lwn, ch),
-                    Position = UDim2.fromOffset(lx, cy)
+                    Size = UDim2.fromOffset(lwn, lh or ch),
+                    Position = UDim2.fromOffset(lx, ly or cy)
                 })
             end
             tgo(clip, step, goal_clip)
@@ -5504,13 +5571,13 @@ function kyri.spotify(opts)
                 if v:IsA("UIStroke") then tw:Create(v, FADE, {Transparency = 0.86}):Play() end
             end
             for i,v in pairs({shufb, prevb, playb, nextb, loopb}) do
-                tw:Create(v, FADE, {ImageTransparency = 0.15}):Play()
+                tw:Create(v, FADE, {ImageTransparency = 0}):Play()
             end
-            tw:Create(heart, FADE, {ImageTransparency = 0.12}):Play()
-            tw:Create(vtrack, FADE, {BackgroundTransparency = 0.68}):Play()
+            tw:Create(heart, FADE, {ImageTransparency = 0.08}):Play()
+            tw:Create(vtrack, FADE, {BackgroundTransparency = 0.5}):Play()
             tw:Create(vfill, FADE, {BackgroundTransparency = 0}):Play()
-            tw:Create(vicon, FADE, {ImageTransparency = 0.2}):Play()
-            tw:Create(veil, FADE, {BackgroundTransparency = 1}):Play()
+            tw:Create(vicon, FADE, {ImageTransparency = 0}):Play()
+            tw:Create(veil, FADE, {BackgroundTransparency = 0}):Play()
         end
 
         local function doze()
