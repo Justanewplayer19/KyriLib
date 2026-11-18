@@ -3833,7 +3833,7 @@ function kyri.spotify(opts)
         round(rlyr, 8)
 
         local rl_wash = make("ImageLabel", {
-            Size = UDim2.fromScale(5, 5),
+            Size = UDim2.fromScale(2.4, 2.4),
             Position = UDim2.fromScale(0.5, 0.5),
             AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundTransparency = 1,
@@ -4578,37 +4578,62 @@ function kyri.spotify(opts)
             Parent = gui
         })
 
-        local wash = make("ImageLabel", {
-            Size = UDim2.fromScale(7, 7),
-            Position = UDim2.fromScale(0.5, 0.5),
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            BackgroundTransparency = 1,
-            Image = "",
-            ImageTransparency = 1,
-            ScaleType = Enum.ScaleType.Crop,
-            Parent = back
-        })
+        local washes, wash, wash2, wash2_g
 
-        local wash2 = make("ImageLabel", {
-            Size = UDim2.fromScale(12, 12),
-            Position = UDim2.fromScale(0.5, 0.5),
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            BackgroundTransparency = 1,
-            Image = "",
-            ImageTransparency = 1,
-            Rotation = 180,
-            ScaleType = Enum.ScaleType.Crop,
-            Parent = back
-        })
-        local wash2_g = make("UIGradient", {
-            Transparency = NumberSequence.new({
-                NumberSequenceKeypoint.new(0, 0.15),
-                NumberSequenceKeypoint.new(0.5, 0.75),
-                NumberSequenceKeypoint.new(1, 0.15)
-            }),
-            Rotation = -40,
-            Parent = wash2
-        })
+        do
+            local ring = {
+                {0, 0}, {-11, -7}, {11, -7}, {-11, 7}, {11, 7}, {0, -15}, {0, 15},
+                {-18, 0}, {18, 0}
+            }
+            washes = {}
+            for i,o in pairs(ring) do
+                washes[i] = make("ImageLabel", {
+                    Size = UDim2.fromScale(2.2, 2.2),
+                    Position = UDim2.new(0.5, o[1], 0.5, o[2]),
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    BackgroundTransparency = 1,
+                    Image = "",
+                    ImageTransparency = 1,
+                    ScaleType = Enum.ScaleType.Crop,
+                    Parent = back
+                })
+            end
+            wash = washes[1]
+
+            wash2 = make("ImageLabel", {
+                Size = UDim2.fromScale(3.1, 3.1),
+                Position = UDim2.fromScale(0.5, 0.5),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundTransparency = 1,
+                Image = "",
+                ImageTransparency = 1,
+                Rotation = 180,
+                ResampleMode = Enum.ResamplerMode.Default,
+                ScaleType = Enum.ScaleType.Crop,
+                Parent = back
+            })
+            wash2_g = make("UIGradient", {
+                Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 0.15),
+                    NumberSequenceKeypoint.new(0.5, 0.75),
+                    NumberSequenceKeypoint.new(1, 0.15)
+                }),
+                Rotation = -40,
+                Parent = wash2
+            })
+            washes[#washes + 1] = wash2
+        end
+
+        local function wash_set(a)
+            for i,v in pairs(washes) do v.Image = a or "" end
+        end
+
+        local function wash_show(on)
+            local lean = gui.AbsoluteSize.X < 760
+            for i,v in pairs(washes) do
+                v.Visible = on and not (lean and i > 5 and v ~= wash2)
+            end
+        end
 
         local vign = make("Frame", {
             Size = UDim2.fromScale(1, 1),
@@ -5332,13 +5357,14 @@ function kyri.spotify(opts)
 
         local function wash_fade()
             local on = mount ~= nil or mode == "cinema"
+            local has = wash.Image ~= ""
             tw:Create(back, FADE, {BackgroundTransparency = on and 0 or 1}):Play()
-            tw:Create(wash, FADE, {
-                ImageTransparency = (on and wash.Image ~= "") and 0.28 or 1
-            }):Play()
-            tw:Create(wash2, FADE, {
-                ImageTransparency = (on and wash2.Image ~= "") and 0.5 or 1
-            }):Play()
+            for i,v in pairs(washes) do
+                local base = v == wash2 and 0.62 or 0.82
+                tw:Create(v, FADE, {
+                    ImageTransparency = (on and has) and base or 1
+                }):Play()
+            end
         end
 
         local twmap = {}
@@ -5361,8 +5387,7 @@ function kyri.spotify(opts)
                 lyrbg.Visible = false
                 clip.Visible = true
                 vign.Visible = true
-                wash.Visible = true
-                wash2.Visible = true
+                wash_show(true)
 
                 local edge = 30
                 local gap = 26
@@ -5522,8 +5547,7 @@ function kyri.spotify(opts)
 
             clip.Visible = true
             vign.Visible = cine
-            wash.Visible = cine
-            wash2.Visible = cine
+            wash_show(cine)
             lyrbg.Visible = not cine
 
             local goal_clip
@@ -5795,8 +5819,7 @@ function kyri.spotify(opts)
                     load_art(u, t.id, function(a)
                         if shown_id ~= t.id then return end
                         art.Image = a
-                        wash.Image = a
-                        wash2.Image = a
+                        wash_set(a)
                         wash_fade()
                     end)
                 end
@@ -5831,8 +5854,11 @@ function kyri.spotify(opts)
                 if not hidden and os.clock() - idle > 1.8 and not pop_open then doze() end
 
                 local drift = os.clock()
-                wash.Rotation = math.sin(drift / 11) * 4
-                wash2.Rotation = 180 + math.cos(drift / 14) * 5
+                local spin = math.sin(drift / 11) * 3
+                for i,v in pairs(washes) do
+                    if v ~= wash2 then v.Rotation = spin end
+                end
+                wash2.Rotation = 180 + math.cos(drift / 14) * 4
                 wash2_g.Rotation = -40 + math.cos(drift / 9) * 20
 
                 if not sp.ready or not sp.track then continue end
