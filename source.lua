@@ -1795,6 +1795,7 @@ function kyri.spotify(opts)
     sp.playing = false
     sp.pos, sp.dur, sp.vol = 0, 0, 100
     sp.vol_known = false
+    sp.vol_want, sp.vol_at = nil, 0
     sp.can_volume = true
     local idle_for = 0
     sp.shuffle = false
@@ -2050,8 +2051,12 @@ function kyri.spotify(opts)
             return false
         end
         v = math.clamp(math.floor(v), 0, 100)
+        sp.vol = v
+        sp.vol_known = true
+        sp.vol_want = v
+        sp.vol_at = os.clock()
         local r = api("PUT", "/me/player/volume?volume_percent=" .. v)
-        if good(r) then sp.vol = v end
+        if not good(r) then sp.vol_want = nil end
         return good(r)
     end
 
@@ -2656,7 +2661,11 @@ function kyri.spotify(opts)
         if d.device then
             if d.device.id then sp.device_id = d.device.id end
             if d.device.volume_percent then
-                sp.vol = d.device.volume_percent
+                local rv = d.device.volume_percent
+                if sp.vol_want and (rv == sp.vol_want or os.clock() - sp.vol_at > 2.5) then
+                    sp.vol_want = nil
+                end
+                if not sp.vol_want then sp.vol = rv end
                 sp.vol_known = true
             end
             sp.device_name = d.device.name
@@ -4349,8 +4358,8 @@ function kyri.spotify(opts)
             end)
         end
 
+        local vdrag = false
         do
-            local vdrag = false
             local function to(x)
                 local p = math.clamp((x - vtrack.AbsolutePosition.X) / math.max(vtrack.AbsoluteSize.X, 1), 0, 1)
                 vfill.Size = UDim2.fromScale(p, 1)
@@ -4372,7 +4381,8 @@ function kyri.spotify(opts)
                 if not vdrag then return end
                 if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                     vdrag = false
-                    sp:volume(to(i.Position.X))
+                    local v = to(i.Position.X)
+                    task.spawn(function() sp:volume(v) end)
                 end
             end)
         end
@@ -4433,7 +4443,7 @@ function kyri.spotify(opts)
             end
             t_left.Text = fmt_time(sp.pos)
             t_right.Text = fmt_time(sp.dur)
-            if sp.vol_known then vfill.Size = UDim2.fromScale(sp.vol / 100, 1) end
+            if sp.vol_known and not vdrag then vfill.Size = UDim2.fromScale(sp.vol / 100, 1) end
         end
 
         local function relayout()
@@ -5796,8 +5806,8 @@ function kyri.spotify(opts)
             end)
         end
 
+        local vdrag = false
         do
-            local vdrag = false
             local function to(y)
                 local top = vtrack.AbsolutePosition.Y
                 local h = math.max(vtrack.AbsoluteSize.Y, 1)
@@ -5821,7 +5831,8 @@ function kyri.spotify(opts)
                 if not vdrag then return end
                 if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                     vdrag = false
-                    sp:volume(to(i.Position.Y))
+                    local v = to(i.Position.Y)
+                    task.spawn(function() sp:volume(v) end)
                 end
             end)
         end
@@ -5857,7 +5868,7 @@ function kyri.spotify(opts)
             end
             t_left.Text = fmt_time(sp.pos)
             t_right.Text = fmt_time(sp.dur)
-            if sp.vol_known then
+            if sp.vol_known and not vdrag then
                 vfill.Size = UDim2.fromScale(1, sp.vol / 100)
                 vicon.Image = ico(sp.vol == 0 and "volume-x" or sp.vol < 50 and "volume-1" or "volume-2") or vicon.Image
             end
