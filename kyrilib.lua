@@ -4592,11 +4592,17 @@ function kyri.spotify(opts)
         })
         gui:SetAttribute("kyri", true)
 
+        local shell = make("Frame", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundTransparency = 1,
+            Parent = gui
+        })
+
         local back = make("Frame", {
             Size = UDim2.fromScale(1, 1),
             BackgroundColor3 = Color3.fromRGB(18, 16, 20),
             BackgroundTransparency = 1,
-            Parent = gui
+            Parent = shell
         })
 
         local washes, wash, wash2, wash2_g
@@ -4676,7 +4682,7 @@ function kyri.spotify(opts)
             Size = UDim2.fromScale(1, 1),
             BackgroundTransparency = 1,
             Active = true,
-            Parent = gui
+            Parent = shell
         })
 
         local card = make("Frame", {
@@ -5376,22 +5382,15 @@ function kyri.spotify(opts)
             end
         end
 
-        local function wash_slide(up, anim)
-            local goal = UDim2.fromScale(0, up and 0 or 1)
-            if anim then
-                tw:Create(back, up and RISE or SINK, {Position = goal}):Play()
-            else
-                back.Position = goal
-            end
-        end
-
         local function wash_fade()
             local on = mount ~= nil or mode == "cinema"
             local has = wash.Image ~= ""
-            tw:Create(back, FADE, {BackgroundTransparency = on and 0 or 1}):Play()
+            local info = on and TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+                or TweenInfo.new(0.2)
+            tw:Create(back, info, {BackgroundTransparency = on and 0 or 1}):Play()
             for i,v in pairs(washes) do
                 local base = v == wash2 and 0.62 or 0.82
-                tw:Create(v, FADE, {
+                tw:Create(v, info, {
                     ImageTransparency = (on and has) and base or 1
                 }):Play()
             end
@@ -5476,8 +5475,6 @@ function kyri.spotify(opts)
                 tool.Size = UDim2.fromOffset(276, 48)
                 tool.Position = UDim2.new(0.5, -138, 0, 18)
                 vign.BackgroundTransparency = 0
-                back.Position = UDim2.fromScale(0, 0)
-                stage.Position = UDim2.fromScale(0, 0)
                 wash_fade()
 
                 blank.Size = UDim2.fromOffset(math.min(clip.AbsoluteSize.X - 20, 540), 226)
@@ -5610,7 +5607,6 @@ function kyri.spotify(opts)
             compacti.Image = ico(compact and "maximize-2" or "square") or compacti.Image
 
             wash_fade()
-            wash_slide(cine, anim)
             tw:Create(vign, FADE, {BackgroundTransparency = cine and 0 or 1}):Play()
 
             task.delay(anim and 0.46 or 0.06, rebuild_if_needed)
@@ -5694,10 +5690,8 @@ function kyri.spotify(opts)
                 gui.Enabled = true
                 wake()
                 place(false)
-                stage.Position = UDim2.fromScale(0, 1)
-                back.Position = UDim2.fromScale(0, 1)
-                tw:Create(stage, RISE, {Position = UDim2.fromScale(0, 0)}):Play()
-                tw:Create(back, RISE, {Position = UDim2.fromScale(0, 0)}):Play()
+                shell.Position = UDim2.fromScale(0, 1)
+                tw:Create(shell, RISE, {Position = UDim2.fromScale(0, 0)}):Play()
                 return
             end
             if mode == "cinema" and back_to then
@@ -5982,41 +5976,21 @@ function kyri.spotify(opts)
             gui.Enabled = true
             wake()
             place(false)
-            if mode == "cinema" then
-                stage.Position = UDim2.fromScale(0, 1)
-                back.Position = UDim2.fromScale(0, 1)
-                tw:Create(stage, RISE, {Position = UDim2.fromScale(0, 0)}):Play()
-                tw:Create(back, RISE, {Position = UDim2.fromScale(0, 0)}):Play()
-            else
-                card.Size = UDim2.fromOffset(card.Size.X.Offset * 0.94, card.Size.Y.Offset * 0.94)
-                place(true)
-            end
+            shell.Position = UDim2.fromScale(0, 1)
+            tw:Create(shell, RISE, {Position = UDim2.fromScale(0, 0)}):Play()
             pcall(refresh_track)
             task.spawn(function() sp:sync() end)
         end
 
         function cin:hide()
             pophide()
-            if mode == "cinema" then
-                tw:Create(back, SINK, {Position = UDim2.fromScale(0, 1)}):Play()
-                local t = tw:Create(stage, SINK, {Position = UDim2.fromScale(0, 1)})
-                t.Completed:Connect(function()
-                    if not gui then return end
-                    gui.Enabled = false
-                    stage.Position = UDim2.fromScale(0, 0)
-                end)
-                t:Play()
-                return
-            end
-            tw:Create(back, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-            tw:Create(card, TweenInfo.new(0.2), {
-                Size = UDim2.fromOffset(card.Size.X.Offset * 0.94, card.Size.Y.Offset * 0.94),
-                BackgroundTransparency = 1
-            }):Play()
-            task.delay(0.21, function()
+            local t = tw:Create(shell, SINK, {Position = UDim2.fromScale(0, 1)})
+            t.Completed:Connect(function()
                 if not gui then return end
                 gui.Enabled = false
+                shell.Position = UDim2.fromScale(0, 0)
             end)
+            t:Play()
         end
 
         function cin:toggle()
@@ -6027,6 +6001,7 @@ function kyri.spotify(opts)
             if mount == host then return end
             mount = host
             mode = "nowbar"
+            shell.Position = UDim2.fromScale(0, 0)
             back.Parent = host
             stage.Parent = host
             tool.Parent = stage
@@ -6045,8 +6020,9 @@ function kyri.spotify(opts)
             if not mount then return end
             mount = nil
             if mount_con then mount_con:Disconnect() mount_con = nil end
-            back.Parent = gui
-            stage.Parent = gui
+            shell.Position = UDim2.fromScale(0, 0)
+            back.Parent = shell
+            stage.Parent = shell
             tool.Parent = pad
             place(false)
         end
