@@ -2075,9 +2075,27 @@ function kyri.spotify(opts)
         return report(r, "repeat"), sp.loop
     end
 
-    function sp:like()
+    function sp:liked(id)
+        id = id or (sp.track and sp.track.id)
+        if not id then return nil end
+        local r = api("GET", "/me/tracks/contains?ids=" .. id)
+        if not r or r.StatusCode ~= 200 then return nil end
+        local ok, d = pcall(function() return hs:JSONDecode(r.Body) end)
+        if not ok or type(d) ~= "table" then return nil end
+        return d[1] == true
+    end
+
+    function sp:like(on)
         if not sp.track or not sp.track.id then return false end
-        return report(api("PUT", "/me/tracks?ids=" .. sp.track.id), "like")
+        local id = sp.track.id
+        local r = api(on == false and "DELETE" or "PUT", "/me/tracks?ids=" .. id)
+        if not report(r, "like") then return false end
+        local back = sp:liked(id)
+        if back ~= nil and back ~= (on ~= false) then
+            sp.last_error = "spotify did not save that"
+            return false
+        end
+        return true
     end
 
     function sp:search(q, limit, kind)
@@ -4753,6 +4771,14 @@ function kyri.spotify(opts)
         })
         tip(heart, "save to liked songs")
 
+        local liked = false
+        local function set_heart(on)
+            liked = on == true
+            tw:Create(heart, TweenInfo.new(0.18), {
+                ImageColor3 = liked and Color3.fromRGB(255, 86, 112) or Color3.new(1, 1, 1)
+            }):Play()
+        end
+
         local vtrack = make("Frame", {
             Size = UDim2.fromOffset(7, 180),
             Position = UDim2.new(1, -26, 0.5, -120),
@@ -5371,7 +5397,7 @@ function kyri.spotify(opts)
             local h = clip.AbsoluteSize.Y
             local want = -L.y + h * 0.36
             local floor = math.min(-(reel.Size.Y.Offset - h + 20), 0)
-            want = math.clamp(want, floor, h * 0.36)
+            want = math.clamp(want, floor, 10)
             tw:Create(reel, TweenInfo.new(0.55, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
                 {Position = UDim2.fromOffset(0, want)}):Play()
         end
@@ -5596,7 +5622,7 @@ function kyri.spotify(opts)
                 c_artist.TextSize = compact and 12 or 15
             end
 
-            local hs_ = math.floor(ah * 0.38)
+            local hs_ = math.floor(ah * (ccine and 0.3 or 0.38))
             heart.Size = UDim2.fromOffset(hs_, hs_)
             heart.Position = UDim2.new(0.5, -math.floor(hs_ / 2), 0.5, -math.floor(hs_ * 0.58))
 
@@ -5639,7 +5665,7 @@ function kyri.spotify(opts)
 
             local goal_clip
             if ccine then
-                local top = cy + cw + 56
+                local top = cy + cw + 40
                 goal_clip = {
                     Size = UDim2.fromOffset(colw, math.max(vp.Y - top - 24, 160)),
                     Position = UDim2.fromOffset(colx, top)
@@ -5732,7 +5758,11 @@ function kyri.spotify(opts)
         end)
 
         heart.MouseButton1Click:Connect(function()
-            sp:like()
+            local want = not liked
+            set_heart(want)
+            task.spawn(function()
+                if not sp:like(want) then set_heart(not want) end
+            end)
             local s = heart.Size.X.Offset
             tw:Create(heart, TweenInfo.new(0.1), {Size = UDim2.fromOffset(s + 18, s + 18)}):Play()
             task.delay(0.12, function()
@@ -5916,6 +5946,11 @@ function kyri.spotify(opts)
 
             if t.id ~= shown_id then
                 shown_id = t.id
+                set_heart(false)
+                task.spawn(function()
+                    local on = sp:liked(t.id)
+                    if on ~= nil and shown_id == t.id then set_heart(on) end
+                end)
                 local u = t.album and t.album.images and t.album.images[1] and t.album.images[1].url
                 if u then
                     load_art(u, t.id, function(a)
