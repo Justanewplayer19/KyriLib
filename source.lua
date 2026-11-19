@@ -4690,6 +4690,7 @@ function kyri.spotify(opts)
             BackgroundColor3 = Color3.fromRGB(16, 15, 18),
             BackgroundTransparency = 1,
             Active = true,
+            ZIndex = 3,
             Parent = stage
         })
         local card_c = make("UICorner", {CornerRadius = UDim.new(0, 14), Parent = card})
@@ -5271,7 +5272,7 @@ function kyri.spotify(opts)
         local function tsize()
             if mount then return 32 end
             if mode ~= "cinema" then return 26 end
-            return compact and 30 or 40
+            return compact and 36 or 40
         end
 
         local function build()
@@ -5492,6 +5493,7 @@ function kyri.spotify(opts)
             local edge = (compact or tight) and 26 or 64
             local gap = 14
 
+            local ccine = cine and compact
             local cw = compact and 250 or (cine and 360 or 430)
             local room_w = vp.X - edge * 2
             if cw > room_w then cw = math.max(room_w, 150) end
@@ -5499,8 +5501,17 @@ function kyri.spotify(opts)
             local inset = cine and 0 or 12
             local ch = ah + (cine and 108 or 120)
 
+            if ccine then
+                cw = math.floor(math.min(vp.Y * 0.46, vp.X * 0.32))
+                if cw > room_w then cw = room_w end
+                if cw < 190 then cw = 190 end
+                ah = cw
+                ch = cw
+                inset = 0
+            end
+
             local stack = not cine and (vp.X - cw - edge * 2 - gap) < 240
-            card.Visible = not (cine and tight)
+            card.Visible = not (cine and tight and not compact)
 
             local lwn = compact and 280 or 420
             if not cine then
@@ -5517,6 +5528,7 @@ function kyri.spotify(opts)
 
             if cine then
                 cx = side == "left" and edge or (vp.X - cw - edge)
+                if ccine then cy = math.max(math.floor(vp.Y * 0.06), 18) end
             elseif stack then
                 local room_h = vp.Y - edge * 2 - gap
                 if ch > room_h * 0.56 then
@@ -5549,11 +5561,33 @@ function kyri.spotify(opts)
             pad.Position = UDim2.fromOffset(inset, inset)
 
             art.Size = UDim2.new(1, 0, 0, ah)
-            srow.Position = UDim2.fromOffset(0, ah + 14)
-            c_title.Position = UDim2.fromOffset(12, ah + 42)
-            c_artist.Position = UDim2.fromOffset(12, ah + 76)
-            c_title.TextSize = compact and 19 or (cine and 23 or 25)
-            c_artist.TextSize = compact and 12 or 15
+            if ccine then
+                srow.Size = UDim2.new(1, -28, 0, 20)
+                srow.Position = UDim2.fromOffset(14, ah - 30)
+                local lw_ = side == "left" and (vp.X - cx - cw - 56 - edge) or (cx - 56 - edge)
+                if lw_ < 140 then lw_ = 140 end
+                local tx = side == "left" and (cw + 56) or -(lw_ + 56)
+                local al = side == "left" and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right
+                c_title.Size = UDim2.fromOffset(lw_, 44)
+                c_artist.Size = UDim2.fromOffset(lw_, 26)
+                c_title.Position = UDim2.fromOffset(tx, ch - 118)
+                c_artist.Position = UDim2.fromOffset(tx, ch - 70)
+                c_title.TextXAlignment = al
+                c_artist.TextXAlignment = al
+                c_title.TextSize = vp.X < 980 and 27 or 34
+                c_artist.TextSize = vp.X < 980 and 16 or 19
+            else
+                srow.Size = UDim2.new(1, 0, 0, 20)
+                srow.Position = UDim2.fromOffset(0, ah + 14)
+                c_title.Size = UDim2.new(1, -24, 0, 34)
+                c_artist.Size = UDim2.new(1, -24, 0, 22)
+                c_title.Position = UDim2.fromOffset(12, ah + 42)
+                c_artist.Position = UDim2.fromOffset(12, ah + 76)
+                c_title.TextXAlignment = Enum.TextXAlignment.Center
+                c_artist.TextXAlignment = Enum.TextXAlignment.Center
+                c_title.TextSize = compact and 19 or (cine and 23 or 25)
+                c_artist.TextSize = compact and 12 or 15
+            end
 
             local hs_ = math.floor(ah * 0.38)
             heart.Size = UDim2.fromOffset(hs_, hs_)
@@ -5562,13 +5596,18 @@ function kyri.spotify(opts)
             vtrack.Size = UDim2.fromOffset(7, math.floor(ah * 0.4))
             vtrack.Position = UDim2.new(1, -24, 0.5, -math.floor(ah * 0.27))
 
-            trow.Position = UDim2.new(0, 0, 1, compact and -42 or -56)
-            trow_l.Padding = UDim.new(0, compact and 14 or 22)
-            playb.Size = UDim2.fromOffset(compact and 28 or 36, compact and 28 or 36)
-            prevb.Size = UDim2.fromOffset(compact and 21 or 26, compact and 21 or 26)
-            nextb.Size = UDim2.fromOffset(compact and 21 or 26, compact and 21 or 26)
-            shufb.Size = UDim2.fromOffset(compact and 18 or 22, compact and 18 or 22)
-            loopb.Size = UDim2.fromOffset(compact and 18 or 22, compact and 18 or 22)
+            trow.Position = UDim2.new(0, 0, 1, ccine and -86 or (compact and -42 or -56))
+            local tsc = ccine and 0.95 or (compact and 0.78 or 1)
+            local function bsz(n)
+                local v = math.floor(n * tsc)
+                return UDim2.fromOffset(v, v)
+            end
+            trow_l.Padding = UDim.new(0, math.floor(22 * tsc))
+            playb.Size = bsz(36)
+            prevb.Size = bsz(26)
+            nextb.Size = bsz(26)
+            shufb.Size = bsz(22)
+            loopb.Size = bsz(22)
 
             local tw_ = compact and 240 or 276
             tool.Size = UDim2.fromOffset(tw_, compact and 42 or 48)
@@ -5580,8 +5619,13 @@ function kyri.spotify(opts)
             lyrbg.Visible = not cine
 
             local goal_clip
-            if cine then
-                local lpad = compact and 54 or 78
+            if ccine then
+                goal_clip = {
+                    Size = UDim2.fromOffset(vp.X - edge * 2, vp.Y - edge),
+                    Position = UDim2.fromOffset(edge, math.floor(edge / 2))
+                }
+            elseif cine then
+                local lpad = 78
                 local clx = side == "left" and (cx + cw + lpad) or edge
                 local lw = vp.X - cw - edge * 2 - lpad
                 if lw < 260 then lw = 260 end
