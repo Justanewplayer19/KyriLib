@@ -5408,6 +5408,8 @@ function kyri.spotify(opts)
 
         local NOW = TweenInfo.new(0)
 
+        local idle, hidden = os.clock(), false
+
         local function place(anim)
             local step = anim and EASE or NOW
             if mount then
@@ -5501,10 +5503,16 @@ function kyri.spotify(opts)
             local inset = cine and 0 or 12
             local ch = ah + (cine and 108 or 120)
 
+            local lean = ccine and hidden
             if ccine then
-                cw = math.floor(math.min(vp.Y * 0.46, vp.X * 0.32))
+                if lean then
+                    cw = math.floor(math.min(vp.Y * 0.16, vp.X * 0.13))
+                    if cw < 96 then cw = 96 end
+                else
+                    cw = math.floor(math.min(vp.Y * 0.46, vp.X * 0.32))
+                    if cw < 190 then cw = 190 end
+                end
                 if cw > room_w then cw = room_w end
-                if cw < 190 then cw = 190 end
                 ah = cw
                 ch = cw
                 inset = 0
@@ -5564,18 +5572,22 @@ function kyri.spotify(opts)
             if ccine then
                 srow.Size = UDim2.new(1, -28, 0, 20)
                 srow.Position = UDim2.fromOffset(14, ah - 30)
-                local lw_ = side == "left" and (vp.X - cx - cw - 56 - edge) or (cx - 56 - edge)
+                local pull = lean and 34 or 56
+                local lw_ = side == "left" and (vp.X - cx - cw - pull - edge) or (cx - pull - edge)
                 if lw_ < 140 then lw_ = 140 end
-                local tx = side == "left" and (cw + 56) or -(lw_ + 56)
+                local tx = side == "left" and (cw + pull) or -(lw_ + pull)
                 local al = side == "left" and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right
+                local ts = vp.X < 980 and 25 or 31
+                local as = vp.X < 980 and 15 or 18
+                local ty = lean and math.floor(ch / 2 - 38) or (ch - 118)
                 c_title.Size = UDim2.fromOffset(lw_, 44)
                 c_artist.Size = UDim2.fromOffset(lw_, 26)
-                c_title.Position = UDim2.fromOffset(tx, ch - 118)
-                c_artist.Position = UDim2.fromOffset(tx, ch - 70)
+                c_title.Position = UDim2.fromOffset(tx, ty)
+                c_artist.Position = UDim2.fromOffset(tx, ty + 48)
                 c_title.TextXAlignment = al
                 c_artist.TextXAlignment = al
-                c_title.TextSize = vp.X < 980 and 27 or 34
-                c_artist.TextSize = vp.X < 980 and 16 or 19
+                c_title.TextSize = ts
+                c_artist.TextSize = as
             else
                 srow.Size = UDim2.new(1, 0, 0, 20)
                 srow.Position = UDim2.fromOffset(0, ah + 14)
@@ -5656,8 +5668,6 @@ function kyri.spotify(opts)
             task.delay(anim and 0.46 or 0.06, rebuild_if_needed)
         end
 
-        local idle, hidden = os.clock(), false
-
         local function wake()
             idle = os.clock()
             if not hidden then return end
@@ -5675,6 +5685,11 @@ function kyri.spotify(opts)
             tw:Create(vfill, FADE, {BackgroundTransparency = 0}):Play()
             tw:Create(vicon, FADE, {ImageTransparency = 0}):Play()
             tw:Create(veil, FADE, {BackgroundTransparency = 0}):Play()
+            tw:Create(t_left, FADE, {TextTransparency = 0.3}):Play()
+            tw:Create(t_right, FADE, {TextTransparency = 0.3}):Play()
+            tw:Create(strack, FADE, {BackgroundTransparency = 0.7}):Play()
+            tw:Create(sfill, FADE, {BackgroundTransparency = 0}):Play()
+            if mode == "cinema" and compact then place(true) end
         end
 
         local function doze()
@@ -5695,6 +5710,11 @@ function kyri.spotify(opts)
             tw:Create(vfill, slow, {BackgroundTransparency = 1}):Play()
             tw:Create(vicon, slow, {ImageTransparency = 1}):Play()
             tw:Create(veil, slow, {BackgroundTransparency = 1}):Play()
+            tw:Create(t_left, slow, {TextTransparency = 1}):Play()
+            tw:Create(t_right, slow, {TextTransparency = 1}):Play()
+            tw:Create(strack, slow, {BackgroundTransparency = 1}):Play()
+            tw:Create(sfill, slow, {BackgroundTransparency = 1}):Play()
+            if mode == "cinema" and compact then place(true) end
         end
 
         kyri.svc.inp.InputChanged:Connect(function(i)
