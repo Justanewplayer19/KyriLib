@@ -6446,8 +6446,6 @@ function kyri.spotify(opts)
                 if a and ob.img then
                     ob.img.Image = a
                     ob.img.ImageColor3 = Color3.new(1, 1, 1)
-                    ob.img.Size = UDim2.fromOffset(18, 18)
-                    ob.img.Position = UDim2.new(0.5, -9, 0.5, -9)
                 end
             end)
         end
