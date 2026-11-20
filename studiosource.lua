@@ -388,7 +388,72 @@ end
 
 local CONFIG_FOLDER = "KyriLib"
 
+function kyri.toast(msg)
+    local lp = kyri.svc.plr.LocalPlayer
+    local t = kyri.theme
+    local gui = make("ScreenGui", {
+        Name = rnd(),
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false,
+        IgnoreGuiInset = true,
+        DisplayOrder = 999999999,
+        Parent = gethui and gethui() or lp:FindFirstChildOfClass("PlayerGui")
+    })
+    gui:SetAttribute("kyri", true)
+
+    local pill = make("Frame", {
+        AutomaticSize = Enum.AutomaticSize.X,
+        Size = UDim2.fromOffset(0, 34),
+        Position = UDim2.new(0.5, 0, 0, 26),
+        AnchorPoint = Vector2.new(0.5, 0),
+        BackgroundColor3 = t.container,
+        BackgroundTransparency = 1,
+        Parent = gui
+    })
+    make("UICorner", {CornerRadius = UDim.new(0, 17), Parent = pill})
+    local st = make("UIStroke", {Color = t.border, Thickness = 1, Transparency = 1, Parent = pill})
+    make("UIPadding", {
+        PaddingLeft = UDim.new(0, 16),
+        PaddingRight = UDim.new(0, 16),
+        Parent = pill
+    })
+    local lb = make("TextLabel", {
+        AutomaticSize = Enum.AutomaticSize.X,
+        Size = UDim2.fromOffset(0, 34),
+        BackgroundTransparency = 1,
+        Text = msg or "",
+        TextColor3 = t.text,
+        TextTransparency = 1,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 13,
+        Parent = pill
+    })
+
+    local tw = kyri.svc.tw
+    local inf = TweenInfo.new(0.16)
+    tw:Create(pill, inf, {BackgroundTransparency = 0.05}):Play()
+    tw:Create(st, inf, {Transparency = 0.3}):Play()
+    tw:Create(lb, inf, {TextTransparency = 0}):Play()
+
+    task.delay(2.2, function()
+        if not gui.Parent then return end
+        local out = TweenInfo.new(0.24)
+        tw:Create(pill, out, {BackgroundTransparency = 1}):Play()
+        tw:Create(st, out, {Transparency = 1}):Play()
+        tw:Create(lb, out, {TextTransparency = 1}):Play()
+        task.delay(0.3, function() pcall(function() gui:Destroy() end) end)
+    end)
+end
+
 function kyri.copybox(text, title)
+    if setclipboard then
+        local ok = pcall(setclipboard, tostring(text or ""))
+        if ok then
+            pcall(kyri.toast, (title and (title .. " copied") or "copied to clipboard"))
+            return
+        end
+    end
+
     local lp = kyri.svc.plr.LocalPlayer
     local gui = make("ScreenGui", {
         Name = rnd(),

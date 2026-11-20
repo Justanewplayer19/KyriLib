@@ -148,7 +148,72 @@ end
 
 local CONFIG_FOLDER = "KyriLib"
 
+function kyri.toast(msg)
+    local lp = kyri.svc.plr.LocalPlayer
+    local t = kyri.theme
+    local gui = make("ScreenGui", {
+        Name = rnd(),
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false,
+        IgnoreGuiInset = true,
+        DisplayOrder = 999999999,
+        Parent = gethui and gethui() or lp:FindFirstChildOfClass("PlayerGui")
+    })
+    gui:SetAttribute("kyri", true)
+
+    local pill = make("Frame", {
+        AutomaticSize = Enum.AutomaticSize.X,
+        Size = UDim2.fromOffset(0, 34),
+        Position = UDim2.new(0.5, 0, 0, 26),
+        AnchorPoint = Vector2.new(0.5, 0),
+        BackgroundColor3 = t.container,
+        BackgroundTransparency = 1,
+        Parent = gui
+    })
+    make("UICorner", {CornerRadius = UDim.new(0, 17), Parent = pill})
+    local st = make("UIStroke", {Color = t.border, Thickness = 1, Transparency = 1, Parent = pill})
+    make("UIPadding", {
+        PaddingLeft = UDim.new(0, 16),
+        PaddingRight = UDim.new(0, 16),
+        Parent = pill
+    })
+    local lb = make("TextLabel", {
+        AutomaticSize = Enum.AutomaticSize.X,
+        Size = UDim2.fromOffset(0, 34),
+        BackgroundTransparency = 1,
+        Text = msg or "",
+        TextColor3 = t.text,
+        TextTransparency = 1,
+        Font = Enum.Font.GothamMedium,
+        TextSize = 13,
+        Parent = pill
+    })
+
+    local tw = kyri.svc.tw
+    local inf = TweenInfo.new(0.16)
+    tw:Create(pill, inf, {BackgroundTransparency = 0.05}):Play()
+    tw:Create(st, inf, {Transparency = 0.3}):Play()
+    tw:Create(lb, inf, {TextTransparency = 0}):Play()
+
+    task.delay(2.2, function()
+        if not gui.Parent then return end
+        local out = TweenInfo.new(0.24)
+        tw:Create(pill, out, {BackgroundTransparency = 1}):Play()
+        tw:Create(st, out, {Transparency = 1}):Play()
+        tw:Create(lb, out, {TextTransparency = 1}):Play()
+        task.delay(0.3, function() pcall(function() gui:Destroy() end) end)
+    end)
+end
+
 function kyri.copybox(text, title)
+    if setclipboard then
+        local ok = pcall(setclipboard, tostring(text or ""))
+        if ok then
+            pcall(kyri.toast, (title and (title .. " copied") or "copied to clipboard"))
+            return
+        end
+    end
+
     local lp = kyri.svc.plr.LocalPlayer
     local gui = make("ScreenGui", {
         Name = rnd(),
@@ -6419,6 +6484,25 @@ function kyri.spotify(opts)
             results:set(rows)
         end
 
+        local function show_albums(items)
+            local rows = {}
+            for i,al in pairs(items) do
+                local cover
+                if al.images and #al.images > 0 then cover = al.images[#al.images].url end
+                local who = {}
+                for j,a in pairs(al.artists or {}) do who[#who + 1] = a.name end
+                rows[#rows + 1] = {
+                    text = al.name .. (#who > 0 and ("  -  " .. table.concat(who, ", ")) or ""),
+                    icon = cover,
+                    cb = function()
+                        if sp:playcontext(al.uri) then isl:notify(al.name, 2.5) end
+                        results:clear()
+                    end
+                }
+            end
+            results:set(rows)
+        end
+
         local function show_devices()
             local rows = {}
             for i,d in pairs(sp:devices()) do
@@ -6453,11 +6537,6 @@ function kyri.spotify(opts)
                 return
             end
 
-            if kind == "device" then
-                show_devices()
-                return
-            end
-
             if q == "" then
                 if kind == "playlist" then
                     show_lists(sp:playlists(opts.island_results or 5))
@@ -6473,8 +6552,19 @@ function kyri.spotify(opts)
                 results:clear()
                 return
             end
-            if kind == "playlist" then show_lists(items) else show_tracks(items) end
-        end, {{"track", "songs"}, {"playlist", "lists"}, {"device", "on"}})
+            if kind == "playlist" then
+                show_lists(items)
+            elseif kind == "album" then
+                show_albums(items)
+            else
+                show_tracks(items)
+            end
+        end, {{"track", "songs"}, {"playlist", "lists"}, {"album", "albums"}})
+
+        isl:button("monitor", function()
+            finder:show(false)
+            show_devices()
+        end, "devices")
 
         isl:button("search", function()
             local on = not finder:visible()
