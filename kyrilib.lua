@@ -4761,7 +4761,8 @@ function kyri.spotify(opts)
 
         local heart = make("ImageButton", {
             Size = UDim2.fromOffset(170, 170),
-            Position = UDim2.new(0.5, -85, 0.5, -95),
+            Position = UDim2.new(0.5, 0, 0.5, -10),
+            AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundTransparency = 1,
             Image = ico("heart") or "",
             ImageColor3 = Color3.new(1, 1, 1),
@@ -4943,10 +4944,15 @@ function kyri.spotify(opts)
             Padding = UDim.new(0, 6),
             Parent = tool
         })
+        make("UIPadding", {
+            PaddingLeft = UDim.new(0, 9),
+            PaddingRight = UDim.new(0, 9),
+            Parent = tool
+        })
 
         local function toolbtn(icon, label, ord)
             local b = make("ImageButton", {
-                Size = UDim2.fromOffset(36, 36),
+                Size = UDim2.fromOffset(34, 34),
                 BackgroundColor3 = Color3.new(1, 1, 1),
                 BackgroundTransparency = 1,
                 Image = "",
@@ -4958,7 +4964,8 @@ function kyri.spotify(opts)
             make("UICorner", {CornerRadius = UDim.new(1, 0), Parent = b})
             local im = make("ImageLabel", {
                 Size = UDim2.fromOffset(17, 17),
-                Position = UDim2.new(0.5, -8, 0.5, -8),
+                Position = UDim2.fromScale(0.5, 0.5),
+                AnchorPoint = Vector2.new(0.5, 0.5),
                 BackgroundTransparency = 1,
                 Image = ico(icon) or "",
                 ImageColor3 = Color3.new(1, 1, 1),
@@ -5488,7 +5495,7 @@ function kyri.spotify(opts)
 
                 local hs_ = math.floor(ah * 0.38)
                 heart.Size = UDim2.fromOffset(hs_, hs_)
-                heart.Position = UDim2.new(0.5, -math.floor(hs_ / 2), 0.5, -math.floor(hs_ * 0.58))
+                heart.Position = UDim2.new(0.5, 0, 0.5, -math.floor(hs_ * 0.08))
 
                 vtrack.Size = UDim2.fromOffset(7, math.floor(ah * 0.4))
                 vtrack.Position = UDim2.new(1, -24, 0.5, -math.floor(ah * 0.27))
@@ -5624,7 +5631,7 @@ function kyri.spotify(opts)
 
             local hs_ = math.floor(ah * (ccine and 0.3 or 0.38))
             heart.Size = UDim2.fromOffset(hs_, hs_)
-            heart.Position = UDim2.new(0.5, -math.floor(hs_ / 2), 0.5, -math.floor(hs_ * 0.58))
+            heart.Position = UDim2.new(0.5, 0, 0.5, -math.floor(hs_ * 0.08))
 
             vtrack.Size = UDim2.fromOffset(7, math.floor(ah * 0.4))
             vtrack.Position = UDim2.new(1, -24, 0.5, -math.floor(ah * 0.27))
@@ -5650,8 +5657,8 @@ function kyri.spotify(opts)
             shufb.Size = bsz(22)
             loopb.Size = bsz(22)
 
-            local tw_ = compact and 240 or 276
-            tool.Size = UDim2.fromOffset(tw_, compact and 42 or 48)
+            local tw_ = 268
+            tool.Size = UDim2.fromOffset(tw_, compact and 42 or 46)
             if ccine then
                 tool.Position = UDim2.fromOffset(colw - tw_, math.floor(cw / 2 - 21))
             else
