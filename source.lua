@@ -6458,9 +6458,40 @@ function kyri.spotify(opts)
         end, "loop")
         lb:tint(kyri.theme.subtext)
 
-        isl:button("heart", function()
-            if sp:like() then isl:notify("added to liked", 1.5) end
+        local hb, isl_liked, isl_id = nil, false, nil
+
+        local function isl_heart(on)
+            isl_liked = on == true
+            if hb then
+                hb:tint(isl_liked and Color3.fromRGB(255, 86, 112) or kyri.theme.text)
+            end
+        end
+
+        hb = isl:button("heart", function()
+            if not sp.track or not sp.track.id then return end
+            local want = not isl_liked
+            isl_heart(want)
+            task.spawn(function()
+                if sp:like(want) then
+                    isl:notify(want and "added to liked" or "removed from liked", 1.5)
+                else
+                    isl_heart(not want)
+                end
+            end)
         end, "like")
+        isl_heart(false)
+
+        hooks[#hooks + 1] = function()
+            local id = sp.track and sp.track.id
+            if id == isl_id then return end
+            isl_id = id
+            isl_heart(false)
+            if not id then return end
+            task.spawn(function()
+                local on = sp:liked(id)
+                if on ~= nil and isl_id == id then isl_heart(on) end
+            end)
+        end
 
         local results = isl:list(opts.island_results or 5)
         local finder
@@ -6527,6 +6558,8 @@ function kyri.spotify(opts)
             results:set(rows)
         end
 
+        local dev_on = false
+
         local function show_devices()
             local rows = {}
             for i,d in pairs(sp:devices()) do
@@ -6535,6 +6568,7 @@ function kyri.spotify(opts)
                     icon = d.is_active and "volume-2" or "monitor",
                     cb = function()
                         if sp:transfer(d.id) then isl:notify("moved to " .. d.name, 2.5) end
+                        dev_on = false
                         results:clear()
                     end
                 }
@@ -6586,11 +6620,17 @@ function kyri.spotify(opts)
         end, {{"track", "songs"}, {"playlist", "lists"}, {"album", "albums"}})
 
         isl:button("monitor", function()
+            dev_on = not dev_on
+            if not dev_on then
+                results:clear()
+                return
+            end
             finder:show(false)
             show_devices()
         end, "devices")
 
         isl:button("search", function()
+            dev_on = false
             local on = not finder:visible()
             finder:show(on)
             if not on then results:clear() end
