@@ -4187,6 +4187,7 @@ function kyri.spotify(opts)
             if not lyr_on then return end
             lyr_on = false
             lyr_host.Visible = false
+            rlyr.Visible = true
             mid_scroll.Visible = true
             lyrb.ImageTransparency = 0.25
             pcall(function() sp:cinema(dopts.cinema_options):detach() end)
@@ -4196,6 +4197,7 @@ function kyri.spotify(opts)
             if lyr_on then return lyr_off() end
             lyr_on = true
             mid_scroll.Visible = false
+            rlyr.Visible = false
             lyr_host.Visible = true
             lyrb.ImageTransparency = 0
             local cv = sp:cinema(dopts.cinema_options)
@@ -4773,6 +4775,7 @@ function kyri.spotify(opts)
         tip(heart, "save to liked songs")
 
         local liked = false
+        local hbase = 170
         local function set_heart(on)
             liked = on == true
             tw:Create(heart, TweenInfo.new(0.18), {
@@ -5456,10 +5459,10 @@ function kyri.spotify(opts)
 
                 local edge = 30
                 local gap = 26
-                local ch = math.min(ms.Y - 96, 520)
+                local ch = math.min(ms.Y - 96, compact and 372 or 520)
                 local ah = ch - 110
                 local cw = ah
-                local capw = math.floor(ms.X * 0.42)
+                local capw = math.floor(ms.X * (compact and 0.3 or 0.42))
                 if cw > capw then
                     cw = capw
                     ah = cw
@@ -5487,29 +5490,37 @@ function kyri.spotify(opts)
                 pad.Size = UDim2.new(1, 0, 1, 0)
                 pad.Position = UDim2.fromOffset(0, 0)
                 art.Size = UDim2.new(1, 0, 0, ah)
+                srow.Size = UDim2.new(1, 0, 0, 20)
                 srow.Position = UDim2.fromOffset(0, ah + 12)
+                c_title.Size = UDim2.new(1, -24, 0, 34)
+                c_artist.Size = UDim2.new(1, -24, 0, 22)
                 c_title.Position = UDim2.fromOffset(12, ah + 38)
                 c_artist.Position = UDim2.fromOffset(12, ah + 70)
-                c_title.TextSize = 23
-                c_artist.TextSize = 14
+                c_title.TextXAlignment = Enum.TextXAlignment.Center
+                c_artist.TextXAlignment = Enum.TextXAlignment.Center
+                c_title.TextSize = compact and 19 or 23
+                c_artist.TextSize = compact and 12 or 14
 
                 local hs_ = math.floor(ah * 0.38)
+                hbase = hs_
                 heart.Size = UDim2.fromOffset(hs_, hs_)
                 heart.Position = UDim2.new(0.5, 0, 0.5, -math.floor(hs_ * 0.08))
 
                 vtrack.Size = UDim2.fromOffset(7, math.floor(ah * 0.4))
                 vtrack.Position = UDim2.new(1, -24, 0.5, -math.floor(ah * 0.27))
 
+                trow.Size = UDim2.new(1, 0, 0, 44)
                 trow.Position = UDim2.new(0, 0, 0, ah - 54)
-                trow_l.Padding = UDim.new(0, 20)
-                playb.Size = UDim2.fromOffset(34, 34)
-                prevb.Size = UDim2.fromOffset(25, 25)
-                nextb.Size = UDim2.fromOffset(25, 25)
-                shufb.Size = UDim2.fromOffset(21, 21)
-                loopb.Size = UDim2.fromOffset(21, 21)
+                trow_l.HorizontalAlignment = Enum.HorizontalAlignment.Center
+                trow_l.Padding = UDim.new(0, compact and 15 or 20)
+                playb.Size = UDim2.fromOffset(compact and 28 or 34, compact and 28 or 34)
+                prevb.Size = UDim2.fromOffset(compact and 21 or 25, compact and 21 or 25)
+                nextb.Size = UDim2.fromOffset(compact and 21 or 25, compact and 21 or 25)
+                shufb.Size = UDim2.fromOffset(compact and 18 or 21, compact and 18 or 21)
+                loopb.Size = UDim2.fromOffset(compact and 18 or 21, compact and 18 or 21)
 
-                tool.Size = UDim2.fromOffset(276, 48)
-                tool.Position = UDim2.new(0.5, -138, 0, 18)
+                tool.Size = UDim2.fromOffset(268, 46)
+                tool.Position = UDim2.new(0.5, -134, 0, 18)
                 vign.BackgroundTransparency = 0
                 wash_fade()
 
@@ -5630,6 +5641,7 @@ function kyri.spotify(opts)
             end
 
             local hs_ = math.floor(ah * (ccine and 0.3 or 0.38))
+            hbase = hs_
             heart.Size = UDim2.fromOffset(hs_, hs_)
             heart.Position = UDim2.new(0.5, 0, 0.5, -math.floor(hs_ * 0.08))
 
@@ -5770,7 +5782,7 @@ function kyri.spotify(opts)
             task.spawn(function()
                 if not sp:like(want) then set_heart(not want) end
             end)
-            local s = heart.Size.X.Offset
+            local s = hbase
             tw:Create(heart, TweenInfo.new(0.1), {Size = UDim2.fromOffset(s + 18, s + 18)}):Play()
             task.delay(0.12, function()
                 tw:Create(heart, TweenInfo.new(0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
