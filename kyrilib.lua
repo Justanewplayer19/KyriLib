@@ -2049,7 +2049,10 @@ function kyri.spotify(opts)
         last_seek = now
         seeking = true
         local r = api("PUT", "/me/player/seek?position_ms=" .. math.floor(math.clamp(pct, 0, 1) * sp.dur * 1000))
-        if good(r) then sp.pos = math.floor(pct * sp.dur) end
+        if good(r) then
+            sp.pos = math.floor(pct * sp.dur)
+            sp.at_pos, sp.at_clock = sp.pos, os.clock()
+        end
         task.delay(0.6, function() seeking = false end)
         return good(r)
     end
@@ -5358,9 +5361,34 @@ function kyri.spotify(opts)
                     local f = make("Frame", {
                         Size = UDim2.new(1, 0, 0, lh),
                         Position = UDim2.fromOffset(0, y),
+                        BackgroundColor3 = Color3.new(1, 1, 1),
                         BackgroundTransparency = 1,
                         Parent = reel
                     })
+
+                    if ln.t then
+                        make("UICorner", {CornerRadius = UDim.new(0, 10), Parent = f})
+                        local hit = make("TextButton", {
+                            Size = UDim2.new(1, 24, 1, 6),
+                            Position = UDim2.fromOffset(-12, -3),
+                            BackgroundTransparency = 1,
+                            Text = "",
+                            AutoButtonColor = false,
+                            Parent = f
+                        })
+                        hit:GetPropertyChangedSignal("GuiState"):Connect(function()
+                            local on = hit.GuiState ~= Enum.GuiState.Idle
+                            tw:Create(f, TweenInfo.new(0.14), {
+                                BackgroundTransparency = on and 0.93 or 1
+                            }):Play()
+                        end)
+                        hit.MouseButton1Click:Connect(function()
+                            if sp.dur <= 0 then return end
+                            local at = math.max(ln.t + (sp.lyric_offset or 0), 0)
+                            sp.at_pos, sp.at_clock = at, os.clock()
+                            task.spawn(function() sp:seek(at / sp.dur) end)
+                        end)
+                    end
 
                     local x, rows = 0, 1
                     local parts = {}
