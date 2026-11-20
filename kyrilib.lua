@@ -5828,10 +5828,13 @@ function kyri.spotify(opts)
                 if not gv.MenuIsOpen then return end
                 if os.clock() - esc_at > 0.9 then return end
                 esc_at = 0
-                pcall(function()
-                    local vim = gs(game:GetService("VirtualInputManager"))
-                    vim:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
-                    vim:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+                task.delay(0.1, function()
+                    pcall(function()
+                        local vim = gs(game:GetService("VirtualInputManager"))
+                        vim:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+                        task.wait(0.03)
+                        vim:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+                    end)
                 end)
             end)
         end)
