@@ -4987,13 +4987,14 @@ function kyri.spotify(opts)
                 Parent = b
             })
             tip(b, label)
-            b.MouseEnter:Connect(function()
-                hov = b
-                tw:Create(b, TweenInfo.new(0.12), {BackgroundTransparency = 0.82}):Play()
-            end)
-            b.MouseLeave:Connect(function()
-                if hov == b then hov = nil end
-                tw:Create(b, TweenInfo.new(0.12), {BackgroundTransparency = 1}):Play()
+            b:GetPropertyChangedSignal("GuiState"):Connect(function()
+                local on = b.GuiState == Enum.GuiState.Hover or b.GuiState == Enum.GuiState.Press
+                if on then
+                    hov = b
+                elseif hov == b then
+                    hov = nil
+                end
+                tw:Create(b, TweenInfo.new(0.12), {BackgroundTransparency = on and 0.82 or 1}):Play()
             end)
             return b, im
         end
@@ -5459,6 +5460,19 @@ function kyri.spotify(opts)
 
         local idle, hidden = os.clock(), false
 
+        local function settle()
+            for i,v in pairs(tool:GetChildren()) do
+                if v:IsA("ImageButton") then
+                    local on = v.GuiState == Enum.GuiState.Hover or v.GuiState == Enum.GuiState.Press
+                    if on then hov = v elseif hov == v then hov = nil end
+                    local want = (on and not hidden) and 0.82 or 1
+                    if math.abs(v.BackgroundTransparency - want) > 0.01 then
+                        tw:Create(v, TweenInfo.new(0.14), {BackgroundTransparency = want}):Play()
+                    end
+                end
+            end
+        end
+
         local function place(anim)
             local step = anim and EASE or NOW
             if mount then
@@ -5538,9 +5552,13 @@ function kyri.spotify(opts)
                 wash_fade()
 
                 blank.Size = UDim2.fromOffset(math.min(goal_clip.Size.X.Offset - 20, 540), 226)
+                settle()
                 cinei.Image = ico("maximize") or cinei.Image
                 compacti.Image = ico(compact and "maximize-2" or "square") or compacti.Image
-                task.delay(anim and 0.46 or 0.06, rebuild_if_needed)
+                task.delay(anim and 0.46 or 0.06, function()
+                    settle()
+                    rebuild_if_needed()
+                end)
                 return
             end
 
@@ -5725,13 +5743,17 @@ function kyri.spotify(opts)
             tgo(clip, step, goal_clip)
 
             blank.Size = UDim2.fromOffset(math.min(goal_clip.Size.X.Offset - 20, 540), 226)
+            settle()
             cinei.Image = ico(cine and "minimize" or "maximize") or cinei.Image
             compacti.Image = ico(compact and "maximize-2" or "square") or compacti.Image
 
             wash_fade()
             tw:Create(vign, FADE, {BackgroundTransparency = cine and 0 or 1}):Play()
 
-            task.delay(anim and 0.46 or 0.06, rebuild_if_needed)
+            task.delay(anim and 0.46 or 0.06, function()
+                settle()
+                rebuild_if_needed()
+            end)
         end
 
         local function wake()
