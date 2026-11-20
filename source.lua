@@ -5812,8 +5812,28 @@ function kyri.spotify(opts)
             if not gui.Enabled and not mount then return end
             if i.UserInputType == Enum.UserInputType.MouseMovement then wake() end
         end)
-        kyri.svc.inp.InputBegan:Connect(function()
+        local esc_at = 0
+
+        kyri.svc.inp.InputBegan:Connect(function(i)
             if gui.Enabled or mount then wake() end
+            if i.KeyCode ~= Enum.KeyCode.Escape then return end
+            if mount or not gui.Enabled then return end
+            esc_at = os.clock()
+            cin:hide()
+        end)
+
+        pcall(function()
+            local gv = kyri.svc.gui
+            gv:GetPropertyChangedSignal("MenuIsOpen"):Connect(function()
+                if not gv.MenuIsOpen then return end
+                if os.clock() - esc_at > 0.9 then return end
+                esc_at = 0
+                pcall(function()
+                    local vim = gs(game:GetService("VirtualInputManager"))
+                    vim:SendKeyEvent(true, Enum.KeyCode.Escape, false, game)
+                    vim:SendKeyEvent(false, Enum.KeyCode.Escape, false, game)
+                end)
+            end)
         end)
 
         heart.MouseButton1Click:Connect(function()
