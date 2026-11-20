@@ -4953,6 +4953,8 @@ function kyri.spotify(opts)
             Parent = tool
         })
 
+        local hov = nil
+
         local function toolbtn(icon, label, ord)
             local b = make("ImageButton", {
                 Size = UDim2.fromOffset(34, 34),
@@ -4977,9 +4979,11 @@ function kyri.spotify(opts)
             })
             tip(b, label)
             b.MouseEnter:Connect(function()
+                hov = b
                 tw:Create(b, TweenInfo.new(0.12), {BackgroundTransparency = 0.82}):Play()
             end)
             b.MouseLeave:Connect(function()
+                if hov == b then hov = nil end
                 tw:Create(b, TweenInfo.new(0.12), {BackgroundTransparency = 1}):Play()
             end)
             return b, im
@@ -5729,6 +5733,9 @@ function kyri.spotify(opts)
             for i,v in pairs(tool:GetDescendants()) do
                 if v:IsA("ImageLabel") then tw:Create(v, FADE, {ImageTransparency = 0}):Play() end
                 if v:IsA("UIStroke") then tw:Create(v, FADE, {Transparency = 0.86}):Play() end
+                if v:IsA("ImageButton") then
+                    tw:Create(v, FADE, {BackgroundTransparency = v == hov and 0.82 or 1}):Play()
+                end
             end
             for i,v in pairs({shufb, prevb, playb, nextb, loopb}) do
                 tw:Create(v, FADE, {ImageTransparency = 0}):Play()
@@ -5753,6 +5760,7 @@ function kyri.spotify(opts)
             for i,v in pairs(tool:GetDescendants()) do
                 if v:IsA("ImageLabel") then tw:Create(v, slow, {ImageTransparency = 1}):Play() end
                 if v:IsA("UIStroke") then tw:Create(v, slow, {Transparency = 1}):Play() end
+                if v:IsA("ImageButton") then tw:Create(v, slow, {BackgroundTransparency = 1}):Play() end
             end
             for i,v in pairs({shufb, prevb, playb, nextb, loopb}) do
                 tw:Create(v, slow, {ImageTransparency = 1}):Play()
