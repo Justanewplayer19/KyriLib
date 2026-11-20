@@ -5524,7 +5524,7 @@ function kyri.spotify(opts)
                 vign.BackgroundTransparency = 0
                 wash_fade()
 
-                blank.Size = UDim2.fromOffset(math.min(clip.AbsoluteSize.X - 20, 540), 226)
+                blank.Size = UDim2.fromOffset(math.min(goal_clip.Size.X.Offset - 20, 540), 226)
                 cinei.Image = ico("maximize") or cinei.Image
                 compacti.Image = ico(compact and "maximize-2" or "square") or compacti.Image
                 task.delay(anim and 0.46 or 0.06, rebuild_if_needed)
@@ -5615,7 +5615,7 @@ function kyri.spotify(opts)
             local htx, hlw
             if ccine then
                 htx = cw + 32
-                hlw = math.max(colw - htx - 258, 150)
+                hlw = math.max(colw - htx - 290, 150)
                 local ty = math.floor(cw * 0.2)
                 c_title.Size = UDim2.fromOffset(hlw, 40)
                 c_artist.Size = UDim2.fromOffset(hlw, 26)
@@ -5711,7 +5711,7 @@ function kyri.spotify(opts)
             end
             tgo(clip, step, goal_clip)
 
-            blank.Size = UDim2.fromOffset(math.min(clip.AbsoluteSize.X - 20, 540), 226)
+            blank.Size = UDim2.fromOffset(math.min(goal_clip.Size.X.Offset - 20, 540), 226)
             cinei.Image = ico(cine and "minimize" or "maximize") or cinei.Image
             compacti.Image = ico(compact and "maximize-2" or "square") or compacti.Image
 
