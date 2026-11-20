@@ -3989,18 +3989,30 @@ function kyri.spotify(opts)
             for i,L in pairs(got.synced) do
                 local tx = tostring(L.text or ""):gsub("^%s+", ""):gsub("%s+$", "")
                 if tx ~= "" then
-                    local n = lbl(rl_scroll, {
+                    local n = make("TextButton", {
                         Size = UDim2.new(1, 0, 0, 0),
                         AutomaticSize = Enum.AutomaticSize.Y,
+                        BackgroundTransparency = 1,
                         Text = tx,
+                        TextColor3 = c.text,
                         Font = fb,
                         TextSize = rl_size(),
                         TextTransparency = 0.6,
                         TextWrapped = true,
                         TextXAlignment = Enum.TextXAlignment.Left,
+                        AutoButtonColor = false,
                         LayoutOrder = i,
-                        ZIndex = 4
+                        ZIndex = 4,
+                        Parent = rl_scroll
                     })
+                    if L.t then
+                        n.MouseButton1Click:Connect(function()
+                            if sp.dur <= 0 then return end
+                            local at = math.max(L.t + (sp.lyric_offset or 0), 0)
+                            sp.at_pos, sp.at_clock = at, os.clock()
+                            task.spawn(function() sp:seek(at / sp.dur) end)
+                        end)
+                    end
                     rl_times[#rl_times + 1] = L.t
                     rl_labels[#rl_labels + 1] = n
                 end
