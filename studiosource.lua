@@ -1179,7 +1179,7 @@ function kyri.island(opts)
         LayoutOrder = 3,
         Parent = ev
     })
-    make("UIListLayout", {
+    local trow_l = make("UIListLayout", {
         FillDirection = Enum.FillDirection.Horizontal,
         HorizontalAlignment = Enum.HorizontalAlignment.Center,
         VerticalAlignment = Enum.VerticalAlignment.Center,
@@ -1187,6 +1187,29 @@ function kyri.island(opts)
         Padding = UDim.new(0, 8),
         Parent = trow
     })
+
+    local btns = {}
+
+    local function reflow()
+        local n = #btns
+        if n == 0 then return end
+        local w = trow.AbsoluteSize.X
+        if w < 40 then return end
+        local size, pad = 34, 8
+        if n * size + (n - 1) * pad > w then
+            pad = 5
+            size = math.floor((w - (n - 1) * pad) / n)
+            size = math.clamp(size, 22, 34)
+        end
+        trow_l.Padding = UDim.new(0, pad)
+        local ic = math.max(math.floor(size * 0.47), 11)
+        for i,v in pairs(btns) do
+            v.box.Size = UDim2.fromOffset(size, size)
+            v.img.Size = UDim2.fromOffset(ic, ic)
+        end
+    end
+
+    table.insert(conns, trow:GetPropertyChangedSignal("AbsoluteSize"):Connect(reflow))
 
     local vfill, vic
     if show_vol then
@@ -1401,7 +1424,8 @@ function kyri.island(opts)
 
         local im = make("ImageLabel", {
             Size = UDim2.fromOffset(16, 16),
-            Position = UDim2.new(0.5, -8, 0.5, -8),
+            Position = UDim2.fromScale(0.5, 0.5),
+            AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundTransparency = 1,
             Image = ico(icon) or kyri.icons["play"],
             ImageColor3 = t.text,
@@ -1425,6 +1449,8 @@ function kyri.island(opts)
         end
 
         local api = {box = b, img = im}
+        btns[#btns + 1] = api
+        reflow()
         function api:icon(new) im.Image = ico(new) or im.Image end
         function api:tint(c) im.ImageColor3 = c end
         function api:setcallback(fn) cb = fn end
