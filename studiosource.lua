@@ -549,6 +549,14 @@ local has_cg = pcall(function()
     o:Destroy()
 end)
 
+local tips = setmetatable({}, {__mode = "k"})
+
+local function hide_tips()
+    for o,h in pairs(tips) do
+        if o.Parent then pcall(h) else tips[o] = nil end
+    end
+end
+
 local function tip(obj, text)
     if not obj or not text or text == "" then return end
 
@@ -632,6 +640,7 @@ local function tip(obj, text)
         end)
     end
 
+    tips[obj] = hide
     obj.MouseLeave:Connect(hide)
     if obj:IsA("GuiButton") then
         obj.MouseButton1Down:Connect(hide)
